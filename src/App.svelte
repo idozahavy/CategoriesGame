@@ -1,5 +1,6 @@
 <script lang="ts">
   import { screen } from './lib/stores';
+  import { pack } from './lib/i18n';
   import Home from './screens/Home.svelte';
   import NewGame from './screens/NewGame.svelte';
   import Join from './screens/Join.svelte';
@@ -7,6 +8,12 @@
   import Round from './screens/Round.svelte';
   import Review from './screens/Review.svelte';
   import Scoreboard from './screens/Scoreboard.svelte';
+
+  // Keep <html dir/lang> in sync with the active language (RTL support).
+  $effect(() => {
+    document.documentElement.dir = $pack.dir;
+    document.documentElement.lang = $pack.code;
+  });
 </script>
 
 <main class="shell">

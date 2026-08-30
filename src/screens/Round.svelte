@@ -162,7 +162,7 @@
             <span class="cat-name">{cat ? $categoryName(cat) : catId}</span>
           </div>
           <TextInput
-            bind:value={answers[catId]}
+            bind:value={() => answers[catId] ?? '', (v) => (answers[catId] = v)}
             error={val !== '' && !matchesLetter(val, round.letter)
               ? $t('round.letterHint').replace('{letter}', round.letter)
               : ''}

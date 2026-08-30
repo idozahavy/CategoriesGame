@@ -41,12 +41,9 @@ export const categoryName = derived(
         : ''),
 );
 
+/** Apply the current pack's direction/lang to <html>. Called reactively from App.svelte. */
 export function applyDir(): void {
   const p = get(pack);
   document.documentElement.dir = p.dir;
   document.documentElement.lang = p.code;
 }
-
-uiLanguage.subscribe(() => {
-  if (typeof document !== 'undefined') applyDir();
-});

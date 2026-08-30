@@ -75,7 +75,7 @@
               <b class="players">{save.playerNames.join(', ')}</b>
               <span class="progress">
                 {$t('resume.progress')
-                  .replace('{n}', String(save.roundsPlayed))
+                  .replace('{n}', String(Math.min(save.roundsPlayed + 1, save.roundCount)))
                   .replace('{total}', String(save.roundCount))}
               </span>
               <span class="date">
