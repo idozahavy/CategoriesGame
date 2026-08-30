@@ -1,0 +1,74 @@
+{
+  "$description": "CategoriesGame component registry. Every UI component must be registered here with its token bindings. Reference sheet: references/refine-5-components.html",
+  "version": "0.1.0",
+  "components": {
+    "button": {
+      "id": "M1",
+      "variants": ["primary", "accent", "secondary", "danger", "ghost"],
+      "states": ["default", "hover", "pressed", "disabled", "focus"],
+      "spec": {
+        "radius": "{radius.md}",
+        "font": "{typography.family.base} {typography.weight.display} {typography.size.body}",
+        "minBlockSize": "48px",
+        "pressableEdge": "border-block-end {border.edge-width} solid <variant>-edge; pressed = edge 0 + translateY(5px) via {motion.easing.spring} {motion.duration.press}",
+        "primary": { "bg": "{color.light.primary}", "text": "{color.light.on-primary}", "edge": "{color.light.primary-edge}", "hoverBg": "#0F8A7F (primary lightened ~6%)" },
+        "accent": { "bg": "{color.light.accent}", "text": "{color.light.on-accent}", "edge": "{color.light.accent-edge}", "use": "big moments only: New Game, celebrations" },
+        "secondary": { "bg": "{color.light.surface}", "text": "{color.light.primary}", "border": "2px + edge in {color.light.primary}", "hoverBg": "#EAF6F4" },
+        "danger": { "bg": "{color.light.danger}", "text": "{color.light.on-danger}", "edge": "{color.light.danger-edge}" },
+        "ghost": { "bg": "transparent", "text": "{color.light.primary}" },
+        "disabled": { "bg": "#E4DCD2", "text": "#9A8F92", "edge": "#CFC5B9" }
+      }
+    },
+    "input": {
+      "id": "M2",
+      "states": ["default", "focus", "error", "disabled"],
+      "spec": {
+        "radius": "{radius.md}", "border": "{border.width} solid {color.light.border-strong}",
+        "minBlockSize": "48px", "font": "{typography.weight.body} {typography.size.body}",
+        "focus": "border {color.light.primary} + 3px primary glow at 25% alpha",
+        "error": "border {color.light.danger}, bg #FFF5F5, message in {color.light.danger} {typography.size.small} bold"
+      }
+    },
+    "card": {
+      "id": "M3",
+      "spec": { "bg": "{color.light.surface}", "radius": "{radius.lg}", "border": "{border.width} solid {color.light.border}", "shadow": "{shadow.card}", "padding": "{space.4}" }
+    },
+    "chip": {
+      "id": "M4",
+      "states": ["on", "off"],
+      "spec": {
+        "radius": "{radius.pill}", "minBlockSize": "44px", "font": "800 15px",
+        "on": { "bg": "{color.light.primary}", "text": "{color.light.on-primary}" },
+        "off": { "bg": "{color.light.surface}", "text": "{color.light.muted}", "border": "2px {color.light.border-strong}" }
+      }
+    },
+    "topbar": {
+      "id": "M5",
+      "spec": "Only chrome on game screens: back icon-button (48px, radius {radius.md}, bg {color.light.bg}) + bold title + optional settings icon-button at inline-end. Card-style container radius 20px."
+    },
+    "modal": {
+      "id": "M6",
+      "spec": "Overlay rgba(61,52,54,0.5) at z {z.overlay}; panel: surface, radius {radius.lg}, padding {space.5}, centered, max 2 action buttons, big emoji allowed as illustration. z {z.modal}."
+    },
+    "score-row": {
+      "id": "M7",
+      "spec": "Row: avatar circle 40px in player-N color with initial, bold name, score at inline-end in tabular-nums 800 20px. Bg {color.light.bg}, radius {radius.md}."
+    },
+    "letter-tile": {
+      "id": "M8a",
+      "spec": "96px rounded square ({radius.lg}), bg {color.light.accent}, letter 56px 800 {color.light.on-accent}, shadow {shadow.card}. Scales up on shared/TV screen."
+    },
+    "timer": {
+      "id": "M8b",
+      "spec": "Pill ({radius.pill}), bg {color.light.primary}, text on-primary 800 22px tabular-nums. Under 15s: bg {color.light.danger} + scale pulse {motion.duration.pulse} (reduced-motion: color only)."
+    },
+    "icons": {
+      "id": "M9",
+      "spec": "One set only: outline style (Lucide), stroke 2.5, stroke-linecap round, sizes 20/24/32, color {color.light.text} or currentColor. No filled icon set, no emoji-as-icon in chrome (emoji allowed as content/illustration)."
+    },
+    "focus-ring": {
+      "id": "M10",
+      "spec": "outline: 3px solid {color.light.focus}; outline-offset: 2px. Applied via :focus-visible on every interactive element. Never remove without replacement."
+    }
+  }
+}
