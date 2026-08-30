@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refine 3/6 — Shape &amp; rhythm</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#FFF8F0; color:#3D3436; padding:32px; font-family:'Nunito','Segoe UI',system-ui,sans-serif; }
+  h1 { font-size:28px; margin-block-end:8px; }
+  .note { color:#7A6E71; margin-block-end:28px; max-inline-size:760px; line-height:1.5; }
+  .cols { display:flex; flex-wrap:wrap; gap:32px; }
+  .option { border:2px dashed #D9C8B8; border-radius:24px; padding:24px; inline-size:440px; }
+  .option h2 { font-size:20px; color:#0E7C72; }
+  .option .sub { color:#7A6E71; font-size:14px; margin-block-end:16px; }
+  h3 { font-size:14px; color:#7A6E71; margin-block:14px 8px; text-transform:uppercase; letter-spacing:0.05em; }
+  .spacerow { display:flex; align-items:flex-end; gap:8px; }
+  .spacebar { background:#0E7C72; border-radius:4px; inline-size:28px; display:flex; align-items:end; justify-content:center; color:#fff; font-size:10px; font-weight:800; }
+  .boxes { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  .rbox { background:#fff; border:2px solid #F3E7DA; padding:10px 14px; font-size:13px; font-weight:700; }
+  .shbox { background:#fff; border-radius:16px; padding:14px 18px; font-size:13px; font-weight:700; }
+  .democard { background:#fff; margin-block-start:14px; padding:16px; }
+  .demobtn { border:none; color:#fff; background:#0E7C72; font:800 17px 'Nunito','Segoe UI',system-ui,sans-serif; padding:13px 22px 10px; cursor:pointer; }
+</style>
+</head>
+<body>
+<h1>Category 3/6 — Shape &amp; rhythm</h1>
+<p class="note">Two coherent packages: spacing scale, corner radii, borders and shadows. Each shows its full scale as real rendered boxes, plus a sample card + button built from that package. (Z-index layering is structural and defined in tokens regardless: base 0 &lt; sticky 10 &lt; overlay 100 &lt; modal 110 &lt; toast 120.)</p>
+
+<div class="cols">
+  <div class="option">
+    <h2>R1 — Chunky &amp; snug</h2>
+    <p class="sub">As in the Direction A mockup. 4px-base spacing, radius 16/24, one soft shadow level.</p>
+    <h3>Spacing scale (px)</h3>
+    <div class="spacerow">
+      <div class="spacebar" style="block-size:4px;"></div><div class="spacebar" style="block-size:8px;">8</div>
+      <div class="spacebar" style="block-size:12px;">12</div><div class="spacebar" style="block-size:16px;">16</div>
+      <div class="spacebar" style="block-size:24px;">24</div><div class="spacebar" style="block-size:32px;">32</div>
+      <div class="spacebar" style="block-size:48px;">48</div>
+    </div>
+    <h3>Radii</h3>
+    <div class="boxes">
+      <div class="rbox" style="border-radius:8px;">sm 8</div>
+      <div class="rbox" style="border-radius:16px;">md 16 (buttons)</div>
+      <div class="rbox" style="border-radius:24px;">lg 24 (cards)</div>
+      <div class="rbox" style="border-radius:999px;">pill (chips)</div>
+    </div>
+    <h3>Borders &amp; shadows</h3>
+    <div class="boxes">
+      <div class="shbox" style="border:2px solid #F3E7DA;">border 2px</div>
+      <div class="shbox" style="box-shadow:0 4px 12px rgba(61,52,54,0.10);">shadow: 0 4 12 @10%</div>
+    </div>
+    <div class="democard" style="border-radius:24px;border:2px solid #F3E7DA;box-shadow:0 4px 12px rgba(61,52,54,0.10);">
+      <div style="font-weight:800;margin-block-end:8px;">Animal</div>
+      <button class="demobtn" style="border-radius:16px;border-block-end:5px solid #084F48;">Done!</button>
+    </div>
+  </div>
+
+  <div class="option">
+    <h2>R2 — Extra round &amp; airy</h2>
+    <p class="sub">Bigger gaps, rounder corners (20/28), slightly deeper shadow. More breathing room, less per screen.</p>
+    <h3>Spacing scale (px)</h3>
+    <div class="spacerow">
+      <div class="spacebar" style="block-size:6px;"></div><div class="spacebar" style="block-size:12px;">12</div>
+      <div class="spacebar" style="block-size:20px;">20</div><div class="spacebar" style="block-size:28px;">28</div>
+      <div class="spacebar" style="block-size:40px;">40</div><div class="spacebar" style="block-size:56px;">56</div>
+    </div>
+    <h3>Radii</h3>
+    <div class="boxes">
+      <div class="rbox" style="border-radius:12px;">sm 12</div>
+      <div class="rbox" style="border-radius:20px;">md 20 (buttons)</div>
+      <div class="rbox" style="border-radius:28px;">lg 28 (cards)</div>
+      <div class="rbox" style="border-radius:999px;">pill (chips)</div>
+    </div>
+    <h3>Borders &amp; shadows</h3>
+    <div class="boxes">
+      <div class="shbox" style="border:2px solid #F3E7DA;">border 2px</div>
+      <div class="shbox" style="box-shadow:0 8px 20px rgba(61,52,54,0.14);">shadow: 0 8 20 @14%</div>
+    </div>
+    <div class="democard" style="border-radius:28px;border:2px solid #F3E7DA;box-shadow:0 8px 20px rgba(61,52,54,0.14);padding:24px;">
+      <div style="font-weight:800;margin-block-end:12px;">Animal</div>
+      <button class="demobtn" style="border-radius:20px;border-block-end:5px solid #084F48;padding:15px 26px 12px;">Done!</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
