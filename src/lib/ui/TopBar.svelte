@@ -1,8 +1,5 @@
 <script lang="ts">
-  let {
-    title,
-    onback,
-  }: { title: string; onback?: () => void } = $props();
+  let { title, onback }: { title: string; onback?: () => void } = $props();
 </script>
 
 <header class="topbar">

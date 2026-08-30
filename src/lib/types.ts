@@ -92,14 +92,7 @@ export interface SaveSummary {
   status: GameStatus;
 }
 
-export type Screen =
-  | 'home'
-  | 'new-game'
-  | 'join'
-  | 'resume'
-  | 'round'
-  | 'review'
-  | 'scoreboard';
+export type Screen = 'home' | 'new-game' | 'join' | 'resume' | 'round' | 'review' | 'scoreboard';
 
 /** A language pack bundles UI strings + game content for one language. */
 export interface LanguagePack {

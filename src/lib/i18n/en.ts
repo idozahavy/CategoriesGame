@@ -1,11 +1,12 @@
 import type { LanguagePack } from '../types';
+import { enWords } from '../words/en';
 
 /** English — the default language pack. Word lists live in ./words/en/*.json (merged at build). */
 export const en: LanguagePack = {
   code: 'en',
   name: 'English',
   dir: 'ltr',
-  letters: [...'ABCDEFGHIJKLMNOPRSTW'],
+  letters: 'A B C D E F G H I J K L M N O P R S T W'.split(' '),
   ui: {
     'app.title': 'Categories!',
     'home.new': 'New Game',
@@ -42,6 +43,7 @@ export const en: LanguagePack = {
     'setup.validation.vote': 'Group vote only',
     'setup.validation.none': "Don't check words",
     'setup.language': 'Game language',
+    'setup.step3': 'Points & timer',
     'setup.start': 'Start!',
     'setup.back': 'Back',
     'setup.next': 'Next',
@@ -52,6 +54,8 @@ export const en: LanguagePack = {
     'round.pass': 'Pass to {name}',
     'round.yourTurn': "{name}, it's your turn!",
     'round.timeUp': "Time's up!",
+    'round.leaveConfirm': 'Leave this round? Your progress is saved.',
+    'round.letterHint': 'Starts with "{letter}"?',
 
     'review.title': 'Let’s check the words!',
     'review.vote.question': 'Is "{word}" a real {category}?',
@@ -97,5 +101,5 @@ export const en: LanguagePack = {
     sport: 'Sport',
     color: 'Color',
   },
-  words: {},
+  words: enWords,
 };

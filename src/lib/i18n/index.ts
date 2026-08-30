@@ -1,8 +1,12 @@
 import { derived, writable, get } from 'svelte/store';
 import type { LanguagePack } from '../types';
 import { en } from './en';
+import { he } from './he';
 
-const packs = new Map<string, LanguagePack>([[en.code, en]]);
+const packs = new Map<string, LanguagePack>([
+  [en.code, en],
+  [he.code, he],
+]);
 
 export function registerPack(pack: LanguagePack): void {
   packs.set(pack.code, pack);
@@ -31,7 +35,10 @@ export const categoryName = derived(
   pack,
   (p) =>
     (cat: { nameKey?: string; customName?: string }): string =>
-      cat.customName ?? (cat.nameKey ? (p.categoryNames[cat.nameKey] ?? en.categoryNames[cat.nameKey] ?? cat.nameKey) : ''),
+      cat.customName ??
+      (cat.nameKey
+        ? (p.categoryNames[cat.nameKey] ?? en.categoryNames[cat.nameKey] ?? cat.nameKey)
+        : ''),
 );
 
 export function applyDir(): void {

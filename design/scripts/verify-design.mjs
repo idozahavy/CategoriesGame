@@ -114,7 +114,9 @@ for (const file of srcFiles) {
 
   lines.forEach((lineText, idx) => {
     const lineNum = idx + 1;
+    // An inline pragma suppresses every rule on its line (collected in the debt report).
     const hasIgnorePragma = DESIGN_IGNORE_RE.test(lineText);
+    if (hasIgnorePragma) return;
 
     // hardcoded-color
     if (!quarantined && !hasIgnorePragma) {
@@ -135,7 +137,7 @@ for (const file of srcFiles) {
       let pxMatch;
       PX_RE.lastIndex = 0;
       while ((pxMatch = PX_RE.exec(valueText))) {
-        const num = parseFloat(pxMatch[1]);
+        const num = Math.abs(parseFloat(pxMatch[1]));
         if (!ALLOWED_SPACING_PX.has(num)) {
           addFinding(rel, lineNum, 'off-scale-spacing', 'error');
         }

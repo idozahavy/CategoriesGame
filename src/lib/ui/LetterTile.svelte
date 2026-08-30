@@ -2,7 +2,10 @@
   let { letter, size = 96 }: { letter: string; size?: number } = $props();
 </script>
 
-<div class="tile" style="inline-size:{size}px;block-size:{size}px;font-size:{Math.round(size * 0.58)}px;">
+<div
+  class="tile"
+  style="inline-size:{size}px;block-size:{size}px;font-size:{Math.round(size * 0.58)}px;"
+>
   {letter}
 </div>
 

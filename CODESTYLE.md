@@ -1,0 +1,54 @@
+# Code Scheme — CategoriesGame
+
+**Version 1.0.0** · 2026-08-30 · Enforced by Prettier + ESLint (`npm run format` / `npm run lint`) and the `code-conventions` skill.
+
+## Formatting (Prettier — do not hand-format)
+
+2-space indent · single quotes · semicolons · trailing commas · 100-char lines · LF endings (`.gitattributes` normalizes).
+
+## Language & framework
+
+- TypeScript strict everywhere; no `any`, no `@ts-ignore`. Non-null `!` only when the invariant is obvious on the same screen of code.
+- **Svelte 5 runes only**: `$state`, `$derived`, `$effect`, `$props`, `$bindable`; event handlers as attributes (`onclick=`). Never `export let`, never `on:click`, no legacy reactive `$:`.
+- Global cross-screen state lives in `src/lib/stores.ts` svelte stores, read in components via `$store`. Local screen state uses runes.
+
+## Architecture & files
+
+- `src/screens/` — one route-level component per screen (PascalCase, matches the `Screen` union in `types.ts`). Navigation = `screen.set(...)`; no router.
+- `src/lib/ui/` — presentational components only (PascalCase). No game logic, no store imports, no data fetching; inputs via `$props`.
+- `src/lib/` — logic/services in lowercase modules: `types.ts` (all shared domain types — extend it, don't redeclare shapes locally), `game.ts` (pure game rules), `db.ts` (IndexedDB only), `validation.ts` (word checking), `stores.ts`.
+- `src/lib/i18n/` — one `LanguagePack` per file; `src/lib/words/` — word-list data.
+- Imports: relative paths within `src`; import types with `import type`.
+
+## Domain rules
+
+- Every mutation of a running game goes through `updateGame()` (it persists to IndexedDB). Never mutate `$game` directly.
+- Pure functions in `game.ts` take state explicitly; no store access outside components/`stores.ts`.
+- No network calls except `validation.ts` (public dictionary); every fetch has a timeout and degrades gracefully (never throws to the UI).
+
+## UI text & styling
+
+- Every user-facing string goes through `$t('key')` with the key in **every** language pack; placeholders as `{name}`. `TODO-i18n` comments are debt to clear before merging.
+- Styling: design tokens only (`var(--…)`), logical CSS properties only — see `design/scheme.md` hard rules; run `npm run verify:design` after UI work.
+
+## Errors & async
+
+- No floating promises: `await` or explicit `void`.
+- User-visible failures use the friendly error-card pattern (S4) with an alternative action; log details with `console.error`, never show raw errors to players.
+
+## Naming
+
+- `camelCase` functions/variables, `PascalCase` types/components, `SCREAMING_SNAKE` module constants, kebab/lowercase file names outside components.
+- Booleans read as predicates (`hasSaves`, `isFinished`); event props as `on<thing>` (`onback`, `onclick`).
+
+## Commits
+
+Prefix by area: `feat:`, `fix:`, `chore:`, `design:` / `design-approve:` / `design-migrate:` (reserved for the design scheme). Imperative subject, ≤72 chars.
+
+## Verify
+
+`npm run format:check` · `npm run lint` · `npm run check` (svelte-check) · `npm run verify:design`. All four must pass before a commit that touches `src/`.
+
+## Changelog
+
+- 1.0.0 (2026-08-30) — Initial code scheme: current-style Prettier, strict type-checked ESLint, npm-scripts enforcement (user-approved).

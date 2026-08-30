@@ -2,9 +2,7 @@
   let { seconds }: { seconds: number } = $props();
 
   const warn = $derived(seconds <= 15);
-  const label = $derived(
-    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
-  );
+  const label = $derived(`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`);
 </script>
 
 <span class="timer" class:warn>{label}</span>

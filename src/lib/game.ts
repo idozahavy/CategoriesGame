@@ -1,19 +1,7 @@
-import type {
-  AnswerEntry,
-  GameSettings,
-  GameState,
-  PlayerDef,
-  RoundState,
-} from './types';
+import type { GameSettings, GameState, PlayerDef, RoundState } from './types';
 import { getPack } from './i18n';
 
-export const DEFAULT_CATEGORY_IDS = [
-  'animal',
-  'food',
-  'city',
-  'name',
-  'object',
-] as const;
+export const DEFAULT_CATEGORY_IDS = ['animal', 'food', 'city', 'name', 'object'] as const;
 
 export function newId(): string {
   return crypto.randomUUID();
@@ -46,10 +34,9 @@ export function startNextRound(state: GameState): RoundState {
   const letter = drawLetter(state);
   state.usedLetters.push(letter);
   const { mode, categories } = state.settings;
+  const singleCategory = categories[state.rounds.length % categories.length] ?? categories[0];
   const categoryIds =
-    mode === 'single'
-      ? [categories[state.rounds.length % categories.length]?.id ?? categories[0]!.id]
-      : categories.map((c) => c.id);
+    mode === 'single' && singleCategory ? [singleCategory.id] : categories.map((c) => c.id);
   const round: RoundState = {
     index: state.rounds.length,
     letter,
@@ -63,8 +50,15 @@ export function startNextRound(state: GameState): RoundState {
   return round;
 }
 
-export function setAnswer(round: RoundState, playerId: string, categoryId: string, word: string): void {
-  const existing = round.answers.find((a) => a.playerId === playerId && a.categoryId === categoryId);
+export function setAnswer(
+  round: RoundState,
+  playerId: string,
+  categoryId: string,
+  word: string,
+): void {
+  const existing = round.answers.find(
+    (a) => a.playerId === playerId && a.categoryId === categoryId,
+  );
   const trimmed = word.trim();
   if (existing) {
     existing.word = trimmed;
@@ -98,7 +92,8 @@ export function scoreRound(state: GameState, round: RoundState): void {
         continue;
       }
       const sameWord = inCategory.filter(
-        (o) => o !== answer && o.status !== 'invalid' && normalize(o.word) === normalize(answer.word),
+        (o) =>
+          o !== answer && o.status !== 'invalid' && normalize(o.word) === normalize(answer.word),
       );
       if (scoring === 'unique' && sameWord.length > 0) {
         answer.status = 'shared';

@@ -68,7 +68,7 @@ export async function inPublicDictionary(
     if (!res.ok) return 'error';
     const data = (await res.json()) as { query?: { pages?: Record<string, { missing?: string }> } };
     const pages = data.query?.pages ?? {};
-    const found = Object.keys(pages).some((id) => id !== '-1' && !(pages[id] && 'missing' in pages[id]!));
+    const found = Object.entries(pages).some(([id, page]) => id !== '-1' && !('missing' in page));
     const verdict = found ? 'known' : 'unknown';
     dictCache.set(key, verdict);
     return verdict;

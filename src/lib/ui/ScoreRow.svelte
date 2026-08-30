@@ -1,9 +1,5 @@
 <script lang="ts">
-  let {
-    name,
-    score,
-    colorIndex,
-  }: { name: string; score: number; colorIndex: number } = $props();
+  let { name, score, colorIndex }: { name: string; score: number; colorIndex: number } = $props();
 </script>
 
 <div class="row">

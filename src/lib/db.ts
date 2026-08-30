@@ -1,12 +1,20 @@
-import { openDB, type IDBPDatabase } from 'idb';
+import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { GameState, SaveSummary } from './types';
+
+interface GameDB extends DBSchema {
+  saves: {
+    key: string;
+    value: GameState;
+    indexes: { updatedAt: number };
+  };
+}
 
 const DB_NAME = 'categories-game';
 const STORE = 'saves';
 
-let dbPromise: Promise<IDBPDatabase> | null = null;
+let dbPromise: Promise<IDBPDatabase<GameDB>> | null = null;
 
-function db(): Promise<IDBPDatabase> {
+function db(): Promise<IDBPDatabase<GameDB>> {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, 1, {
       upgrade(d) {
@@ -32,7 +40,7 @@ export async function deleteGame(id: string): Promise<void> {
 }
 
 export async function listSaves(): Promise<SaveSummary[]> {
-  const all: GameState[] = await (await db()).getAll(STORE);
+  const all = await (await db()).getAll(STORE);
   return all
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .map((g) => ({
