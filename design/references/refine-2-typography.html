@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refine 2/6 — Typography</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background:#FFF8F0; color:#3D3436; padding:32px; font-family:'Segoe UI',system-ui,sans-serif; }
+  h1 { font-size:28px; margin-block-end:8px; }
+  .note { color:#7A6E71; margin-block-end:28px; max-inline-size:760px; line-height:1.5; }
+  .card { background:#fff; border:2px solid #F3E7DA; border-radius:24px; padding:24px; margin-block-end:28px; max-inline-size:860px; }
+  .card h2 { font-size:20px; color:#0E7C72; margin-block-end:2px; }
+  .card .sub { color:#7A6E71; font-size:14px; margin-block-end:18px; }
+  .row { border-block-start:1px dashed #F3E7DA; padding-block:10px; display:flex; gap:16px; align-items:baseline; }
+  .tag { flex:0 0 150px; font-size:12px; color:#7A6E71; }
+  .f1 { font-family:'Nunito','Varela Round','Comic Sans MS','Segoe UI',system-ui,sans-serif; }
+  .f2 { font-family:'Quicksand','Century Gothic','Trebuchet MS','Segoe UI',system-ui,sans-serif; }
+  .f3h { font-family:'Baloo 2','Comic Sans MS','Segoe UI',system-ui,sans-serif; }
+  .f3b { font-family:'Nunito','Segoe UI',system-ui,sans-serif; }
+</style>
+</head>
+<body>
+<h1>Category 2/6 — Typography</h1>
+<p class="note">Fonts will be <b>self-hosted</b> in the app (bundled at build time — no external URLs at runtime). If a font below isn't installed on this machine, your browser shows the closest fallback from the same stack — sizes, weights and line-heights are exact either way. Note for multi-language support: <b>Nunito covers Latin + Cyrillic + Hebrew</b>; Quicksand and Baloo 2 do not cover Hebrew/Arabic and would fall back to a system font for RTL languages.</p>
+
+<div class="card">
+  <h2>F1 — Nunito everywhere</h2>
+  <p class="sub">One rounded family for all text. Best script coverage (incl. Hebrew).</p>
+  <div class="row"><span class="tag">display · 40px · 800</span><span class="f1" style="font-size:40px;font-weight:800;line-height:1.15;">Round 3 — Letter B!</span></div>
+  <div class="row"><span class="tag">h1 · 28px · 800</span><span class="f1" style="font-size:28px;font-weight:800;line-height:1.2;">Who found the best words?</span></div>
+  <div class="row"><span class="tag">h2 · 22px · 700</span><span class="f1" style="font-size:22px;font-weight:700;line-height:1.3;">Animals, foods and faraway cities</span></div>
+  <div class="row"><span class="tag">body · 17px · 600</span><span class="f1" style="font-size:17px;font-weight:600;line-height:1.5;">Type one word for every category before the timer runs out. Unique words earn extra points!</span></div>
+  <div class="row"><span class="tag">small · 14px · 600</span><span class="f1" style="font-size:14px;font-weight:600;line-height:1.4;">Saved 5 minutes ago · 3 players · Round 2 of 5</span></div>
+</div>
+
+<div class="card">
+  <h2>F2 — Quicksand everywhere</h2>
+  <p class="sub">Geometric-rounded, lighter and airier. Latin scripts only (RTL falls back to system).</p>
+  <div class="row"><span class="tag">display · 40px · 700</span><span class="f2" style="font-size:40px;font-weight:700;line-height:1.15;">Round 3 — Letter B!</span></div>
+  <div class="row"><span class="tag">h1 · 28px · 700</span><span class="f2" style="font-size:28px;font-weight:700;line-height:1.2;">Who found the best words?</span></div>
+  <div class="row"><span class="tag">h2 · 22px · 600</span><span class="f2" style="font-size:22px;font-weight:600;line-height:1.3;">Animals, foods and faraway cities</span></div>
+  <div class="row"><span class="tag">body · 17px · 500</span><span class="f2" style="font-size:17px;font-weight:500;line-height:1.5;">Type one word for every category before the timer runs out. Unique words earn extra points!</span></div>
+  <div class="row"><span class="tag">small · 14px · 500</span><span class="f2" style="font-size:14px;font-weight:500;line-height:1.4;">Saved 5 minutes ago · 3 players · Round 2 of 5</span></div>
+</div>
+
+<div class="card">
+  <h2>F3 — Baloo 2 headings + Nunito body</h2>
+  <p class="sub">Chunky toy-like display for titles/scores, calm rounded body. Two fonts to ship.</p>
+  <div class="row"><span class="tag">display · 40px · 700</span><span class="f3h" style="font-size:40px;font-weight:700;line-height:1.15;">Round 3 — Letter B!</span></div>
+  <div class="row"><span class="tag">h1 · 28px · 700</span><span class="f3h" style="font-size:28px;font-weight:700;line-height:1.2;">Who found the best words?</span></div>
+  <div class="row"><span class="tag">h2 · 22px · 600</span><span class="f3h" style="font-size:22px;font-weight:600;line-height:1.3;">Animals, foods and faraway cities</span></div>
+  <div class="row"><span class="tag">body · 17px · 600</span><span class="f3b" style="font-size:17px;font-weight:600;line-height:1.5;">Type one word for every category before the timer runs out. Unique words earn extra points!</span></div>
+  <div class="row"><span class="tag">small · 14px · 600</span><span class="f3b" style="font-size:14px;font-weight:600;line-height:1.4;">Saved 5 minutes ago · 3 players · Round 2 of 5</span></div>
+</div>
+
+<h1 style="font-size:24px;">Size scale options (shown in the F1 stack)</h1>
+<div class="card">
+  <h2>S1 — Cozy scale</h2>
+  <p class="sub">display 40 · h1 28 · h2 22 · body 17 · small 14 — the scale used in the specimens above.</p>
+  <span class="f1" style="font-size:17px;font-weight:600;line-height:1.5;">This sentence is body text at 17 pixels. Comfortable on phones, compact enough for the round screen with five categories visible.</span>
+</div>
+<div class="card">
+  <h2>S2 — Extra-large scale</h2>
+  <p class="sub">display 48 · h1 32 · h2 25 · body 18 · small 15 — bigger everywhere, for young readers &amp; TV distance.</p>
+  <div class="row"><span class="tag">display · 48px · 800</span><span class="f1" style="font-size:48px;font-weight:800;line-height:1.1;">Round 3 — Letter B!</span></div>
+  <div class="row"><span class="tag">h1 · 32px · 800</span><span class="f1" style="font-size:32px;font-weight:800;line-height:1.2;">Who found the best words?</span></div>
+  <div class="row"><span class="tag">body · 18px · 600</span><span class="f1" style="font-size:18px;font-weight:600;line-height:1.55;">This sentence is body text at 18 pixels. Easier for young readers; fewer categories fit on screen at once.</span></div>
+  <div class="row"><span class="tag">small · 15px · 600</span><span class="f1" style="font-size:15px;font-weight:600;line-height:1.4;">Saved 5 minutes ago · 3 players · Round 2 of 5</span></div>
+</div>
+</body>
+</html>
