@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refine 4/6 — Motion</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#FFF8F0; color:#3D3436; padding:32px; font-family:'Nunito','Segoe UI',system-ui,sans-serif; }
+  h1 { font-size:28px; margin-block-end:8px; }
+  .note { color:#7A6E71; margin-block-end:28px; max-inline-size:760px; line-height:1.5; }
+  .cols { display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start; }
+  .option { border:2px dashed #D9C8B8; border-radius:24px; padding:24px; inline-size:430px; }
+  .option h2 { font-size:20px; color:#0E7C72; }
+  .option .sub { color:#7A6E71; font-size:14px; margin-block-end:16px; }
+  h3 { font-size:13px; color:#7A6E71; margin-block:16px 8px; text-transform:uppercase; letter-spacing:0.05em; }
+  .replay { border:none; background:#C61E72; color:#fff; border-radius:999px; font:800 13px 'Nunito','Segoe UI',system-ui,sans-serif; padding:8px 16px; cursor:pointer; margin-block-end:12px; }
+  .stage { background:#fff; border:2px solid #F3E7DA; border-radius:16px; padding:16px; margin-block-end:8px; min-block-size:84px; display:flex; align-items:center; gap:16px; overflow:hidden; }
+  .btn { border:none; color:#fff; background:#0E7C72; border-radius:16px; border-block-end:5px solid #084F48; font:800 16px 'Nunito','Segoe UI',system-ui,sans-serif; padding:12px 20px 9px; }
+  .card { background:#FFF8F0; border:2px solid #F3E7DA; border-radius:16px; padding:10px 16px; font-weight:800; }
+  .timer { background:#C61E72; color:#fff; border-radius:999px; font-weight:800; padding:8px 18px; font-variant-numeric:tabular-nums; }
+
+  /* A — Bouncy */
+  @keyframes a-press { 0%{transform:translateY(0);border-block-end-width:5px;} 40%{transform:translateY(4px);border-block-end-width:1px;} 70%{transform:translateY(-2px);border-block-end-width:6px;} 100%{transform:translateY(0);border-block-end-width:5px;} }
+  .a-press.play { animation:a-press 350ms cubic-bezier(.34,1.56,.64,1); }
+  @keyframes a-pop { 0%{transform:scale(.6);opacity:0;} 70%{transform:scale(1.08);opacity:1;} 100%{transform:scale(1);opacity:1;} }
+  .a-pop.play { animation:a-pop 300ms cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes a-pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.12);} }
+  .a-pulse.play { animation:a-pulse 600ms ease-in-out 3; }
+
+  /* B — Gentle */
+  @keyframes b-press { 0%{transform:translateY(0);border-block-end-width:5px;} 50%{transform:translateY(3px);border-block-end-width:2px;} 100%{transform:translateY(0);border-block-end-width:5px;} }
+  .b-press.play { animation:b-press 200ms ease-out; }
+  @keyframes b-fadeup { 0%{transform:translateY(8px);opacity:0;} 100%{transform:translateY(0);opacity:1;} }
+  .b-fadeup.play { animation:b-fadeup 200ms ease-out both; }
+  @keyframes b-tick { 0%,100%{opacity:1;} 50%{opacity:.55;} }
+  .b-tick.play { animation:b-tick 800ms ease-in-out 3; }
+
+  /* Reduced motion fallback */
+  @keyframes rm-fade { 0%{opacity:0;} 100%{opacity:1;} }
+  .rm-fade.play { animation:rm-fade 150ms linear both; }
+</style>
+</head>
+<body>
+<h1>Category 4/6 — Motion</h1>
+<p class="note">Both options follow the brief rule: feedback and celebration moments only — <b>nothing animates while players are typing/thinking</b>. Press ▶ Replay to run each option's set. The reduced-motion fallback (bottom) applies to whichever option wins when a device asks for less motion.</p>
+
+<div class="cols">
+  <div class="option">
+    <h2>MA — Bouncy toy</h2>
+    <p class="sub">Springy overshoot easing, 200–350ms. Button squashes &amp; rebounds, cards pop in, timer warning pulses in size.</p>
+    <button class="replay" onclick="replay('a')">▶ Replay A</button>
+    <h3>Button press (350ms spring)</h3>
+    <div class="stage"><button class="btn a-press">Done!</button></div>
+    <h3>Card enter (300ms pop)</h3>
+    <div class="stage"><div class="card a-pop">Animal — Bear ✓</div></div>
+    <h3>Timer warning (scale pulse)</h3>
+    <div class="stage"><div class="timer a-pulse">0:10</div></div>
+  </div>
+
+  <div class="option">
+    <h2>MB — Gentle slide</h2>
+    <p class="sub">Plain ease-out, 150–250ms, no overshoot. Softer press, cards fade up, timer warning blinks opacity.</p>
+    <button class="replay" onclick="replay('b')">▶ Replay B</button>
+    <h3>Button press (200ms ease-out)</h3>
+    <div class="stage"><button class="btn b-press">Done!</button></div>
+    <h3>Card enter (200ms fade-up)</h3>
+    <div class="stage"><div class="card b-fadeup">Animal — Bear ✓</div></div>
+    <h3>Timer warning (opacity blink)</h3>
+    <div class="stage"><div class="timer b-tick">0:10</div></div>
+  </div>
+
+  <div class="option" style="border-color:#0E7C72;">
+    <h2>Reduced-motion fallback (both options)</h2>
+    <p class="sub">When the OS asks for reduced motion: no movement or scaling — only a 150ms fade; timer warning becomes a color change only.</p>
+    <button class="replay" onclick="replay('rm')">▶ Replay fallback</button>
+    <h3>Any enter/feedback → 150ms fade</h3>
+    <div class="stage"><div class="card rm-fade">Animal — Bear ✓</div></div>
+    <h3>Timer warning → color only (static)</h3>
+    <div class="stage"><div class="timer" style="background:#C22328;">0:10</div></div>
+  </div>
+</div>
+
+<script>
+  function replay(prefix) {
+    document.querySelectorAll('.' + prefix + '-press, .' + prefix + '-pop, .' + prefix + '-pulse, .' + prefix + '-fadeup, .' + prefix + '-tick, .' + prefix + '-fade').forEach(el => {
+      el.classList.remove('play');
+      void el.offsetWidth;
+      el.classList.add('play');
+    });
+  }
+  replay('a'); replay('b'); replay('rm');
+</script>
+</body>
+</html>
