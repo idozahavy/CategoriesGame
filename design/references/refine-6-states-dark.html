@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refine 6/6 — States &amp; dark mode</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#FFF8F0; color:#3D3436; padding:32px; font-family:'Nunito','Segoe UI',system-ui,sans-serif; }
+  h1 { font-size:28px; margin-block-end:8px; }
+  .note { color:#7A6E71; margin-block-end:28px; max-inline-size:760px; line-height:1.5; }
+  .cols { display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start; }
+  .option { border-radius:24px; padding:24px; inline-size:430px; }
+  .option h2 { font-size:20px; margin-block-end:2px; }
+  .option .sub { font-size:14px; margin-block-end:16px; }
+  .swatches { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-block-end:16px; }
+  .sw { border-radius:12px; padding:10px 12px; font-size:13px; font-weight:700; min-block-size:50px; display:flex; flex-direction:column; justify-content:center; }
+  .sw small { font-weight:400; opacity:.85; font-size:11px; }
+  .btn { border:none; border-radius:16px; font:800 17px 'Nunito','Segoe UI',system-ui,sans-serif; padding:13px 22px 10px; cursor:pointer; min-block-size:48px; }
+  section { background:#fff; border:2px solid #F3E7DA; border-radius:24px; padding:24px; margin-block-start:28px; max-inline-size:900px; }
+  section h2 { font-size:20px; color:#0E7C72; margin-block-end:12px; }
+  .strip { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .cell { text-align:center; }
+  .cell .lbl { font-size:12px; color:#7A6E71; margin-block-start:6px; }
+  .skel { border-radius:12px; background:linear-gradient(90deg,#F3E7DA 25%,#FBF3E9 50%,#F3E7DA 75%); background-size:200% 100%; animation:shimmer 1.2s linear infinite; }
+  @keyframes shimmer { to { background-position:-200% 0; } }
+  .spin { inline-size:40px; block-size:40px; border-radius:999px; border:5px solid #F3E7DA; border-block-start-color:#0E7C72; animation:rot 800ms linear infinite; margin-inline:auto; }
+  @keyframes rot { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<h1>Category 6/6 — States &amp; dark mode</h1>
+<p class="note">Interactive states (hover/pressed/disabled/focus/error) were approved with the components. Left to decide: the <b>dark theme palette</b> (two options below, each with a mini home screen), and the loading/empty/error patterns at the bottom (same in both themes). Dark buttons switch to bright candy fills with dark text — that's what keeps AA contrast on dark backgrounds.</p>
+
+<div class="cols">
+  <!-- D1 -->
+  <div class="option" style="background:#241B1D;color:#F5EDE7;">
+    <h2 style="color:#3DD6C6;">D1 — Warm cocoa</h2>
+    <p class="sub" style="color:#B8A8AB;">Brown-charcoal night version of the cream world. Cozy, stays on-brand.</p>
+    <div class="swatches">
+      <div class="sw" style="background:#241B1D;color:#F5EDE7;border:1px solid #4A3A3E;">bg <small>#241B1D</small></div>
+      <div class="sw" style="background:#332528;color:#F5EDE7;">surface <small>#332528</small></div>
+      <div class="sw" style="background:#F5EDE7;color:#241B1D;">text <small>#F5EDE7</small></div>
+      <div class="sw" style="background:#B8A8AB;color:#241B1D;">muted <small>#B8A8AB</small></div>
+      <div class="sw" style="background:#3DD6C6;color:#06302B;">primary <small>#3DD6C6</small></div>
+      <div class="sw" style="background:#FF7AB8;color:#4A0A28;">accent <small>#FF7AB8</small></div>
+      <div class="sw" style="background:#FFB061;color:#4A2800;">warning <small>#FFB061</small></div>
+      <div class="sw" style="background:#7EDB8A;color:#0A3D12;">success <small>#7EDB8A</small></div>
+      <div class="sw" style="background:#FF8A8E;color:#4A0A0C;">danger <small>#FF8A8E</small></div>
+      <div class="sw" style="background:#C4A8FF;color:#2A1060;">focus <small>#C4A8FF</small></div>
+    </div>
+    <div style="background:#332528;border-radius:20px;padding:20px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;margin-block-end:12px;">🎪 Categories!</div>
+      <button class="btn" style="background:#FF7AB8;color:#4A0A28;border-block-end:5px solid #C4488A;display:block;inline-size:100%;margin-block-end:8px;">New Game</button>
+      <button class="btn" style="background:#3DD6C6;color:#06302B;border-block-end:5px solid #23A296;display:block;inline-size:100%;">Join Game</button>
+    </div>
+  </div>
+
+  <!-- D2 -->
+  <div class="option" style="background:#1A1D21;color:#F0F2F5;">
+    <h2 style="color:#3DD6C6;">D2 — Neutral night</h2>
+    <p class="sub" style="color:#A6ADB8;">Standard cool charcoal like most dark modes. Candy colors pop harder, less cozy.</p>
+    <div class="swatches">
+      <div class="sw" style="background:#1A1D21;color:#F0F2F5;border:1px solid #3A4048;">bg <small>#1A1D21</small></div>
+      <div class="sw" style="background:#24282E;color:#F0F2F5;">surface <small>#24282E</small></div>
+      <div class="sw" style="background:#F0F2F5;color:#1A1D21;">text <small>#F0F2F5</small></div>
+      <div class="sw" style="background:#A6ADB8;color:#1A1D21;">muted <small>#A6ADB8</small></div>
+      <div class="sw" style="background:#3DD6C6;color:#06302B;">primary <small>#3DD6C6</small></div>
+      <div class="sw" style="background:#FF7AB8;color:#4A0A28;">accent <small>#FF7AB8</small></div>
+      <div class="sw" style="background:#FFB061;color:#4A2800;">warning <small>#FFB061</small></div>
+      <div class="sw" style="background:#7EDB8A;color:#0A3D12;">success <small>#7EDB8A</small></div>
+      <div class="sw" style="background:#FF8A8E;color:#4A0A0C;">danger <small>#FF8A8E</small></div>
+      <div class="sw" style="background:#C4A8FF;color:#2A1060;">focus <small>#C4A8FF</small></div>
+    </div>
+    <div style="background:#24282E;border-radius:20px;padding:20px;text-align:center;">
+      <div style="font-size:24px;font-weight:800;margin-block-end:12px;">🎪 Categories!</div>
+      <button class="btn" style="background:#FF7AB8;color:#4A0A28;border-block-end:5px solid #C4488A;display:block;inline-size:100%;margin-block-end:8px;">New Game</button>
+      <button class="btn" style="background:#3DD6C6;color:#06302B;border-block-end:5px solid #23A296;display:block;inline-size:100%;">Join Game</button>
+    </div>
+  </div>
+</div>
+
+<section>
+  <h2>Loading / empty / error patterns (both themes)</h2>
+  <div class="strip">
+    <div class="cell">
+      <div class="skel" style="inline-size:200px;block-size:20px;margin-block-end:8px;"></div>
+      <div class="skel" style="inline-size:200px;block-size:48px;border-radius:16px;"></div>
+      <div class="lbl">loading list → shimmer skeleton</div>
+    </div>
+    <div class="cell"><div class="spin"></div><div class="lbl">short waits → spinner<br>(reduced-motion: static dots)</div></div>
+    <div class="cell" style="max-inline-size:220px;">
+      <div style="font-size:36px;">📭</div>
+      <b>No saved games yet</b>
+      <div style="color:#7A6E71;font-size:14px;">Start a new game and it will appear here!</div>
+      <div class="lbl">empty → emoji + one friendly line + action</div>
+    </div>
+    <div class="cell" style="max-inline-size:240px;">
+      <div style="background:#FFF5F5;border:2px solid #C22328;border-radius:16px;padding:12px;font-weight:700;color:#C22328;">😕 Couldn't check this word — vote instead?</div>
+      <div class="lbl">error → inline card, plain words, always an alternative</div>
+    </div>
+  </div>
+</section>
+</body>
+</html>

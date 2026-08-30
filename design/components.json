@@ -66,6 +66,22 @@
       "id": "M9",
       "spec": "One set only: outline style (Lucide), stroke 2.5, stroke-linecap round, sizes 20/24/32, color {color.light.text} or currentColor. No filled icon set, no emoji-as-icon in chrome (emoji allowed as content/illustration)."
     },
+    "skeleton": {
+      "id": "S1",
+      "spec": "Loading lists: shimmer skeleton blocks (border/bg tones, 1.2s linear shimmer; reduced-motion: static block). Shapes mirror the content they replace."
+    },
+    "spinner": {
+      "id": "S2",
+      "spec": "Short waits: 40px ring, 5px stroke, track {color.light.border}, head {color.light.primary}, 800ms linear rotation. Reduced-motion: static three dots."
+    },
+    "empty-state": {
+      "id": "S3",
+      "spec": "Big emoji + one friendly bold line + one muted helper line + one action button. Example: 📭 'No saved games yet' / 'Start a new game and it will appear here!'"
+    },
+    "error-card": {
+      "id": "S4",
+      "spec": "Inline card: danger-tinted bg (#FFF5F5 light / danger at 12% alpha dark), 2px danger border, radius {radius.md}, plain-words message, ALWAYS offers an alternative action. Never a bare technical error."
+    },
     "focus-ring": {
       "id": "M10",
       "spec": "outline: 3px solid {color.light.focus}; outline-offset: 2px. Applied via :focus-visible on every interactive element. Never remove without replacement."
