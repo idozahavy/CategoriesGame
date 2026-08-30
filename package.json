@@ -1,0 +1,26 @@
+{
+  "name": "categories-game",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "verify:design": "node design/scripts/verify-design.mjs --pretty",
+    "build:styleguide": "node design/scripts/build-style-guide.mjs"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^5.0.0",
+    "@tsconfig/svelte": "^5.0.4",
+    "svelte": "^5.0.0",
+    "svelte-check": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "@fontsource-variable/nunito": "^5.1.0",
+    "idb": "^8.0.0"
+  }
+}

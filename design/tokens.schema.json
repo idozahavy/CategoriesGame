@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CategoriesGame design tokens",
+  "type": "object",
+  "required": ["version", "color", "typography", "space", "radius", "border", "shadow", "motion", "z"],
+  "properties": {
+    "version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "color": {
+      "type": "object",
+      "required": ["primitive", "light", "dark"],
+      "properties": {
+        "primitive": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["$type", "$value"],
+            "properties": {
+              "$type": { "const": "color" },
+              "$value": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" }
+            }
+          }
+        },
+        "light": { "$ref": "#/$defs/semanticColorSet" },
+        "dark": { "$ref": "#/$defs/semanticColorSet" }
+      }
+    }
+  },
+  "$defs": {
+    "semanticColorSet": {
+      "type": "object",
+      "description": "Semantic colors must reference primitives, never raw values.",
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string" },
+          {
+            "type": "object",
+            "required": ["$type", "$value"],
+            "properties": {
+              "$type": { "const": "color" },
+              "$value": { "type": "string", "pattern": "^\\{color\\.primitive\\.[a-z0-9-]+\\}$" }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

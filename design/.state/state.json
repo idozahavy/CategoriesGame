@@ -1,11 +1,19 @@
 {
-  "version": "0.0.0",
-  "phase": 4,
-  "phaseName": "Propose Directions",
+  "version": "1.0.0",
+  "phase": 6,
+  "phaseName": "Assemble Artifacts",
   "stack": "svelte-vite-ts",
   "emptyProject": true,
   "skippedPhases": [3, 7, 8],
   "brief": "design/brief.md",
-  "approvals": [],
+  "approvals": [
+    { "id": "direction", "choice": "A Candy Pop", "date": "2026-08-30" },
+    { "id": "colors", "choice": "C2 teal-lead", "date": "2026-08-30" },
+    { "id": "typography", "choice": "F1 Nunito + S1 cozy", "date": "2026-08-30" },
+    { "id": "shape", "choice": "R1 chunky-snug", "date": "2026-08-30" },
+    { "id": "motion", "choice": "MA bouncy-toy", "date": "2026-08-30" },
+    { "id": "components", "choice": "M1-M10 approved", "date": "2026-08-30" },
+    { "id": "states-dark", "choice": "D1 warm cocoa + S1-S4 patterns", "date": "2026-08-30" }
+  ],
   "updated": "2026-08-30"
 }
