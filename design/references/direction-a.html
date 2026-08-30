@@ -1,0 +1,690 @@
+<title>Direction A — Candy Pop</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root {
+    /* ---- Base surfaces & text ---- */
+    --bg: #FFF8F0;
+    --surface: #FFFFFF;
+    --surface-border: #F3E4D6;
+    --text: #4A3B35;
+    --text-soft: #8A7A72;
+    --text-faint: #B4A79E;
+
+    /* ---- Brand swatches (true hues, used decoratively / on white text-free areas) ---- */
+    --pink: #F0408C;
+    --teal: #00B5A5;
+    --orange: #FF9A3D;
+    --purple: #8A5CF6;
+    --green: #3FAE4A;
+
+    /* ---- AA-safe fill tones for buttons carrying white text ---- */
+    --pink-fill: #C61E72;
+    --pink-deep: #8F1552;
+    --teal-fill: #00695F;
+    --teal-deep: #004840;
+    --purple-fill: #7548E0;
+    --purple-deep: #4B27A8;
+    --green-fill: #227A2C;
+    --green-deep: #16511D;
+    --red-fill: #C22328;
+    --red-deep: #7E1519;
+
+    /* orange stays true-hue for fills; paired with dark text for AA (see note) */
+    --orange-deep: #C96A17;
+
+    --disabled-bg: #E9E0D6;
+    --disabled-text: #B4A79E;
+
+    --radius-btn: 16px;
+    --radius-card: 24px;
+    --shadow-card: 0 6px 20px rgba(74, 59, 53, 0.08);
+    --font-display: 'Nunito', 'Quicksand', 'Comic Sans MS', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-display);
+    margin: 0;
+    padding-block: 0;
+    padding-inline: 0;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  body {
+    padding-block: 40px 80px;
+    padding-inline: clamp(16px, 4vw, 48px);
+  }
+
+  .intro {
+    max-width: 900px;
+    margin-inline: auto;
+    margin-block-end: 48px;
+    text-align: start;
+  }
+
+  .intro h1 {
+    font-size: 32px;
+    font-weight: 900;
+    margin-block-end: 4px;
+    color: var(--pink-fill);
+  }
+
+  .intro p {
+    color: var(--text-soft);
+    font-size: 16px;
+    margin-block-start: 0;
+  }
+
+  .direction-heading {
+    max-width: 1200px;
+    margin-inline: auto;
+    margin-block: 64px 24px;
+    padding-block-end: 12px;
+    border-block-end: 4px dashed var(--purple);
+  }
+
+  .direction-heading .kicker {
+    display: inline-block;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #fff;
+    background: var(--purple-fill);
+    padding-block: 4px;
+    padding-inline: 12px;
+    border-radius: 999px;
+    margin-block-end: 10px;
+  }
+
+  .direction-heading h2 {
+    font-size: 28px;
+    font-weight: 900;
+    margin-block: 0;
+    color: var(--text);
+  }
+
+  .direction-heading p {
+    color: var(--text-soft);
+    margin-block: 6px 0;
+    font-size: 15px;
+  }
+
+  .row {
+    max-width: 1200px;
+    margin-inline: auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    align-items: flex-start;
+  }
+
+  /* ============ PHONE FRAME ============ */
+  .phone {
+    inline-size: 380px;
+    flex: 0 0 auto;
+    background: var(--surface);
+    border-radius: 40px;
+    border: 10px solid #2b2320;
+    box-shadow: 0 20px 40px rgba(74, 59, 53, 0.18);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .phone-screen {
+    background: var(--bg);
+    padding-block: 28px 24px;
+    padding-inline: 20px;
+    min-block-size: 720px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .phone-notch {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    inline-size: 120px;
+    block-size: 22px;
+    background: #2b2320;
+    border-end-start-radius: 14px;
+    border-end-end-radius: 14px;
+    z-index: 2;
+  }
+
+  /* ============ BUTTONS (chunky pressable) ============ */
+  .btn {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 17px;
+    border-radius: var(--radius-btn);
+    border: none;
+    border-block-end: 5px solid transparent;
+    padding-block: 14px;
+    padding-inline: 22px;
+    min-block-size: 48px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    transition: transform 0.05s ease;
+  }
+
+  .btn-block { inline-size: 100%; }
+
+  .btn-primary { background: var(--pink-fill); border-block-end-color: var(--pink-deep); }
+  .btn-secondary { background: var(--teal-fill); border-block-end-color: var(--teal-deep); }
+  .btn-tertiary { background: var(--orange); border-block-end-color: var(--orange-deep); color: var(--text); }
+  .btn-danger { background: var(--red-fill); border-block-end-color: var(--red-deep); }
+  .btn-success { background: var(--green-fill); border-block-end-color: var(--green-deep); }
+
+  .btn-outline {
+    background: var(--surface);
+    color: var(--pink-fill);
+    border: 2px solid var(--pink-fill);
+    border-block-end: 5px solid var(--pink-fill);
+    padding-block: 12px;
+  }
+
+  .btn-hover.btn-primary { background: #D6237E; }
+  .btn-hover.btn-secondary { background: #027A6E; }
+  .btn-hover.btn-tertiary { background: #FFA652; }
+  .btn-hover.btn-danger { background: #D22B30; }
+  .btn-hover.btn-outline { background: #FFF0F7; }
+  .btn-hover { box-shadow: 0 4px 0 0 rgba(0,0,0,0.02); }
+
+  .btn-pressed {
+    border-block-end-width: 0;
+    transform: translateY(5px);
+  }
+
+  .btn-disabled {
+    background: var(--disabled-bg);
+    color: var(--disabled-text);
+    border-block-end: 5px solid #DDD2C6;
+    cursor: not-allowed;
+  }
+
+  /* ============ CARDS ============ */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    border: 2px solid var(--surface-border);
+    box-shadow: var(--shadow-card);
+    padding: 20px;
+  }
+
+  /* ============ LETTER TILE ============ */
+  .letter-tile {
+    inline-size: 108px;
+    block-size: 108px;
+    border-radius: 28px;
+    background: linear-gradient(145deg, var(--pink) 0%, var(--purple) 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    font-weight: 900;
+    box-shadow: 0 6px 0 var(--purple-deep);
+    margin-inline: auto;
+  }
+
+  /* ============ TIMER ============ */
+  .timer-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--teal-fill);
+    color: #fff;
+    font-weight: 800;
+    font-size: 20px;
+    padding-block: 10px;
+    padding-inline: 22px;
+    border-radius: 999px;
+    margin-inline: auto;
+    box-shadow: 0 4px 0 var(--teal-deep);
+  }
+
+  /* ============ CATEGORY CARD (play list) ============ */
+  .cat-card {
+    background: var(--surface);
+    border: 2px solid var(--surface-border);
+    border-radius: 18px;
+    padding-block: 12px;
+    padding-inline: 16px;
+    margin-block-end: 12px;
+  }
+
+  .cat-label {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--text-soft);
+    margin-block-end: 6px;
+    display: block;
+  }
+
+  .text-input {
+    inline-size: 100%;
+    font-family: var(--font-display);
+    font-size: 16px;
+    padding-block: 12px;
+    padding-inline: 14px;
+    border-radius: 12px;
+    border: 2px solid var(--surface-border);
+    background: var(--bg);
+    color: var(--text);
+    min-block-size: 48px;
+  }
+
+  .text-input:focus, .input-focus {
+    outline: none;
+    border-color: var(--pink);
+    box-shadow: 0 0 0 4px rgba(240, 64, 140, 0.15);
+  }
+
+  .input-error {
+    border-color: var(--red-fill);
+    box-shadow: 0 0 0 4px rgba(194, 35, 40, 0.12);
+  }
+
+  .input-filled { border-color: var(--green); background: #F2FBF3; }
+
+  /* ============ COMPONENT SHEET LAYOUT ============ */
+  .sheet-section {
+    max-width: 1200px;
+    margin-inline: auto;
+    margin-block-end: 40px;
+  }
+
+  .sheet-section h3 {
+    font-size: 20px;
+    font-weight: 800;
+    margin-block-end: 16px;
+    color: var(--purple-fill);
+  }
+
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+  }
+
+  .label-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .label-box span {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ============ SCORE CARD ============ */
+  .score-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border: 2px solid var(--surface-border);
+    border-radius: 18px;
+    padding-block: 12px;
+    padding-inline: 16px;
+    inline-size: 280px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .avatar {
+    inline-size: 48px;
+    block-size: 48px;
+    border-radius: 50%;
+    background: var(--orange);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 16px;
+    flex: 0 0 auto;
+  }
+
+  .score-name {
+    font-weight: 800;
+    font-size: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-inline-size: 0;
+  }
+
+  .score-points {
+    font-weight: 900;
+    font-size: 18px;
+    color: #fff;
+    background: var(--green-fill);
+    border-radius: 999px;
+    padding-block: 4px;
+    padding-inline: 12px;
+    flex: 0 0 auto;
+  }
+
+  /* ============ CHIP TOGGLE ============ */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    padding-block: 10px;
+    padding-inline: 18px;
+    border-radius: 999px;
+    min-block-size: 48px;
+    border: 2px solid var(--surface-border);
+    background: var(--surface);
+    color: var(--text-soft);
+  }
+
+  .chip-on {
+    background: var(--pink-fill);
+    border-color: var(--pink-fill);
+    color: #fff;
+  }
+
+  /* ============ TYPE SCALE ============ */
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    padding-block: 14px;
+    border-block-end: 1px solid var(--surface-border);
+    flex-wrap: wrap;
+  }
+
+  .type-row .tag {
+    inline-size: 90px;
+    flex: 0 0 auto;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    letter-spacing: 0.05em;
+  }
+
+  .type-display { font-size: 40px; font-weight: 900; }
+  .type-h1 { font-size: 32px; font-weight: 900; }
+  .type-h2 { font-size: 24px; font-weight: 800; }
+  .type-body { font-size: 16px; font-weight: 400; }
+  .type-small { font-size: 13px; font-weight: 600; color: var(--text-soft); }
+
+  /* ============ EMPTY / ERROR STATES ============ */
+  .empty-state {
+    text-align: center;
+    padding-block: 40px;
+    color: var(--text-faint);
+  }
+
+  .empty-state .emoji { font-size: 48px; display: block; margin-block-end: 12px; }
+
+  .error-card {
+    background: #FFF3F2;
+    border: 2px solid var(--red-fill);
+    border-radius: 18px;
+    padding-block: 16px;
+    padding-inline: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .error-card .msg { flex: 1 1 240px; font-weight: 700; color: #7E1519; }
+
+  .note {
+    font-size: 13px;
+    color: var(--text-soft);
+    background: #FFF3E4;
+    border-inline-start: 4px solid var(--orange);
+    padding-block: 10px;
+    padding-inline: 14px;
+    border-radius: 8px;
+    margin-block-start: 10px;
+  }
+
+  code { background: #F3E4D6; padding-inline: 4px; border-radius: 4px; font-size: 0.9em; }
+</style>
+
+<div class="intro">
+  <h1>🍬 Direction A — Candy Pop</h1>
+  <p>Duolingo-style energy: warm cream backgrounds, chunky pressable 3D buttons, rounded cards, and a bold sunny palette. Mobile-first mockups below at 380px width.</p>
+</div>
+
+<!-- ======================================================= -->
+<!-- 1. HOME SCREEN -->
+<!-- ======================================================= -->
+<div class="direction-heading">
+  <span class="kicker">Direction A — Candy Pop</span>
+  <h2>1. Home Screen</h2>
+  <p>Logo, and three big stacked buttons — minimal and kid-friendly.</p>
+</div>
+
+<div class="row">
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="phone-screen" style="justify-content: center; align-items: center; gap: 40px;">
+      <div style="text-align: center;">
+        <div style="font-size: 56px; line-height: 1;">🎉</div>
+        <div style="font-size: 34px; font-weight: 900; color: var(--pink-fill); margin-block-start: 8px;">Categories!</div>
+        <div style="font-size: 15px; color: var(--text-soft); font-weight: 700; margin-block-start: 4px;">Think fast. Laugh hard.</div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px; inline-size: 100%;">
+        <button class="btn btn-primary btn-block">🆕 New Game</button>
+        <button class="btn btn-secondary btn-block">🔗 Join Game</button>
+        <button class="btn btn-tertiary btn-block">↩️ Resume Game</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-inline-size: 420px; padding-block-start: 8px;">
+    <p style="color: var(--text-soft); font-size: 15px;">
+      The home screen keeps decisions to a minimum: one obvious primary action (pink), a clear secondary
+      (teal), and a lower-emphasis tertiary (orange with dark text for contrast). All three buttons are
+      full-width, 48px+ tall, and use the chunky pressable style shown in the component sheet.
+    </p>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- 2. ROUND PLAY SCREEN -->
+<!-- ======================================================= -->
+<div class="direction-heading">
+  <span class="kicker">Direction A — Candy Pop</span>
+  <h2>2. Round Play Screen</h2>
+  <p>Big letter tile, countdown pill, five category cards (one filled), and a big Done! button.</p>
+</div>
+
+<div class="row">
+  <div class="phone">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div style="display:flex; flex-direction: column; align-items: center; gap: 10px; margin-block-end: 18px;">
+        <div class="letter-tile">B</div>
+        <div class="timer-pill">⏱ 0:42</div>
+      </div>
+
+      <div style="flex: 1 1 auto; overflow-y: auto;">
+        <div class="cat-card">
+          <span class="cat-label">Animal</span>
+          <input class="text-input input-filled" value="Bear" readonly />
+        </div>
+        <div class="cat-card">
+          <span class="cat-label">Food</span>
+          <input class="text-input" placeholder="Type an answer…" readonly />
+        </div>
+        <div class="cat-card">
+          <span class="cat-label">City</span>
+          <input class="text-input" placeholder="Type an answer…" readonly />
+        </div>
+        <div class="cat-card">
+          <span class="cat-label">Name</span>
+          <input class="text-input" placeholder="Type an answer…" readonly />
+        </div>
+        <div class="cat-card">
+          <span class="cat-label">Thing you find at school</span>
+          <input class="text-input" placeholder="Type an answer…" readonly />
+        </div>
+      </div>
+
+      <button class="btn btn-success btn-block" style="margin-block-start: 12px; font-size: 19px; padding-block: 16px;">Done! ✅</button>
+    </div>
+  </div>
+
+  <div style="max-inline-size: 420px; padding-block-start: 8px;">
+    <p style="color: var(--text-soft); font-size: 15px;">
+      The letter tile uses a pink→purple gradient with a solid drop shadow to feel like a physical tile.
+      The timer is a solid teal pill for high visibility. A filled answer (green border) previews the
+      "good to go" state before the player taps the big success-green Done! button.
+    </p>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- 3. COMPONENT SHEET -->
+<!-- ======================================================= -->
+<div class="direction-heading">
+  <span class="kicker">Direction A — Candy Pop</span>
+  <h2>3. Component Sheet</h2>
+  <p>Buttons, inputs, score card, chip toggle, and type scale.</p>
+</div>
+
+<div class="sheet-section">
+  <h3>Buttons — Primary</h3>
+  <div class="swatch-grid">
+    <div class="label-box"><span>Default</span><button class="btn btn-primary btn-block">New Game</button></div>
+    <div class="label-box"><span>Hover</span><button class="btn btn-primary btn-hover btn-block">New Game</button></div>
+    <div class="label-box"><span>Pressed</span><button class="btn btn-primary btn-pressed btn-block">New Game</button></div>
+    <div class="label-box"><span>Disabled</span><button class="btn btn-disabled btn-block">New Game</button></div>
+  </div>
+</div>
+
+<div class="sheet-section">
+  <h3>Buttons — Secondary</h3>
+  <div class="swatch-grid">
+    <div class="label-box"><span>Default</span><button class="btn btn-secondary btn-block">Join Game</button></div>
+    <div class="label-box"><span>Hover</span><button class="btn btn-secondary btn-hover btn-block">Join Game</button></div>
+    <div class="label-box"><span>Pressed</span><button class="btn btn-secondary btn-pressed btn-block">Join Game</button></div>
+    <div class="label-box"><span>Disabled</span><button class="btn btn-disabled btn-block">Join Game</button></div>
+  </div>
+  <div class="note">Outline variant (used for lower-emphasis actions on white cards):</div>
+  <div class="swatch-grid" style="margin-block-start: 10px;">
+    <div class="label-box"><span>Default</span><button class="btn btn-outline btn-block">Skip Turn</button></div>
+    <div class="label-box"><span>Hover</span><button class="btn btn-outline btn-hover btn-block">Skip Turn</button></div>
+    <div class="label-box"><span>Pressed</span><button class="btn btn-outline btn-pressed btn-block">Skip Turn</button></div>
+    <div class="label-box"><span>Disabled</span><button class="btn btn-disabled btn-block">Skip Turn</button></div>
+  </div>
+</div>
+
+<div class="sheet-section">
+  <h3>Buttons — Danger</h3>
+  <div class="swatch-grid">
+    <div class="label-box"><span>Default</span><button class="btn btn-danger btn-block">Leave Game</button></div>
+    <div class="label-box"><span>Hover</span><button class="btn btn-danger btn-hover btn-block">Leave Game</button></div>
+    <div class="label-box"><span>Pressed</span><button class="btn btn-danger btn-pressed btn-block">Leave Game</button></div>
+    <div class="label-box"><span>Disabled</span><button class="btn btn-disabled btn-block">Leave Game</button></div>
+  </div>
+</div>
+
+<div class="sheet-section">
+  <h3>Text Input</h3>
+  <div class="swatch-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));">
+    <div class="label-box"><span>Default</span><input class="text-input" placeholder="Type an answer…" readonly /></div>
+    <div class="label-box"><span>Focus</span><input class="text-input input-focus" value="Bear" readonly /></div>
+    <div class="label-box"><span>Error</span><input class="text-input input-error" value="Xyz123" readonly /></div>
+  </div>
+</div>
+
+<div class="sheet-section">
+  <h3>Player Score Card</h3>
+  <div class="score-card">
+    <div class="avatar">AZ</div>
+    <div class="score-name">Ava Zimmer</div>
+    <div class="score-points">120</div>
+  </div>
+</div>
+
+<div class="sheet-section">
+  <h3>Category Chip / Toggle</h3>
+  <div class="swatch-grid" style="grid-template-columns: repeat(auto-fill, minmax(120px, max-content));">
+    <div class="label-box"><span>On</span><div class="chip chip-on">🐻 Animal</div></div>
+    <div class="label-box"><span>Off</span><div class="chip">🐻 Animal</div></div>
+  </div>
+</div>
+
+<div class="sheet-section">
+  <h3>Type Scale</h3>
+  <div class="card">
+    <div class="type-row"><span class="tag">Display</span><span class="type-display">Categories!</span></div>
+    <div class="type-row"><span class="tag">H1</span><span class="type-h1">Round 3 — Letter B</span></div>
+    <div class="type-row"><span class="tag">H2</span><span class="type-h2">Waiting for other players…</span></div>
+    <div class="type-row"><span class="tag">Body</span><span class="type-body">Type one answer for each category before the timer runs out.</span></div>
+    <div class="type-row" style="border-block-end: none;"><span class="tag">Small</span><span class="type-small">3 of 5 categories answered</span></div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- 4. STRESS TEST -->
+<!-- ======================================================= -->
+<div class="direction-heading">
+  <span class="kicker">Direction A — Candy Pop</span>
+  <h2>4. Stress Test</h2>
+  <p>Long text, empty state, and error state.</p>
+</div>
+
+<div class="sheet-section">
+  <h3>Very Long Category Name</h3>
+  <div class="cat-card" style="max-inline-size: 380px;">
+    <span class="cat-label">Something you would take with you on a very long summer vacation trip abroad</span>
+    <input class="text-input" placeholder="Type an answer…" readonly />
+  </div>
+</div>
+
+<div class="sheet-section">
+  <h3>Very Long Player Name</h3>
+  <div class="score-card">
+    <div class="avatar">AP</div>
+    <div class="score-name" title="Alexandria-Priscilla Montgomery-Fitzgerald-Windsor III">Alexandria-Priscilla Montgomery-Fitzgerald-Windsor III</div>
+    <div class="score-points">85</div>
+  </div>
+  <div class="note">Name truncates with an ellipsis and exposes the full name via a tooltip (title attribute); the score badge never gets squeezed.</div>
+</div>
+
+<div class="sheet-section">
+  <h3>Empty State</h3>
+  <div class="card empty-state" style="max-inline-size: 380px;">
+    <span class="emoji">🗂️</span>
+    <div style="font-weight: 800; font-size: 17px; color: var(--text);">No saved games yet</div>
+    <div style="font-size: 14px; margin-block-start: 4px;">Start a new game to see it here.</div>
+  </div>
+</div>
+
+<div class="sheet-section">
+  <h3>Error State</h3>
+  <div class="error-card" style="max-inline-size: 500px;">
+    <span style="font-size: 24px;">⚠️</span>
+    <span class="msg">Couldn't check this word — vote instead?</span>
+    <button class="btn btn-outline">Vote</button>
+  </div>
+</div>

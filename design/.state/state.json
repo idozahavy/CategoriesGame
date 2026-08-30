@@ -1,0 +1,11 @@
+{
+  "version": "0.0.0",
+  "phase": 4,
+  "phaseName": "Propose Directions",
+  "stack": "svelte-vite-ts",
+  "emptyProject": true,
+  "skippedPhases": [3, 7, 8],
+  "brief": "design/brief.md",
+  "approvals": [],
+  "updated": "2026-08-30"
+}

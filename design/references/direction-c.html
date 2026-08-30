@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Direction C — Sticker Board</title>
+<style>
+  :root{
+    --paper:#FDF6E9;
+    --paper-card:#FFFDF6;
+    --choc:#3A2E39;
+    --raspberry:#E5397B;
+    --raspberry-deep:#C22A66;
+    --turquoise:#19B8A6;
+    --mango:#FFB03A;
+    --blueberry:#4C6FE7;
+    --blueberry-deep:#3E5DD9;
+    --danger-deep:#C1272D;
+    --white:#FFFFFF;
+    --border-w:3px;
+    --radius:14px;
+    --shadow-off:4px;
+  }
+
+  *,*::before,*::after{ box-sizing:border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background-color:var(--paper);
+    background-image:radial-gradient(circle, rgba(58,46,57,0.09) 1.4px, transparent 1.6px);
+    background-size:24px 24px;
+    color:var(--choc);
+    font-family:'Nunito','Quicksand','Comic Sans MS','Segoe UI',system-ui,sans-serif;
+    font-size:16px;
+    line-height:1.45;
+  }
+
+  h1,h2,h3,h4{
+    font-weight:900;
+    color:var(--choc);
+    margin-block:0.4em 0.3em;
+  }
+
+  .page-wrap{
+    max-width:1180px;
+    margin-inline:auto;
+    padding-block:32px 80px;
+    padding-inline:20px;
+  }
+
+  .page-head{
+    text-align:center;
+    margin-block-end:48px;
+  }
+  .page-head h1{
+    font-size:2.6rem;
+    letter-spacing:0.5px;
+  }
+  .page-head p{
+    font-size:1.05rem;
+    max-width:640px;
+    margin-inline:auto;
+    font-weight:700;
+    opacity:0.85;
+  }
+
+  .eyebrow{
+    display:inline-block;
+    background:var(--choc);
+    color:var(--paper);
+    font-weight:800;
+    font-size:0.78rem;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    padding-block:6px;
+    padding-inline:16px;
+    border-radius:999px;
+    transform:rotate(-1deg);
+    margin-block-end:12px;
+  }
+
+  section.major{
+    margin-block-end:72px;
+    padding-block-start:8px;
+    border-block-start:3px dashed rgba(58,46,57,0.25);
+  }
+  section.major:first-of-type{ border-block-start:none; }
+
+  section.major > h2{
+    font-size:1.9rem;
+    margin-block-end:24px;
+  }
+  section.major > h2 .num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    margin-inline-end:10px;
+    background:var(--mango);
+    border:var(--border-w) solid var(--choc);
+    border-radius:10px;
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--choc);
+    font-size:1.2rem;
+    vertical-align:middle;
+    transform:rotate(-3deg);
+  }
+
+  /* ---------- generic sticker primitives ---------- */
+
+  .sticker-box{
+    border:var(--border-w) solid var(--choc);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--choc);
+    background:var(--paper-card);
+  }
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:56px;
+    width:100%;
+    padding-block:12px;
+    padding-inline:22px;
+    font-family:inherit;
+    font-size:1.08rem;
+    font-weight:800;
+    border:var(--border-w) solid var(--choc);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--choc);
+    cursor:pointer;
+    text-decoration:none;
+    user-select:none;
+  }
+  .btn-primary{ background:var(--raspberry-deep); color:var(--white); }
+  .btn-secondary{ background:var(--turquoise); color:var(--choc); }
+  .btn-tertiary{ background:var(--mango); color:var(--choc); }
+  .btn-danger{ background:var(--danger-deep); color:var(--white); }
+
+  .btn.state-hover{ filter:brightness(1.06); }
+  .btn.state-pressed{
+    box-shadow:none;
+    transform:translate(var(--shadow-off), var(--shadow-off));
+  }
+  .btn.state-disabled{
+    opacity:0.45;
+    box-shadow:none;
+    cursor:not-allowed;
+    transform:translate(2px,2px);
+  }
+
+  .field{
+    display:block;
+    width:100%;
+    min-height:48px;
+    font-family:inherit;
+    font-size:1rem;
+    font-weight:700;
+    color:var(--choc);
+    background:var(--white);
+    border:var(--border-w) solid var(--choc);
+    border-radius:10px;
+    padding-block:10px;
+    padding-inline:14px;
+  }
+  .field::placeholder{ color:rgba(58,46,57,0.45); font-weight:600; }
+  .field.state-focus{
+    outline:3px solid var(--blueberry-deep);
+    outline-offset:2px;
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--blueberry-deep);
+  }
+  .field.state-error{
+    border-color:var(--danger-deep);
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--danger-deep);
+    background:#FFF3F1;
+  }
+
+  /* ---------- mobile frame ---------- */
+
+  .frame-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:32px;
+    justify-content:center;
+  }
+
+  .frame{
+    width:380px;
+    max-width:100%;
+    background:var(--paper-card);
+    border:var(--border-w) solid var(--choc);
+    border-radius:26px;
+    box-shadow:6px 6px 0 var(--choc);
+    overflow:hidden;
+  }
+  .frame-notch{
+    height:22px;
+    background:var(--choc);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .frame-notch::after{
+    content:"";
+    width:70px;
+    height:8px;
+    background:var(--paper-card);
+    border-radius:999px;
+  }
+  .frame-body{
+    padding-block:26px;
+    padding-inline:20px;
+  }
+
+  /* ---------- home screen ---------- */
+
+  .title-row{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-block-end:8px;
+  }
+  .title-row + .title-row{ margin-block-start:2px; }
+
+  .tile-letter{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:44px;
+    font-size:1.5rem;
+    font-weight:900;
+    border:var(--border-w) solid var(--choc);
+    border-radius:10px;
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--choc);
+  }
+  .tile-letter.c1{ background:var(--raspberry-deep); color:var(--white); transform:rotate(-4deg); }
+  .tile-letter.c2{ background:var(--turquoise); color:var(--choc); transform:rotate(3deg); }
+  .tile-letter.c3{ background:var(--mango); color:var(--choc); transform:rotate(-2deg); }
+  .tile-letter.c4{ background:var(--blueberry-deep); color:var(--white); transform:rotate(4deg); }
+
+  .home-tagline{
+    text-align:center;
+    font-weight:800;
+    font-size:0.92rem;
+    opacity:0.75;
+    margin-block:6px 28px;
+  }
+
+  .btn-stack{
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  /* ---------- round play screen ---------- */
+
+  .play-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-block-end:18px;
+  }
+
+  .big-letter-tile{
+    width:64px;
+    height:64px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:2.1rem;
+    font-weight:900;
+    background:var(--raspberry-deep);
+    color:var(--white);
+    border:var(--border-w) solid var(--choc);
+    border-radius:16px;
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--choc);
+    transform:rotate(-6deg);
+  }
+
+  .timer-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:3px;
+    background:var(--choc);
+    border:var(--border-w) solid var(--choc);
+    border-radius:999px;
+    padding:5px;
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--choc);
+  }
+  .timer-seg{
+    background:var(--mango);
+    color:var(--choc);
+    font-family:'Segoe UI',monospace;
+    font-weight:900;
+    font-size:1.3rem;
+    padding-block:6px;
+    padding-inline:12px;
+    border-radius:999px;
+    min-width:38px;
+    text-align:center;
+  }
+  .timer-colon{
+    color:var(--paper);
+    font-weight:900;
+    font-size:1.2rem;
+    padding-inline:2px;
+  }
+
+  .cat-list{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    margin-block-end:22px;
+  }
+
+  .cat-card{
+    background:var(--white);
+    border:2.5px solid var(--choc);
+    border-radius:var(--radius);
+    border-inline-start-width:7px;
+    padding-block:10px;
+    padding-inline:14px;
+    box-shadow:3px 3px 0 var(--choc);
+  }
+  .cat-card.accent-turquoise{ border-inline-start-color:var(--turquoise); }
+  .cat-card.accent-mango{ border-inline-start-color:var(--mango); }
+  .cat-card.accent-blueberry{ border-inline-start-color:var(--blueberry-deep); }
+  .cat-card.accent-raspberry{ border-inline-start-color:var(--raspberry-deep); }
+
+  .cat-label{
+    font-weight:800;
+    font-size:0.95rem;
+    margin-block-end:6px;
+    display:block;
+  }
+
+  .cat-input{
+    width:100%;
+    min-height:48px;
+    border:2px solid var(--choc);
+    border-radius:8px;
+    padding-inline:12px;
+    font-family:inherit;
+    font-weight:700;
+    font-size:1rem;
+    background:var(--paper-card);
+    color:var(--choc);
+  }
+  .cat-input::placeholder{ color:rgba(58,46,57,0.4); font-weight:600; }
+  .cat-input.filled{
+    background:#FFF7E0;
+    border-color:var(--mango);
+  }
+
+  /* ---------- component sheet ---------- */
+
+  .comp-block{
+    margin-block-end:44px;
+  }
+  .comp-block h3{
+    font-size:1.25rem;
+    margin-block-end:16px;
+  }
+
+  .btn-grid{
+    display:grid;
+    grid-template-columns:repeat(4, minmax(140px,1fr));
+    gap:14px;
+  }
+  .btn-cell{ display:flex; flex-direction:column; gap:8px; }
+  .btn-cell .state-label{
+    text-align:center;
+    font-size:0.78rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    opacity:0.65;
+  }
+
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(180px,1fr));
+    gap:18px;
+  }
+  .field-cell{ display:flex; flex-direction:column; gap:8px; }
+  .field-cell .state-label{
+    font-size:0.78rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    opacity:0.65;
+  }
+  .field-hint{
+    font-size:0.82rem;
+    font-weight:700;
+    color:var(--danger-deep);
+  }
+
+  .score-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--white);
+    border:var(--border-w) solid var(--choc);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--choc);
+    padding-block:14px;
+    padding-inline:16px;
+    max-width:360px;
+  }
+  .score-avatar{
+    flex:0 0 auto;
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background:var(--blueberry-deep);
+    border:2.5px solid var(--choc);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:1.4rem;
+  }
+  .score-name{
+    font-weight:800;
+    font-size:1.02rem;
+    flex:1 1 auto;
+    min-width:0;
+    overflow-wrap:anywhere;
+  }
+  .score-points{
+    flex:0 0 auto;
+    background:var(--mango);
+    color:var(--choc);
+    font-weight:900;
+    font-size:1rem;
+    border:2.5px solid var(--choc);
+    border-radius:10px;
+    padding-block:6px;
+    padding-inline:12px;
+    transform:rotate(-3deg);
+  }
+
+  .chip-row{ display:flex; gap:14px; flex-wrap:wrap; }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    min-height:48px;
+    padding-inline:18px;
+    font-weight:800;
+    font-size:0.98rem;
+    border:var(--border-w) solid var(--choc);
+    border-radius:999px;
+    box-shadow:3px 3px 0 var(--choc);
+    background:var(--white);
+    color:var(--choc);
+  }
+  .chip.chip-on{
+    background:var(--turquoise);
+    color:var(--choc);
+  }
+  .chip-dot{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    border:2px solid var(--choc);
+    background:var(--white);
+  }
+  .chip.chip-on .chip-dot{ background:var(--choc); }
+
+  .type-scale{ display:flex; flex-direction:column; gap:18px; }
+  .type-row{ display:flex; align-items:baseline; gap:18px; flex-wrap:wrap; }
+  .type-tag{
+    flex:0 0 auto;
+    width:80px;
+    font-size:0.75rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    opacity:0.6;
+  }
+  .t-display{ font-size:2.6rem; font-weight:900; }
+  .t-h1{ font-size:2rem; font-weight:900; }
+  .t-h2{ font-size:1.5rem; font-weight:800; }
+  .t-body{ font-size:1rem; font-weight:700; }
+  .t-small{ font-size:0.85rem; font-weight:700; opacity:0.75; }
+
+  /* ---------- stress test ---------- */
+
+  .stress-grid{
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+    max-width:520px;
+  }
+
+  .empty-state{
+    text-align:center;
+    padding-block:32px;
+    border:3px dashed var(--choc);
+    border-radius:var(--radius);
+    background:var(--paper-card);
+  }
+  .empty-state .emoji{ font-size:2.4rem; display:block; margin-block-end:10px; }
+  .empty-state p{ font-weight:800; font-size:1.05rem; margin:0; }
+
+  .error-banner{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    background:#FFF3F1;
+    border:var(--border-w) solid var(--danger-deep);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow-off) var(--shadow-off) 0 var(--danger-deep);
+    padding-block:14px;
+    padding-inline:16px;
+  }
+  .error-banner .emoji{ font-size:1.4rem; }
+  .error-banner p{ margin:0; font-weight:800; flex:1 1 auto; }
+  .error-banner button{
+    flex:0 0 auto;
+    min-height:40px;
+    padding-inline:14px;
+    font-weight:800;
+    border:2.5px solid var(--choc);
+    border-radius:10px;
+    background:var(--mango);
+    color:var(--choc);
+    box-shadow:3px 3px 0 var(--choc);
+  }
+
+  .note{
+    font-size:0.85rem;
+    font-weight:700;
+    opacity:0.65;
+    margin-block-start:10px;
+  }
+
+  @media (max-width:640px){
+    .btn-grid{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
+    .field-grid{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <div class="page-head">
+    <h1>Direction C — Sticker Board</h1>
+    <p>Board-game / sticker-book look: candy-bright flat fills, thick dark-chocolate outlines, hard offset shadows, and stuck-on letter tiles.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 1. HOME SCREEN                                                -->
+  <!-- ============================================================ -->
+  <section class="major" id="home-screen">
+    <div class="eyebrow">DIRECTION C — Sticker Board</div>
+    <h2><span class="num">1</span>Home Screen</h2>
+
+    <div class="frame-row">
+      <div class="frame">
+        <div class="frame-notch"></div>
+        <div class="frame-body">
+
+          <div class="title-row">
+            <span class="tile-letter c1">C</span>
+            <span class="tile-letter c2">A</span>
+            <span class="tile-letter c3">T</span>
+            <span class="tile-letter c4">E</span>
+          </div>
+          <div class="title-row">
+            <span class="tile-letter c3">G</span>
+            <span class="tile-letter c4">O</span>
+            <span class="tile-letter c1">R</span>
+            <span class="tile-letter c2">I</span>
+            <span class="tile-letter c1">E</span>
+            <span class="tile-letter c3">S</span>
+          </div>
+          <p class="home-tagline">Grab a letter. Beat the clock. Score points!</p>
+
+          <div class="btn-stack">
+            <button class="btn btn-primary">🎲 New Game</button>
+            <button class="btn btn-secondary">🔗 Join Game</button>
+            <button class="btn btn-tertiary">⏵ Resume Game</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. ROUND PLAY SCREEN                                          -->
+  <!-- ============================================================ -->
+  <section class="major" id="round-play">
+    <div class="eyebrow">DIRECTION C — Sticker Board</div>
+    <h2><span class="num">2</span>Round Play Screen</h2>
+
+    <div class="frame-row">
+      <div class="frame">
+        <div class="frame-notch"></div>
+        <div class="frame-body">
+
+          <div class="play-top">
+            <div class="big-letter-tile">B</div>
+            <div class="timer-pill">
+              <span class="timer-seg">0</span>
+              <span class="timer-colon">:</span>
+              <span class="timer-seg">42</span>
+            </div>
+          </div>
+
+          <div class="cat-list">
+            <div class="cat-card accent-turquoise">
+              <span class="cat-label">🐾 Animal</span>
+              <input class="cat-input filled" value="Bear">
+            </div>
+            <div class="cat-card accent-mango">
+              <span class="cat-label">🍎 Food</span>
+              <input class="cat-input" placeholder="Type an answer…">
+            </div>
+            <div class="cat-card accent-blueberry">
+              <span class="cat-label">🏙️ City</span>
+              <input class="cat-input" placeholder="Type an answer…">
+            </div>
+            <div class="cat-card accent-raspberry">
+              <span class="cat-label">🙋 Name</span>
+              <input class="cat-input" placeholder="Type an answer…">
+            </div>
+            <div class="cat-card accent-turquoise">
+              <span class="cat-label">🎒 Thing you find at school</span>
+              <input class="cat-input" placeholder="Type an answer…">
+            </div>
+          </div>
+
+          <button class="btn btn-primary">Done! ✅</button>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. COMPONENT SHEET                                            -->
+  <!-- ============================================================ -->
+  <section class="major" id="components">
+    <div class="eyebrow">DIRECTION C — Sticker Board</div>
+    <h2><span class="num">3</span>Component Sheet</h2>
+
+    <div class="comp-block">
+      <h3>Buttons — primary / secondary / danger</h3>
+      <div class="btn-grid">
+        <div class="btn-cell"><button class="btn btn-primary">New Game</button><span class="state-label">Default</span></div>
+        <div class="btn-cell"><button class="btn btn-primary state-hover">New Game</button><span class="state-label">Hover</span></div>
+        <div class="btn-cell"><button class="btn btn-primary state-pressed">New Game</button><span class="state-label">Pressed</span></div>
+        <div class="btn-cell"><button class="btn btn-primary state-disabled" disabled>New Game</button><span class="state-label">Disabled</span></div>
+
+        <div class="btn-cell"><button class="btn btn-secondary">Join Game</button><span class="state-label">Default</span></div>
+        <div class="btn-cell"><button class="btn btn-secondary state-hover">Join Game</button><span class="state-label">Hover</span></div>
+        <div class="btn-cell"><button class="btn btn-secondary state-pressed">Join Game</button><span class="state-label">Pressed</span></div>
+        <div class="btn-cell"><button class="btn btn-secondary state-disabled" disabled>Join Game</button><span class="state-label">Disabled</span></div>
+
+        <div class="btn-cell"><button class="btn btn-danger">Delete Game</button><span class="state-label">Default</span></div>
+        <div class="btn-cell"><button class="btn btn-danger state-hover">Delete Game</button><span class="state-label">Hover</span></div>
+        <div class="btn-cell"><button class="btn btn-danger state-pressed">Delete Game</button><span class="state-label">Pressed</span></div>
+        <div class="btn-cell"><button class="btn btn-danger state-disabled" disabled>Delete Game</button><span class="state-label">Disabled</span></div>
+      </div>
+    </div>
+
+    <div class="comp-block">
+      <h3>Text input — default / focus / error</h3>
+      <div class="field-grid">
+        <div class="field-cell">
+          <span class="state-label">Default</span>
+          <input class="field" placeholder="Type an answer…">
+        </div>
+        <div class="field-cell">
+          <span class="state-label">Focus</span>
+          <input class="field state-focus" value="Bear">
+        </div>
+        <div class="field-cell">
+          <span class="state-label">Error</span>
+          <input class="field state-error" value="Bxar">
+          <span class="field-hint">Hmm, that doesn't look right</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="comp-block">
+      <h3>Player score card</h3>
+      <div class="score-card">
+        <div class="score-avatar">🦊</div>
+        <div class="score-name">Milo</div>
+        <div class="score-points">120 pts</div>
+      </div>
+    </div>
+
+    <div class="comp-block">
+      <h3>Category chip / toggle</h3>
+      <div class="chip-row">
+        <span class="chip chip-on"><span class="chip-dot"></span> Animal — ON</span>
+        <span class="chip"><span class="chip-dot"></span> Movie — OFF</span>
+      </div>
+    </div>
+
+    <div class="comp-block">
+      <h3>Type scale</h3>
+      <div class="type-scale">
+        <div class="type-row"><span class="type-tag">Display</span><span class="t-display">Time's up!</span></div>
+        <div class="type-row"><span class="type-tag">H1</span><span class="t-h1">Round 3 of 5</span></div>
+        <div class="type-row"><span class="type-tag">H2</span><span class="t-h2">Vote on Milo's answer</span></div>
+        <div class="type-row"><span class="type-tag">Body</span><span class="t-body">Everyone gets 90 seconds to fill in an answer for each category.</span></div>
+        <div class="type-row"><span class="type-tag">Small</span><span class="t-small">Letter B was picked for this round.</span></div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 4. STRESS TEST                                                -->
+  <!-- ============================================================ -->
+  <section class="major" id="stress-test">
+    <div class="eyebrow">DIRECTION C — Sticker Board</div>
+    <h2><span class="num">4</span>Stress Test</h2>
+
+    <div class="stress-grid">
+
+      <div class="cat-card accent-blueberry">
+        <span class="cat-label">🧳 Something you would take with you on a very long summer vacation trip abroad</span>
+        <input class="cat-input" placeholder="Type an answer…">
+      </div>
+
+      <div class="score-card" style="max-width:100%;">
+        <div class="score-avatar">🐙</div>
+        <div class="score-name">Alexandria-Bartholomew-Winterbottom-The-Third-Esquire</div>
+        <div class="score-points">85 pts</div>
+      </div>
+
+      <div class="empty-state">
+        <span class="emoji">🗃️</span>
+        <p>No saved games yet</p>
+      </div>
+
+      <div class="error-banner">
+        <span class="emoji">⚠️</span>
+        <p>Couldn't check this word — vote instead?</p>
+        <button>Vote</button>
+      </div>
+
+    </div>
+
+    <p class="note">Long category labels wrap inside the card; long names wrap with overflow-wrap instead of breaking layout.</p>
+  </section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Refine 1/6 — Colors — Candy Pop variants</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', 'Quicksand', 'Segoe UI', system-ui, sans-serif;
+    background: #FFF8F0; color: #3D3436; padding: 32px; line-height: 1.5;
+  }
+  h1 { font-size: 28px; margin-block-end: 8px; }
+  .note { color: #7A6E71; margin-block-end: 32px; max-inline-size: 720px; }
+  .options { display: flex; flex-wrap: wrap; gap: 32px; }
+  .option {
+    background: #FFF8F0; border: 2px dashed #D9C8B8; border-radius: 24px;
+    padding: 24px; inline-size: 420px;
+  }
+  .option h2 { font-size: 22px; margin-block-end: 4px; }
+  .option .sub { color: #7A6E71; font-size: 14px; margin-block-end: 16px; }
+  .swatches { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-block-end: 16px; }
+  .sw {
+    border-radius: 12px; padding: 10px 12px; font-size: 13px; font-weight: 700;
+    min-block-size: 52px; display: flex; flex-direction: column; justify-content: center;
+    border: 1px solid rgba(0,0,0,0.06);
+  }
+  .sw small { font-weight: 400; opacity: 0.85; font-size: 11px; }
+  .demo { background: #FFFFFF; border: 2px solid #F3E7DA; border-radius: 20px; padding: 16px; }
+  .demo .cat { font-weight: 800; font-size: 16px; margin-block-end: 8px; }
+  .btn {
+    display: block; inline-size: 100%; border: none; border-radius: 16px;
+    font: 800 18px 'Nunito','Quicksand','Segoe UI',system-ui,sans-serif;
+    color: #fff; padding: 13px 0 10px; text-align: center; cursor: pointer;
+    margin-block-start: 10px;
+  }
+  .players { display: flex; gap: 8px; margin-block-start: 12px; }
+  .pl { flex: 1; border-radius: 999px; color: #fff; font-size: 12px; font-weight: 800; text-align: center; padding: 8px 0; }
+  .roles { font-size: 12px; color: #7A6E71; margin-block-start: 12px; }
+</style>
+</head>
+<body>
+<h1>Category 1/6 — Colors</h1>
+<p class="note">Three variants of the approved Candy Pop direction, shown on the real cream background. Each lists its semantic roles (all AA-checked for their text pairings) and its 8-player color set (used to tell players apart on the shared screen). The demo card shows the primary button + a filled answer.</p>
+
+<div class="options">
+
+  <!-- C1 -->
+  <div class="option">
+    <h2>C1 — Bubblegum lead</h2>
+    <p class="sub">As mocked in Direction A: pink primary, teal secondary.</p>
+    <div class="swatches">
+      <div class="sw" style="background:#FFF8F0;color:#3D3436;">bg <small>cream #FFF8F0</small></div>
+      <div class="sw" style="background:#FFFFFF;color:#3D3436;">surface <small>#FFFFFF</small></div>
+      <div class="sw" style="background:#3D3436;color:#fff;">text <small>#3D3436</small></div>
+      <div class="sw" style="background:#7A6E71;color:#fff;">muted <small>#7A6E71</small></div>
+      <div class="sw" style="background:#C61E72;color:#fff;">primary <small>#C61E72</small></div>
+      <div class="sw" style="background:#00695F;color:#fff;">secondary <small>teal #00695F</small></div>
+      <div class="sw" style="background:#FF9A3D;color:#4A2800;">warning/accent <small>#FF9A3D</small></div>
+      <div class="sw" style="background:#227A2C;color:#fff;">success <small>#227A2C</small></div>
+      <div class="sw" style="background:#C22328;color:#fff;">danger <small>#C22328</small></div>
+      <div class="sw" style="background:#6D41E0;color:#fff;">focus <small>grape #6D41E0</small></div>
+    </div>
+    <div class="demo">
+      <div class="cat">Animal — <span style="color:#C61E72">Bear ✓</span></div>
+      <button class="btn" style="background:#C61E72;border-block-end:5px solid #8F1252;">Done!</button>
+    </div>
+    <div class="players">
+      <div class="pl" style="background:#C61E72;">P1</div><div class="pl" style="background:#00695F;">P2</div>
+      <div class="pl" style="background:#B45309;">P3</div><div class="pl" style="background:#6D41E0;">P4</div>
+      <div class="pl" style="background:#1D4ED8;">P5</div><div class="pl" style="background:#227A2C;">P6</div>
+      <div class="pl" style="background:#BE185D;">P7</div><div class="pl" style="background:#57534E;">P8</div>
+    </div>
+  </div>
+
+  <!-- C2 -->
+  <div class="option">
+    <h2>C2 — Teal lead</h2>
+    <p class="sub">Calmer primary: teal buttons, pink saved for fun accents (scores, wins).</p>
+    <div class="swatches">
+      <div class="sw" style="background:#FFF8F0;color:#3D3436;">bg <small>cream #FFF8F0</small></div>
+      <div class="sw" style="background:#FFFFFF;color:#3D3436;">surface <small>#FFFFFF</small></div>
+      <div class="sw" style="background:#3D3436;color:#fff;">text <small>#3D3436</small></div>
+      <div class="sw" style="background:#7A6E71;color:#fff;">muted <small>#7A6E71</small></div>
+      <div class="sw" style="background:#0E7C72;color:#fff;">primary <small>teal #0E7C72</small></div>
+      <div class="sw" style="background:#C61E72;color:#fff;">accent <small>pink #C61E72</small></div>
+      <div class="sw" style="background:#FF9A3D;color:#4A2800;">warning <small>#FF9A3D</small></div>
+      <div class="sw" style="background:#227A2C;color:#fff;">success <small>#227A2C</small></div>
+      <div class="sw" style="background:#C22328;color:#fff;">danger <small>#C22328</small></div>
+      <div class="sw" style="background:#6D41E0;color:#fff;">focus <small>grape #6D41E0</small></div>
+    </div>
+    <div class="demo">
+      <div class="cat">Animal — <span style="color:#0E7C72">Bear ✓</span></div>
+      <button class="btn" style="background:#0E7C72;border-block-end:5px solid #084F48;">Done!</button>
+    </div>
+    <div class="players">
+      <div class="pl" style="background:#0E7C72;">P1</div><div class="pl" style="background:#C61E72;">P2</div>
+      <div class="pl" style="background:#B45309;">P3</div><div class="pl" style="background:#6D41E0;">P4</div>
+      <div class="pl" style="background:#1D4ED8;">P5</div><div class="pl" style="background:#227A2C;">P6</div>
+      <div class="pl" style="background:#BE185D;">P7</div><div class="pl" style="background:#57534E;">P8</div>
+    </div>
+  </div>
+
+  <!-- C3 -->
+  <div class="option">
+    <h2>C3 — Grape lead</h2>
+    <p class="sub">Purple primary: playful but less sugary; pink + teal as supporting cast.</p>
+    <div class="swatches">
+      <div class="sw" style="background:#FFF8F0;color:#3D3436;">bg <small>cream #FFF8F0</small></div>
+      <div class="sw" style="background:#FFFFFF;color:#3D3436;">surface <small>#FFFFFF</small></div>
+      <div class="sw" style="background:#3D3436;color:#fff;">text <small>#3D3436</small></div>
+      <div class="sw" style="background:#7A6E71;color:#fff;">muted <small>#7A6E71</small></div>
+      <div class="sw" style="background:#6D41E0;color:#fff;">primary <small>grape #6D41E0</small></div>
+      <div class="sw" style="background:#C61E72;color:#fff;">accent <small>pink #C61E72</small></div>
+      <div class="sw" style="background:#FF9A3D;color:#4A2800;">warning <small>#FF9A3D</small></div>
+      <div class="sw" style="background:#227A2C;color:#fff;">success <small>#227A2C</small></div>
+      <div class="sw" style="background:#C22328;color:#fff;">danger <small>#C22328</small></div>
+      <div class="sw" style="background:#0E7C72;color:#fff;">focus <small>teal #0E7C72</small></div>
+    </div>
+    <div class="demo">
+      <div class="cat">Animal — <span style="color:#6D41E0">Bear ✓</span></div>
+      <button class="btn" style="background:#6D41E0;border-block-end:5px solid #4C27AA;">Done!</button>
+    </div>
+    <div class="players">
+      <div class="pl" style="background:#6D41E0;">P1</div><div class="pl" style="background:#C61E72;">P2</div>
+      <div class="pl" style="background:#B45309;">P3</div><div class="pl" style="background:#0E7C72;">P4</div>
+      <div class="pl" style="background:#1D4ED8;">P5</div><div class="pl" style="background:#227A2C;">P6</div>
+      <div class="pl" style="background:#BE185D;">P7</div><div class="pl" style="background:#57534E;">P8</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

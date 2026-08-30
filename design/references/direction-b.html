@@ -1,0 +1,968 @@
+<title>Direction B — Sherbet Soft</title>
+<style>
+  :root {
+    --font-body: 'Quicksand', 'Nunito', 'Segoe UI', system-ui, sans-serif;
+
+    /* Neutral surfaces */
+    --doc-bg: #F5F4F8;
+    --white: #FFFFFF;
+    --near-white: #FCFCFD;
+
+    /* Pastel panels (calm, saturation only lives on interactive elements) */
+    --panel-mint:  #E3F7F0;
+    --panel-peach: #FFEDE0;
+    --panel-lilac: #F0EAFD;
+    --panel-sky:   #E4F2FE;
+
+    /* Saturated interactive colors */
+    --coral:        #FF6B6B; /* decorative / glows / large-scale only */
+    --coral-strong: #CC3E38; /* AA-safe fill for white text, 4.9:1 */
+    --coral-dark:   #A82F2A; /* hover / pressed */
+    --teal:         #2FB6A8; /* decorative / glows only */
+    --teal-strong:  #147A6F; /* AA-safe fill for white text, 5.2:1 */
+    --teal-dark:    #0F5F57; /* hover / pressed */
+    --danger:       #C0392B; /* AA-safe fill for white text, 5.4:1 */
+    --danger-dark:  #9C2E22;
+    --danger-tint:  #FFF0EE;
+    --danger-ink:   #8A231A; /* 8.4:1 on danger-tint */
+
+    /* Ink scale, all AA-verified against white / pastel panels */
+    --ink:        #2D2A32; /* primary text, ~13:1 on white */
+    --ink-soft:   #5B5765; /* secondary text, 7.0:1 on white */
+    --ink-muted:  #6B6577; /* tertiary / labels, 5.6:1 on white */
+
+    --border-soft: #E7E2EE;
+    --border-strong: #D8D1E6;
+
+    --shadow-soft: 0 8px 24px rgba(45, 42, 50, 0.10);
+    --shadow-lift: 0 14px 34px rgba(45, 42, 50, 0.16);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--doc-bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.6;
+    padding-block: 3rem;
+    padding-inline: 1.5rem;
+  }
+
+  img, svg { max-inline-size: 100%; }
+
+  button, input {
+    font-family: inherit;
+  }
+
+  .doc-shell {
+    max-inline-size: 1180px;
+    margin-inline: auto;
+  }
+
+  .doc-intro {
+    max-inline-size: 640px;
+    margin-block-end: 3rem;
+  }
+
+  .doc-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding-block: .35rem;
+    padding-inline: 1rem;
+    border-radius: 999px;
+    background: var(--panel-lilac);
+    color: var(--ink-soft);
+    font-weight: 700;
+    font-size: .8rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-block-end: 1rem;
+  }
+
+  .doc-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-block: 0 .5rem;
+  }
+
+  .doc-sub {
+    color: var(--ink-soft);
+    font-size: 1.05rem;
+    margin-block: 0;
+  }
+
+  /* ---------- Section scaffolding ---------- */
+
+  .section {
+    margin-block-end: 4.5rem;
+  }
+
+  .section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .75rem;
+    margin-block-end: 2rem;
+    padding-block-end: 1rem;
+    border-block-end: 3px solid var(--border-soft);
+  }
+
+  .section-heading .tag {
+    display: inline-block;
+    padding-block: .3rem;
+    padding-inline: .9rem;
+    border-radius: 999px;
+    background: var(--coral-strong);
+    color: var(--white);
+    font-weight: 700;
+    font-size: .8rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+
+  .section-heading h2 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .section-note {
+    color: var(--ink-muted);
+    font-size: .95rem;
+    margin-block: -1rem 2rem;
+  }
+
+  .screens-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.5rem;
+    align-items: flex-start;
+  }
+
+  /* ---------- Phone frame ---------- */
+
+  .phone-frame {
+    inline-size: 380px;
+    max-inline-size: 100%;
+    background: var(--white);
+    border-radius: 44px;
+    padding-block: 22px 28px;
+    padding-inline: 18px;
+    box-shadow: var(--shadow-lift);
+    border: 1px solid var(--border-soft);
+  }
+
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-inline: .5rem;
+    margin-block-end: 1.25rem;
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--ink-muted);
+  }
+
+  .status-bar .dot-row { display: flex; gap: 4px; align-items: center; }
+  .status-bar .dot { inline-size: 5px; block-size: 5px; border-radius: 999px; background: var(--ink-muted); }
+
+  /* ---------- Buttons ---------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    border: none;
+    border-radius: 999px;
+    padding-block: 14px;
+    padding-inline: 26px;
+    font-weight: 600;
+    font-size: 1rem;
+    min-block-size: 48px;
+    cursor: pointer;
+    box-shadow: var(--shadow-soft);
+    transition: transform .15s ease, box-shadow .15s ease, filter .15s ease, background-color .15s ease;
+  }
+
+  .btn:focus-visible {
+    outline: 3px solid var(--teal);
+    outline-offset: 2px;
+  }
+
+  .btn-block { inline-size: 100%; }
+
+  .btn-primary { background: var(--coral-strong); color: var(--white); }
+  .btn-primary:hover { background: var(--coral-dark); box-shadow: 0 12px 28px rgba(204, 62, 56, .35); }
+  .btn-primary.is-hover { background: var(--coral-dark); box-shadow: 0 12px 28px rgba(204, 62, 56, .35); }
+  .btn-primary.is-pressed { background: var(--coral-dark); transform: scale(.96); box-shadow: 0 4px 10px rgba(204, 62, 56, .3); }
+
+  .btn-secondary { background: var(--teal-strong); color: var(--white); }
+  .btn-secondary:hover { background: var(--teal-dark); box-shadow: 0 12px 28px rgba(20, 122, 111, .32); }
+  .btn-secondary.is-hover { background: var(--teal-dark); box-shadow: 0 12px 28px rgba(20, 122, 111, .32); }
+  .btn-secondary.is-pressed { background: var(--teal-dark); transform: scale(.96); box-shadow: 0 4px 10px rgba(20, 122, 111, .3); }
+
+  .btn-danger { background: var(--danger); color: var(--white); }
+  .btn-danger:hover { background: var(--danger-dark); box-shadow: 0 12px 28px rgba(192, 57, 43, .32); }
+  .btn-danger.is-hover { background: var(--danger-dark); box-shadow: 0 12px 28px rgba(192, 57, 43, .32); }
+  .btn-danger.is-pressed { background: var(--danger-dark); transform: scale(.96); box-shadow: 0 4px 10px rgba(192, 57, 43, .3); }
+
+  .btn-ghost {
+    background: var(--panel-lilac);
+    color: var(--ink);
+    box-shadow: 0 4px 14px rgba(45, 42, 50, .06);
+  }
+  .btn-ghost:hover { background: #E6DCFB; }
+
+  .btn:disabled,
+  .btn.is-disabled {
+    opacity: .45;
+    box-shadow: none;
+    cursor: not-allowed;
+    filter: grayscale(.1);
+    transform: none;
+  }
+
+  /* ---------- Home screen ---------- */
+
+  .home-title {
+    text-align: center;
+    margin-block: 1.5rem 2.5rem;
+  }
+
+  .home-emoji {
+    font-size: 3rem;
+    display: block;
+    margin-block-end: .5rem;
+  }
+
+  .home-title h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .home-title p {
+    margin-block-start: .4rem;
+    color: var(--ink-muted);
+    font-size: .95rem;
+  }
+
+  .home-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-block-start: 2.5rem;
+  }
+
+  .home-actions .btn { font-size: 1.05rem; padding-block: 16px; }
+
+  /* ---------- Round play screen ---------- */
+
+  .round-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-block-end: 1.25rem;
+  }
+
+  .round-back {
+    inline-size: 40px;
+    block-size: 40px;
+    border-radius: 999px;
+    background: var(--panel-sky);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--ink);
+    cursor: pointer;
+  }
+
+  .round-label {
+    font-weight: 700;
+    color: var(--ink-soft);
+    font-size: .9rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+
+  .round-hero {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: var(--panel-lilac);
+    border-radius: 32px;
+    padding-block: 1.25rem;
+    padding-inline: 1.25rem;
+    margin-block-end: 1.5rem;
+  }
+
+  .letter-tile {
+    inline-size: 92px;
+    block-size: 92px;
+    flex: 0 0 auto;
+    border-radius: 28px;
+    background: var(--coral-strong);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 700;
+    box-shadow: 0 12px 26px rgba(204, 62, 56, .32);
+  }
+
+  .round-hero-copy { flex: 1 1 auto; }
+  .round-hero-copy .label {
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-block-end: .35rem;
+  }
+  .round-hero-copy .value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .ring-timer-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+
+  .ring-timer { inline-size: 76px; block-size: 76px; }
+  .ring-track { fill: none; stroke: var(--border-strong); stroke-width: 7; }
+  .ring-progress {
+    fill: none;
+    stroke: var(--coral-strong);
+    stroke-width: 7;
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+  .ring-time {
+    font-size: 19px;
+    font-weight: 700;
+    fill: var(--ink);
+    font-family: var(--font-body);
+  }
+
+  .category-list {
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    margin-block-end: 1.75rem;
+  }
+
+  .category-row {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+  }
+
+  .category-row .cat-label {
+    inline-size: 96px;
+    flex: 0 0 auto;
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: .88rem;
+  }
+
+  .input-pill {
+    display: block;
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 48px;
+    border-radius: 999px;
+    padding-block: 12px;
+    padding-inline: 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink);
+    background: var(--near-white);
+    border: 2px solid var(--border-soft);
+    box-shadow: 0 4px 12px rgba(45, 42, 50, .05);
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+
+  .input-pill::placeholder { color: var(--ink-muted); }
+
+  .input-pill:focus {
+    outline: none;
+    border-color: var(--coral-strong);
+    box-shadow: 0 0 0 4px rgba(255, 107, 107, .28);
+  }
+
+  .input-pill.is-error {
+    border-color: var(--danger);
+    background: var(--danger-tint);
+  }
+
+  .category-row .input-pill { flex: 1 1 auto; }
+
+  /* ---------- Component sheet ---------- */
+
+  .component-block {
+    background: var(--white);
+    border-radius: 28px;
+    padding-block: 1.75rem;
+    padding-inline: 1.75rem;
+    margin-block-end: 2rem;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .component-block h3 {
+    margin-block: 0 1.25rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
+  .scroll-x {
+    overflow-inline: auto;
+    padding-block-end: .25rem;
+  }
+
+  .button-matrix {
+    display: grid;
+    grid-template-columns: 110px repeat(4, minmax(150px, 1fr));
+    gap: 1.1rem;
+    align-items: center;
+    min-inline-size: 720px;
+  }
+
+  .bm-head {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-muted);
+    text-align: center;
+  }
+
+  .bm-row-label {
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+
+  .bm-cell { display: flex; justify-content: center; }
+
+  .input-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .input-field label {
+    display: block;
+    font-weight: 700;
+    font-size: .8rem;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-block-end: .5rem;
+  }
+
+  .helper-text {
+    display: block;
+    margin-block-start: .5rem;
+    font-size: .85rem;
+    color: var(--ink-muted);
+  }
+
+  .helper-text.is-error { color: var(--danger-dark); font-weight: 600; }
+
+  .score-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-block: 1rem;
+    padding-inline: 1.25rem;
+    border-radius: 24px;
+    background: var(--panel-sky);
+    box-shadow: var(--shadow-soft);
+    max-inline-size: 340px;
+  }
+
+  .score-card .avatar {
+    inline-size: 52px;
+    block-size: 52px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--teal-strong);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.15rem;
+  }
+
+  .score-card .info { flex: 1 1 auto; min-inline-size: 0; }
+  .score-card .name {
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .score-card .role {
+    font-size: .82rem;
+    color: var(--ink-muted);
+  }
+
+  .score-card .points {
+    flex: 0 0 auto;
+    background: var(--white);
+    color: var(--coral-strong);
+    font-weight: 700;
+    padding-block: .4rem;
+    padding-inline: .9rem;
+    border-radius: 999px;
+    box-shadow: 0 4px 10px rgba(45, 42, 50, .08);
+  }
+
+  .chip-row { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding-block: 12px;
+    padding-inline: 18px;
+    min-block-size: 48px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: .92rem;
+    border: 2px solid var(--border-strong);
+    background: var(--white);
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+
+  .chip.is-on {
+    background: var(--teal-strong);
+    border-color: var(--teal-strong);
+    color: var(--white);
+  }
+
+  .type-scale { display: flex; flex-direction: column; }
+
+  .type-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+    padding-block: 1.1rem;
+    border-block-end: 1px solid var(--border-soft);
+  }
+  .type-row:last-child { border-block-end: none; }
+
+  .type-row .tag {
+    inline-size: 84px;
+    flex: 0 0 auto;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-muted);
+  }
+
+  .type-display { font-size: 2.75rem; font-weight: 700; margin: 0; color: var(--ink); }
+  .type-h1 { font-size: 2.1rem; font-weight: 700; margin: 0; color: var(--ink); }
+  .type-h2 { font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--ink); }
+  .type-body { font-size: 1rem; font-weight: 500; margin: 0; color: var(--ink); line-height: 1.65; }
+  .type-small { font-size: .875rem; font-weight: 500; margin: 0; color: var(--ink-soft); }
+
+  /* ---------- Stress test ---------- */
+
+  .stress-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .stress-item {
+    background: var(--white);
+    border-radius: 24px;
+    padding-block: 1.5rem;
+    padding-inline: 1.5rem;
+    box-shadow: var(--shadow-soft);
+  }
+
+  .stress-item h4 {
+    margin-block: 0 .9rem;
+    font-size: .85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--ink-muted);
+  }
+
+  .long-category-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem 1rem;
+  }
+
+  .long-category-row .cat-label-wrap {
+    flex: 1 1 260px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: .95rem;
+    line-height: 1.4;
+  }
+
+  .long-category-row .input-pill {
+    flex: 1 1 260px;
+  }
+
+  .player-name-card {
+    inline-size: 260px;
+    max-inline-size: 100%;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding-block: .9rem;
+    padding-inline: 1.1rem;
+    border-radius: 999px;
+    background: var(--panel-peach);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .player-name-card .avatar {
+    inline-size: 44px;
+    block-size: 44px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: var(--coral-strong);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+
+  .player-name-card .name {
+    min-inline-size: 0;
+    flex: 1 1 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding-block: 3rem;
+    padding-inline: 1.5rem;
+    border-radius: 28px;
+    background: var(--panel-lilac);
+    color: var(--ink-soft);
+  }
+
+  .empty-state .emoji { display: block; font-size: 2.5rem; margin-block-end: .75rem; }
+  .empty-state p { margin: 0; font-weight: 600; font-size: 1.05rem; color: var(--ink); }
+  .empty-state span.sub { display: block; margin-block-start: .35rem; font-size: .9rem; color: var(--ink-muted); }
+
+  .error-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .75rem 1rem;
+    padding-block: 1rem;
+    padding-inline: 1.25rem;
+    border-radius: 22px;
+    background: var(--danger-tint);
+    border: 2px solid rgba(192, 57, 43, .25);
+    color: var(--danger-ink);
+    font-weight: 600;
+  }
+
+  .error-banner .btn { margin-inline-start: auto; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+
+  @media (max-width: 720px) {
+    .button-matrix { min-inline-size: 640px; }
+  }
+</style>
+
+<div class="doc-shell">
+
+  <div class="doc-intro">
+    <span class="doc-kicker">Design Direction B</span>
+    <h1 class="doc-title">Sherbet Soft</h1>
+    <p class="doc-sub">A calm, pastel-playful direction for the categories game. Near-white surfaces, tinted pastel panels, pill shapes everywhere, and saturation reserved for the things you can tap.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 1. HOME SCREEN                                                -->
+  <!-- ============================================================ -->
+  <section class="section" id="home-screen">
+    <div class="section-heading">
+      <span class="tag">Direction B — Sherbet Soft</span>
+      <h2>Home Screen</h2>
+    </div>
+
+    <div class="screens-row">
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+        </div>
+
+        <div class="home-title">
+          <span class="home-emoji">🍧</span>
+          <h1>Categories!</h1>
+          <p>Quick rounds, silly answers, big points.</p>
+        </div>
+
+        <div class="home-actions">
+          <button class="btn btn-primary btn-block">New Game</button>
+          <button class="btn btn-secondary btn-block">Join Game</button>
+          <button class="btn btn-ghost btn-block">Resume Game</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 2. ROUND PLAY SCREEN                                          -->
+  <!-- ============================================================ -->
+  <section class="section" id="round-play-screen">
+    <div class="section-heading">
+      <span class="tag">Direction B — Sherbet Soft</span>
+      <h2>Round Play Screen</h2>
+    </div>
+
+    <div class="screens-row">
+      <div class="phone-frame">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="dot-row"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+        </div>
+
+        <div class="round-top">
+          <button class="round-back" aria-label="Back">←</button>
+          <span class="round-label">Round 3 of 5</span>
+          <span style="inline-size:40px"></span>
+        </div>
+
+        <div class="round-hero">
+          <div class="letter-tile">B</div>
+          <div class="round-hero-copy">
+            <div class="label">Today's letter</div>
+            <div class="value">Fill in all 5 words!</div>
+          </div>
+          <div class="ring-timer-wrap">
+            <svg class="ring-timer" viewBox="0 0 120 120">
+              <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+              <circle class="ring-progress" cx="60" cy="60" r="52"
+                stroke-dasharray="326.7" stroke-dashoffset="98"></circle>
+              <text x="60" y="67" text-anchor="middle" class="ring-time">0:42</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="category-list">
+          <div class="category-row">
+            <span class="cat-label">Animal</span>
+            <input class="input-pill" value="Bear" readonly>
+          </div>
+          <div class="category-row">
+            <span class="cat-label">Food</span>
+            <input class="input-pill" placeholder="Type an answer…">
+          </div>
+          <div class="category-row">
+            <span class="cat-label">City</span>
+            <input class="input-pill" placeholder="Type an answer…">
+          </div>
+          <div class="category-row">
+            <span class="cat-label">Name</span>
+            <input class="input-pill" placeholder="Type an answer…">
+          </div>
+          <div class="category-row">
+            <span class="cat-label">Thing you find at school</span>
+            <input class="input-pill" placeholder="Type an answer…">
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" style="font-size:1.1rem;">Done!</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 3. COMPONENT SHEET                                            -->
+  <!-- ============================================================ -->
+  <section class="section" id="component-sheet">
+    <div class="section-heading">
+      <span class="tag">Direction B — Sherbet Soft</span>
+      <h2>Component Sheet</h2>
+    </div>
+
+    <div class="component-block">
+      <h3>Buttons</h3>
+      <div class="scroll-x">
+        <div class="button-matrix">
+          <div></div>
+          <div class="bm-head">Default</div>
+          <div class="bm-head">Hover</div>
+          <div class="bm-head">Pressed</div>
+          <div class="bm-head">Disabled</div>
+
+          <div class="bm-row-label">Primary</div>
+          <div class="bm-cell"><button class="btn btn-primary">New Game</button></div>
+          <div class="bm-cell"><button class="btn btn-primary is-hover">New Game</button></div>
+          <div class="bm-cell"><button class="btn btn-primary is-pressed">New Game</button></div>
+          <div class="bm-cell"><button class="btn btn-primary is-disabled" disabled>New Game</button></div>
+
+          <div class="bm-row-label">Secondary</div>
+          <div class="bm-cell"><button class="btn btn-secondary">Join Game</button></div>
+          <div class="bm-cell"><button class="btn btn-secondary is-hover">Join Game</button></div>
+          <div class="bm-cell"><button class="btn btn-secondary is-pressed">Join Game</button></div>
+          <div class="bm-cell"><button class="btn btn-secondary is-disabled" disabled>Join Game</button></div>
+
+          <div class="bm-row-label">Danger</div>
+          <div class="bm-cell"><button class="btn btn-danger">Leave Game</button></div>
+          <div class="bm-cell"><button class="btn btn-danger is-hover">Leave Game</button></div>
+          <div class="bm-cell"><button class="btn btn-danger is-pressed">Leave Game</button></div>
+          <div class="bm-cell"><button class="btn btn-danger is-disabled" disabled>Leave Game</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="component-block">
+      <h3>Text Input</h3>
+      <div class="input-grid">
+        <div class="input-field">
+          <label>Default</label>
+          <input class="input-pill" placeholder="Type an answer…">
+        </div>
+        <div class="input-field">
+          <label>Focus</label>
+          <input class="input-pill" value="Bear" autofocus>
+        </div>
+        <div class="input-field">
+          <label>Error</label>
+          <input class="input-pill is-error" value="Xyz">
+          <span class="helper-text is-error">That doesn't start with B</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="component-block">
+      <h3>Player Score Card</h3>
+      <div class="score-card">
+        <div class="avatar">M</div>
+        <div class="info">
+          <div class="name">Mia</div>
+          <div class="role">Host</div>
+        </div>
+        <div class="points">128 pts</div>
+      </div>
+    </div>
+
+    <div class="component-block">
+      <h3>Category Chip / Toggle</h3>
+      <div class="chip-row">
+        <span class="chip is-on">✓ Animals</span>
+        <span class="chip">Foods</span>
+        <span class="chip is-on">✓ Cities</span>
+        <span class="chip">Movies</span>
+      </div>
+    </div>
+
+    <div class="component-block">
+      <h3>Type Scale</h3>
+      <div class="type-scale">
+        <div class="type-row">
+          <span class="tag">Display</span>
+          <p class="type-display">Categories!</p>
+        </div>
+        <div class="type-row">
+          <span class="tag">H1</span>
+          <p class="type-h1">Round 3 of 5</p>
+        </div>
+        <div class="type-row">
+          <span class="tag">H2</span>
+          <p class="type-h2">Today's letter is B</p>
+        </div>
+        <div class="type-row">
+          <span class="tag">Body</span>
+          <p class="type-body">Fill in an answer for every category before the timer runs out.</p>
+        </div>
+        <div class="type-row">
+          <span class="tag">Small</span>
+          <p class="type-small">Answers are checked against other players after time is up.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <!-- 4. STRESS TEST                                                -->
+  <!-- ============================================================ -->
+  <section class="section" id="stress-test">
+    <div class="section-heading">
+      <span class="tag">Direction B — Sherbet Soft</span>
+      <h2>Stress Test</h2>
+    </div>
+    <p class="section-note">Long content, empty states, and error states rendered in the same components as above — nothing gets a special exception.</p>
+
+    <div class="stress-grid">
+      <div class="stress-item">
+        <h4>Very long category name</h4>
+        <div class="long-category-row">
+          <span class="cat-label-wrap">Something you would take with you on a very long summer vacation trip abroad</span>
+          <input class="input-pill" placeholder="Type an answer…">
+        </div>
+      </div>
+
+      <div class="stress-item">
+        <h4>Very long player name (graceful overflow)</h4>
+        <div class="player-name-card" title="Bartholomew Alexander Montgomery-Fitzgerald III">
+          <div class="avatar">B</div>
+          <span class="name">Bartholomew Alexander Montgomery-Fitzgerald III</span>
+        </div>
+      </div>
+
+      <div class="stress-item">
+        <h4>Empty state</h4>
+        <div class="empty-state">
+          <span class="emoji">🗂️</span>
+          <p>No saved games yet</p>
+          <span class="sub">Start a new game and it'll show up here.</span>
+        </div>
+      </div>
+
+      <div class="stress-item">
+        <h4>Error state</h4>
+        <div class="error-banner">
+          <span>Couldn't check this word — vote instead?</span>
+          <button class="btn btn-secondary">Vote</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
