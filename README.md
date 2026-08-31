@@ -6,8 +6,8 @@ A kid-friendly Scattergories-style word game. Play alone, together on one shared
 
 - **Modes**: classic (one letter, all categories) or one category per round
 - **Scoring**: unique-words-win-big (10 unique / 5 shared) or every-good-word-counts
-- **Word checking**: hybrid — bundled word lists → public dictionary (Wiktionary) → group vote; selectable or off in advanced settings
-- **Languages**: English (default) and Hebrew (RTL), extensible via language packs
+- **Word checking**: hybrid — bundled word lists → learned words → Wikidata category check → public dictionary (Wiktionary) → group vote; selectable or off in advanced settings
+- **Languages**: English, Hebrew (RTL), Spanish, Arabic (RTL), French and Russian, extensible via language packs
 - **Saves**: multiple games saved and resumed via IndexedDB
 - **Timer**: optional, per turn (off / 3 min / 2 min / 1 min)
 
@@ -26,7 +26,7 @@ npm run dev
 ## Adding a language
 
 1. Copy `src/lib/i18n/en.ts` to `<code>.ts` and translate every `ui` string and `categoryNames` entry; set `code`, native `name`, `dir` (`ltr`/`rtl`), and the `letters` the round wheel may draw.
-2. Add a word list module in `src/lib/words/<code>.ts` (categoryId → lowercase words) and reference it from the pack.
+2. Add a word list at `src/lib/words/<code>.json` (categoryId → lowercase words) — it is picked up by filename and lazy-loaded when the language is first played.
 3. Register the pack in the `packs` map in `src/lib/i18n/index.ts`.
 4. Run `npm run check:i18n` — it fails if any key is missing. The language then appears automatically in the Home switcher and the game-language setting; RTL layouts come free via logical CSS.
 
@@ -36,4 +36,4 @@ The full design scheme (tokens, components, rules, style guide) lives in [design
 
 ## Stack
 
-Svelte 5 + Vite + TypeScript · idb · self-hosted Nunito (via Fontsource)
+Svelte 5 + Vite + TypeScript · idb · peerjs (WebRTC rooms) · qrcode · vite-plugin-pwa · self-hosted Nunito (via Fontsource)
