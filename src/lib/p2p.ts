@@ -9,7 +9,7 @@ import { newId } from './game';
  */
 
 /** Category as shown on a guest device (label pre-resolved in the game language). */
-export interface RoundCategory {
+interface RoundCategory {
   id: string;
   label: string;
   emoji: string;
@@ -43,7 +43,7 @@ export interface GuestInfo {
   deviceId?: string;
 }
 
-export type JoinFailure = 'not-found' | 'network';
+type JoinFailure = 'not-found' | 'network';
 
 /** Peer-id namespace; the 4-letter code is the only part players type. */
 const PEER_PREFIX = 'kidcategories-v1-';
@@ -60,7 +60,7 @@ const sessionDeviceId = newId();
  * Stable per-browser key sent with every hello, so a device that dropped and
  * reconnected reclaims its own seat instead of joining as "Name 2".
  */
-export function getDeviceId(): string {
+function getDeviceId(): string {
   try {
     const existing = localStorage.getItem(DEVICE_ID_KEY);
     if (existing !== null && existing !== '') return existing;

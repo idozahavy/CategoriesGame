@@ -21,7 +21,7 @@ export const AVATAR_EMOJI = [
 ];
 
 /** Longest edge of a stored custom image — keeps saves and rendering small. */
-export const AVATAR_MAX_SIZE = 512;
+const AVATAR_MAX_SIZE = 512;
 
 /**
  * Downscale an uploaded image to ≤512px on its longest edge and return it as a
