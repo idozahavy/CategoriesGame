@@ -14,6 +14,9 @@ export const en: LanguagePack = {
     'home.resume': 'Resume Game',
     'home.tagline': 'Find words. Beat the clock. Have fun!',
     'home.languageLabel': 'Language',
+    'home.themeLabel': 'Theme',
+    'home.theme.light': 'Light',
+    'home.theme.dark': 'Dark',
 
     'setup.players': 'Who is playing?',
     'setup.addPlayer': 'Add player',
@@ -115,6 +118,7 @@ export const en: LanguagePack = {
     'join.error.notFound': "Couldn't find that room — check the code!",
     'join.error.network': "Couldn't connect — check your internet and try again.",
     'join.error.hostLeft': 'The game has ended.',
+    'join.error.disconnected': 'Lost the connection! Tap "Try again" to jump back in.',
 
     'error.wordCheck': "Couldn't check this word — vote instead?",
     'common.cancel': 'Cancel',

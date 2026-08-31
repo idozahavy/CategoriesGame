@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { screen } from './lib/stores';
+  import { screen, game } from './lib/stores';
   import { pack, uiLanguage, persistLanguage } from './lib/i18n';
+  import { theme, persistTheme } from './lib/theme';
   import Home from './screens/Home.svelte';
   import NewGame from './screens/NewGame.svelte';
   import Join from './screens/Join.svelte';
@@ -17,6 +18,19 @@
     document.documentElement.lang = $pack.code;
     persistLanguage($uiLanguage);
   });
+
+  // Apply + remember the theme (tokens switch on [data-theme="dark"]).
+  $effect(() => {
+    document.documentElement.dataset.theme = $theme;
+    persistTheme($theme);
+  });
+
+  // Hosting a phones-join game, this screen is the shared "TV" — scale it up
+  // so letter, timer and scores read from across the room.
+  const tvMode = $derived(
+    $game?.settings.remote === true &&
+      ($screen === 'round' || $screen === 'review' || $screen === 'scoreboard'),
+  );
 
   // The app has no router, so the browser back button would leave the page
   // entirely (jarring mid-game, especially back-swipes on touch). Keep one
@@ -35,7 +49,7 @@
   });
 </script>
 
-<main class="shell">
+<main class="shell" class:tv={tvMode}>
   {#if $screen === 'home'}
     <Home />
   {:else if $screen === 'new-game'}
@@ -62,5 +76,10 @@
     flex-direction: column;
     padding: var(--space-4);
     gap: var(--space-4);
+  }
+  .shell.tv {
+    max-inline-size: 560px;
+    /* design-ignore: provisional shared-screen scale — real TV type tokens are an open design question */
+    zoom: 1.3;
   }
 </style>

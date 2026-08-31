@@ -141,7 +141,8 @@ export function createRoom(attempts = 3): Promise<HostRoom> {
 
 function buildHostRoom(code: string, peer: Peer): HostRoom {
   interface Seat {
-    conn: DataConnection;
+    /** null while the guest is disconnected (kept for reconnects after lock). */
+    conn: DataConnection | null;
     name: string;
   }
   const seats = new Map<string, Seat>();
@@ -149,12 +150,21 @@ function buildHostRoom(code: string, peer: Peer): HostRoom {
   let guestsChangeCb: ((guests: GuestInfo[]) => void) | null = null;
   let guestMessageCb: ((playerId: string, msg: GuestMessage) => void) | null = null;
   let seatCounter = 0;
+  // Replayed to reconnecting guests so they land on the current screen.
+  let lastRound: HostMessage | null = null;
+  let lastScores: HostMessage | null = null;
 
   const guests = (): GuestInfo[] =>
     [...seats.entries()].map(([playerId, s]) => ({ playerId, name: s.name }));
 
   const broadcast = (msg: HostMessage): void => {
-    for (const s of seats.values()) void s.conn.send(msg);
+    if (msg.type === 'round') {
+      lastRound = msg;
+      lastScores = null;
+    } else if (msg.type === 'scores') {
+      lastScores = msg;
+    }
+    for (const s of seats.values()) if (s.conn) void s.conn.send(msg);
   };
 
   const notifyRoster = (): void => {
@@ -173,34 +183,59 @@ function buildHostRoom(code: string, peer: Peer): HostRoom {
   };
 
   peer.on('connection', (conn) => {
-    if (locked) {
-      conn.on('open', () => {
-        void conn.send({ type: 'busy' } satisfies HostMessage);
-        setTimeout(() => {
-          conn.close();
-        }, 500);
-      });
-      return;
-    }
-    seatCounter += 1;
-    const playerId = `guest-${String(seatCounter)}-${String(Date.now() % 100000)}`;
+    let seatId: string | null = null;
+
     conn.on('data', (data) => {
       if (!isGuestMessage(data)) return;
       if (data.type === 'hello') {
-        if (seats.has(playerId)) return; // duplicate hello
-        seats.set(playerId, { conn, name: uniqueName(sanitizeName(data.name)) });
+        if (seatId) return; // duplicate hello on this connection
+        const wanted = sanitizeName(data.name);
+        if (locked) {
+          // After lock, only a known player may come back (reload / dropped
+          // connection) — matched by name, since names were deduplicated.
+          const existing = [...seats.entries()].find(
+            ([, s]) => s.name.toLocaleLowerCase() === wanted.toLocaleLowerCase(),
+          );
+          if (!existing) {
+            void conn.send({ type: 'busy' } satisfies HostMessage);
+            setTimeout(() => {
+              conn.close();
+            }, 500);
+            return;
+          }
+          const [playerId, seat] = existing;
+          seat.conn?.close(); // supersede a stale duplicate connection
+          seat.conn = conn;
+          seatId = playerId;
+          void conn.send({ type: 'welcome', playerId } satisfies HostMessage);
+          void conn.send({ type: 'roster', names: guests().map((g) => g.name) });
+          if (lastScores) void conn.send(lastScores);
+          else if (lastRound) void conn.send(lastRound);
+          return;
+        }
+        seatCounter += 1;
+        const playerId = `guest-${String(seatCounter)}-${String(Date.now() % 100000)}`;
+        seats.set(playerId, { conn, name: uniqueName(wanted) });
+        seatId = playerId;
         void conn.send({ type: 'welcome', playerId } satisfies HostMessage);
         notifyRoster();
         return;
       }
-      if (seats.has(playerId)) guestMessageCb?.(playerId, data);
+      if (seatId && seats.get(seatId)?.conn === conn) guestMessageCb?.(seatId, data);
     });
-    conn.on('close', () => {
-      if (seats.delete(playerId)) notifyRoster();
-    });
-    conn.on('error', () => {
-      if (seats.delete(playerId)) notifyRoster();
-    });
+
+    const dropped = (): void => {
+      if (!seatId) return;
+      const seat = seats.get(seatId);
+      if (!seat || seat.conn !== conn) return; // superseded by a reconnect
+      if (locked) {
+        seat.conn = null; // keep the seat so the player can come back
+      } else if (seats.delete(seatId)) {
+        notifyRoster(); // in the lobby, leaving really means leaving
+      }
+    };
+    conn.on('close', dropped);
+    conn.on('error', dropped);
   });
 
   return {
@@ -208,7 +243,8 @@ function buildHostRoom(code: string, peer: Peer): HostRoom {
     guests,
     broadcast,
     sendTo: (playerId, msg) => {
-      void seats.get(playerId)?.conn.send(msg);
+      const conn = seats.get(playerId)?.conn;
+      if (conn) void conn.send(msg);
     },
     onGuestsChange: (cb) => {
       guestsChangeCb = cb;

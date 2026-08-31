@@ -3,6 +3,7 @@
   import Button from '../lib/ui/Button.svelte';
   import Chip from '../lib/ui/Chip.svelte';
   import { t, uiLanguage, availablePacks } from '../lib/i18n';
+  import { theme } from '../lib/theme';
   import { screen } from '../lib/stores';
   import { listSaves } from '../lib/db';
   import { setActiveRoom } from '../lib/p2p';
@@ -44,6 +45,13 @@
     {#each availablePacks() as p (p.code)}
       <Chip on={$uiLanguage === p.code} onclick={() => uiLanguage.set(p.code)}>{p.name}</Chip>
     {/each}
+  </div>
+
+  <div class="languages" role="group" aria-label={$t('home.themeLabel')}>
+    <Chip on={$theme === 'light'} onclick={() => theme.set('light')}
+      >☀️ {$t('home.theme.light')}</Chip
+    >
+    <Chip on={$theme === 'dark'} onclick={() => theme.set('dark')}>🌙 {$t('home.theme.dark')}</Chip>
   </div>
 </div>
 

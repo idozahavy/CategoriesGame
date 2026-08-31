@@ -37,6 +37,9 @@ export const he: LanguagePack = {
     'home.resume': 'המשך משחק',
     'home.tagline': 'מוצאים מילים. מנצחים את השעון. נהנים!',
     'home.languageLabel': 'שפה',
+    'home.themeLabel': 'ערכת נושא',
+    'home.theme.light': 'בהיר',
+    'home.theme.dark': 'כהה',
 
     'setup.players': 'מי משחק?',
     'setup.addPlayer': 'הוספת שחקן',
@@ -138,6 +141,7 @@ export const he: LanguagePack = {
     'join.error.notFound': 'לא מצאנו את החדר — בדקו את הקוד!',
     'join.error.network': 'לא הצלחנו להתחבר — בדקו את האינטרנט ונסו שוב.',
     'join.error.hostLeft': 'המשחק הסתיים.',
+    'join.error.disconnected': 'החיבור נותק! לחצו על "לנסות שוב" כדי לחזור למשחק.',
 
     'error.wordCheck': 'לא הצלחנו לבדוק את המילה הזו — להצביע במקום?',
     'common.cancel': 'ביטול',

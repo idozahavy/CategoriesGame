@@ -24,6 +24,39 @@
 
   let session: GuestSession | null = null;
   let roster = $state<string[]>([]);
+
+  // Remember who/where this tab joined so a reload (or dropped connection)
+  // can jump straight back into the running game — the host keeps the seat.
+  const GUEST_SESSION_KEY = 'categories-guest';
+  try {
+    const saved = sessionStorage.getItem(GUEST_SESSION_KEY);
+    if (saved !== null) {
+      const s = JSON.parse(saved) as { code?: string; name?: string };
+      code = s.code ?? '';
+      name = s.name ?? '';
+    }
+  } catch {
+    // storage unavailable — start with an empty form
+  }
+
+  function rememberSession(): void {
+    try {
+      sessionStorage.setItem(
+        GUEST_SESSION_KEY,
+        JSON.stringify({ code: normalizeRoomCode(code), name: name.trim() }),
+      );
+    } catch {
+      // storage unavailable — rejoin just won't be prefilled
+    }
+  }
+
+  function forgetSession(): void {
+    try {
+      sessionStorage.removeItem(GUEST_SESSION_KEY);
+    } catch {
+      // storage unavailable — nothing to forget
+    }
+  }
   let round = $state<RoundMsg | null>(null);
   let scores = $state<ScoresMsg | null>(null);
   let answers = $state<Record<string, string>>({});
@@ -47,6 +80,7 @@
       scores = msg;
       phase = 'scores';
     } else if (msg.type === 'ended') {
+      forgetSession();
       // Final scores stay up even when the host closes the room afterwards.
       if (phase !== 'scores') {
         errorKey = 'join.error.hostLeft';
@@ -62,10 +96,11 @@
     phase = 'connecting';
     try {
       session = await joinRoom(code, name.trim());
+      rememberSession();
       session.onMessage(handleMessage);
       session.onClose(() => {
         if (phase !== 'scores' && phase !== 'error') {
-          errorKey = 'join.error.hostLeft';
+          errorKey = 'join.error.disconnected';
           phase = 'error';
         }
       });
@@ -108,6 +143,7 @@
   });
 
   function leave(): void {
+    forgetSession();
     session?.close();
     session = null;
     screen.set('home');
