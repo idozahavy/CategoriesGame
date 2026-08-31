@@ -297,22 +297,38 @@ export async function inWikidataCategory(
   return run;
 }
 
-const dictCache = new Map<string, 'known' | 'unknown'>();
+/**
+ * Holds promises so concurrent checks of one word share a single request;
+ * an 'error' verdict is evicted on settle so a later check retries.
+ */
+const dictCache = new Map<string, Promise<'known' | 'unknown' | 'error'>>();
 
 /**
  * Check word existence in Wiktionary (public dictionary, no key needed).
  * Category fit is NOT verified — only that the word exists in the language.
  */
-export async function inPublicDictionary(
+export function inPublicDictionary(
   word: string,
   language: string,
 ): Promise<'known' | 'unknown' | 'error'> {
   const key = `${language}:${word.toLocaleLowerCase()}`;
-  const cached = dictCache.get(key);
-  if (cached) return cached;
+  let cached = dictCache.get(key);
+  if (!cached) {
+    cached = lookupWiktionary(word, language).then((verdict) => {
+      if (verdict === 'error') dictCache.delete(key);
+      return verdict;
+    });
+    dictCache.set(key, cached);
+  }
+  return cached;
+}
+
+async function lookupWiktionary(
+  word: string,
+  language: string,
+): Promise<'known' | 'unknown' | 'error'> {
   try {
-    const domain = language === 'en' ? 'en' : language;
-    const url = `https://${domain}.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(
+    const url = `https://${language}.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(
       word.toLocaleLowerCase(),
     )}&format=json&origin=*`;
     const res = await fetch(url, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
@@ -320,9 +336,7 @@ export async function inPublicDictionary(
     const data = (await res.json()) as { query?: { pages?: Record<string, { missing?: string }> } };
     const pages = data.query?.pages ?? {};
     const found = Object.entries(pages).some(([id, page]) => id !== '-1' && !('missing' in page));
-    const verdict = found ? 'known' : 'unknown';
-    dictCache.set(key, verdict);
-    return verdict;
+    return found ? 'known' : 'unknown';
   } catch {
     return 'error';
   }
