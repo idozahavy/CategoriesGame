@@ -1,10 +1,25 @@
-import type { GameSettings, GameState, PlayerDef, RoundState } from './types';
+import type { GameSettings, GameState, PlayerDef, RoundState, Screen } from './types';
 import { getPack } from './i18n';
 
 export const DEFAULT_CATEGORY_IDS = ['animal', 'food', 'city', 'name', 'object'] as const;
 
+/** Timer presets offered in setup and in the round-one settings editor. */
+export const TIMER_OPTIONS: { value: number | null; key: string }[] = [
+  { value: null, key: 'setup.timer.none' },
+  { value: 180, key: 'setup.timer.relaxed' },
+  { value: 120, key: 'setup.timer.normal' },
+  { value: 60, key: 'setup.timer.fast' },
+];
+
 export function newId(): string {
-  return crypto.randomUUID();
+  // crypto.randomUUID only exists in secure contexts (https/localhost) — plain-HTTP
+  // LAN play needs the manual UUIDv4 path via getRandomValues.
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = ((bytes[6] ?? 0) & 0x0f) | 0x40;
+  bytes[8] = ((bytes[8] ?? 0) & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 export function createGame(settings: GameSettings, players: PlayerDef[]): GameState {
@@ -34,7 +49,7 @@ export function startNextRound(state: GameState): RoundState | null {
   // No-op past the configured round count, and while a round is still in
   // progress — so a double-tap on "Next round" cannot skip or add rounds.
   const current = state.rounds[state.rounds.length - 1];
-  if (state.rounds.length >= state.settings.roundCount) return null;
+  if (!state.settings.endless && state.rounds.length >= state.settings.roundCount) return null;
   if (current && current.phase !== 'done') return null;
   const letter = drawLetter(state);
   state.usedLetters.push(letter);
@@ -123,6 +138,20 @@ export function totalScores(state: GameState): Map<string, number> {
   return totals;
 }
 
+/**
+ * Which screen a loaded (resumed/restored) game should open on. Scoreboard is
+ * strictly the end-of-game screen (mounting it finalizes the game), so an
+ * unfinished game with a scored round reopens on Review — it has the
+ * "next round" / "see scores" actions.
+ */
+export function screenForGame(state: GameState): Screen {
+  if (state.status === 'finished' || isFinished(state)) return 'scoreboard';
+  const current = state.rounds[state.currentRound];
+  if (!current || current.phase === 'entry') return 'round';
+  return 'review';
+}
+
 export function isFinished(state: GameState): boolean {
+  if (state.settings.endless) return false; // ends only when someone taps "See scores"
   return state.rounds.filter((r) => r.phase === 'done').length >= state.settings.roundCount;
 }

@@ -31,6 +31,23 @@ export interface PlayerDef {
   name: string;
   /** 1..8 — maps to --color-player-N token. */
   colorIndex: number;
+  /** Emoji, or a ≤512px data-URL image; absent = show the name's first letter. */
+  avatar?: string;
+  /** true = the app plays this player's turns automatically. */
+  isBot?: boolean;
+}
+
+/** A remembered family member: quick-pick in setup, rows on the leaderboard. */
+export interface PlayerProfile {
+  /** Normalized (trimmed, lowercased) name — the natural family-wide key. */
+  key: string;
+  /** Display name as last typed. */
+  name: string;
+  avatar?: string;
+  gamesPlayed: number;
+  wins: number;
+  totalPoints: number;
+  updatedAt: number;
 }
 
 export interface GameSettings {
@@ -40,10 +57,18 @@ export interface GameSettings {
   validation: ValidationMode;
   categories: CategoryDef[];
   roundCount: number;
+  /** true = ignore roundCount and keep playing until someone taps "See scores". */
+  endless?: boolean;
+  /** false = skip the online Wikidata category-fit check (it can be slow). */
+  wikidataCheck?: boolean;
+  /** false = no "did you know" word fact on the review screen. */
+  funFacts?: boolean;
   /** null = no timer. */
   timerSeconds: number | null;
   /** true = players answer on their own devices via a P2P room (host screen orchestrates). */
   remote?: boolean;
+  /** Remote games: the room's join code, so a reloaded host can reopen the room. */
+  roomCode?: string;
 }
 
 export type AnswerStatus = 'pending' | 'valid' | 'shared' | 'invalid';
@@ -83,6 +108,8 @@ export interface GameState {
   currentRound: number;
   usedLetters: string[];
   status: GameStatus;
+  /** Lifetime stats already landed — a game revived with "one more round" isn't counted twice. */
+  statsRecorded?: boolean;
 }
 
 /** Summary row shown in the Resume list (cheap to read, no full state). */
@@ -92,13 +119,23 @@ export interface SaveSummary {
   playerNames: string[];
   roundsPlayed: number;
   roundCount: number;
+  endless: boolean;
   language: LanguageCode;
   status: GameStatus;
   /** Remote (P2P) games can't be resumed — guests would need to rejoin. */
   remote: boolean;
 }
 
-export type Screen = 'home' | 'new-game' | 'join' | 'resume' | 'round' | 'review' | 'scoreboard';
+export type Screen =
+  | 'home'
+  | 'new-game'
+  | 'join'
+  | 'resume'
+  | 'round'
+  | 'review'
+  | 'scoreboard'
+  | 'learned'
+  | 'leaderboard';
 
 /** A language pack bundles UI strings + game content for one language. */
 export interface LanguagePack {
@@ -112,6 +149,4 @@ export interface LanguagePack {
   ui: Record<string, string>;
   /** Built-in category names by nameKey. */
   categoryNames: Record<string, string>;
-  /** Bundled word lists: categoryId -> lowercase words (may be partial). */
-  words: Record<string, string[]>;
 }

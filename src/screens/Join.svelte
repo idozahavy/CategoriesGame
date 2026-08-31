@@ -4,6 +4,9 @@
   import TextInput from '../lib/ui/TextInput.svelte';
   import Card from '../lib/ui/Card.svelte';
   import TopBar from '../lib/ui/TopBar.svelte';
+  import Modal from '../lib/ui/Modal.svelte';
+  import Avatar from '../lib/ui/Avatar.svelte';
+  import { AVATAR_EMOJI, fileToAvatar } from '../lib/avatar';
   import LetterTile from '../lib/ui/LetterTile.svelte';
   import TimerPill from '../lib/ui/TimerPill.svelte';
   import { t } from '../lib/i18n';
@@ -18,9 +21,12 @@
   let phase = $state<GuestPhase>('form');
   let code = $state('');
   let name = $state('');
+  let avatar = $state<string | undefined>(undefined);
   let codeError = $state('');
   let nameError = $state('');
   let errorKey = $state('join.error.network');
+  let avatarPickerOpen = $state(false);
+  let avatarFileInput: HTMLInputElement | undefined = $state();
 
   let session: GuestSession | null = null;
   let roster = $state<string[]>([]);
@@ -31,19 +37,26 @@
   try {
     const saved = sessionStorage.getItem(GUEST_SESSION_KEY);
     if (saved !== null) {
-      const s = JSON.parse(saved) as { code?: string; name?: string };
+      const s = JSON.parse(saved) as { code?: string; name?: string; avatar?: string };
       code = s.code ?? '';
       name = s.name ?? '';
+      avatar = s.avatar;
     }
   } catch {
     // storage unavailable — start with an empty form
   }
+  // Arrived by scanning the host's QR code — the room code rides in the URL.
+  const scannedCode = new URLSearchParams(location.search).get('join');
+  if (scannedCode !== null && scannedCode !== '') code = scannedCode;
+  // Consume the param: a later reload should land wherever the player left off,
+  // not be dragged back to the join screen (the code stays prefilled above).
+  if (scannedCode !== null) history.replaceState(history.state, '', location.pathname);
 
   function rememberSession(): void {
     try {
       sessionStorage.setItem(
         GUEST_SESSION_KEY,
-        JSON.stringify({ code: normalizeRoomCode(code), name: name.trim() }),
+        JSON.stringify({ code: normalizeRoomCode(code), name: name.trim(), avatar }),
       );
     } catch {
       // storage unavailable — rejoin just won't be prefilled
@@ -95,7 +108,7 @@
     if (codeError !== '' || nameError !== '') return;
     phase = 'connecting';
     try {
-      session = await joinRoom(code, name.trim());
+      session = await joinRoom(code, name.trim(), avatar);
       rememberSession();
       session.onMessage(handleMessage);
       session.onClose(() => {
@@ -120,6 +133,18 @@
     submitted = true;
     session.send({ type: 'answers', roundIndex: r.roundIndex, answers: { ...answers } });
     phase = 'waiting';
+  }
+
+  /** Enter hops to the next category's input; on the last one it sends the answers. */
+  function onAnswerKeydown(e: KeyboardEvent, index: number): void {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    if (index >= (round?.categories.length ?? 0) - 1) {
+      submitAnswers();
+      return;
+    }
+    const inputs = document.querySelectorAll<HTMLInputElement>('.cards .inp');
+    inputs[index + 1]?.focus();
   }
 
   // Local countdown mirroring the host's; auto-sends when it runs out.
@@ -155,11 +180,25 @@
     phase = 'form';
   }
 
+  function pickAvatar(a: string | undefined): void {
+    avatar = a;
+    avatarPickerOpen = false;
+  }
+
+  async function onAvatarFile(event: Event): Promise<void> {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const picked = await fileToAvatar(file);
+    if (picked !== null) pickAvatar(picked);
+  }
+
   const roundTitle = $derived(
     round
       ? $t('round.title')
           .replace('{n}', String(round.roundIndex + 1))
-          .replace('{total}', String(round.roundCount))
+          .replace('{total}', round.roundCount === 0 ? '∞' : String(round.roundCount))
       : '',
   );
 </script>
@@ -177,12 +216,22 @@
         error={codeError}
         oninput={() => (codeError = '')}
       />
-      <TextInput
-        label={$t('join.nameLabel')}
-        bind:value={name}
-        error={nameError}
-        oninput={() => (nameError = '')}
-      />
+      <div class="name-row">
+        <button
+          type="button"
+          class="avatar-btn"
+          aria-label={$t('setup.avatar')}
+          onclick={() => (avatarPickerOpen = true)}
+        >
+          <Avatar {name} {avatar} size={44} />
+        </button>
+        <TextInput
+          label={$t('join.nameLabel')}
+          bind:value={name}
+          error={nameError}
+          oninput={() => (nameError = '')}
+        />
+      </div>
       <Button variant="accent" block onclick={() => void join()}>{$t('join.go')}</Button>
     </div>
   {:else if phase === 'connecting'}
@@ -209,7 +258,7 @@
     </div>
     <p class="round-title">{roundTitle}</p>
     <div class="cards">
-      {#each round.categories as cat (cat.id)}
+      {#each round.categories as cat, i (cat.id)}
         {@const val = answers[cat.id] ?? ''}
         <Card>
           <div class="cat-header">
@@ -218,6 +267,8 @@
           </div>
           <TextInput
             bind:value={() => answers[cat.id] ?? '', (v) => (answers[cat.id] = v)}
+            enterkeyhint={i === round.categories.length - 1 ? 'done' : 'next'}
+            onkeydown={(e) => onAnswerKeydown(e, i)}
             error={val !== '' && !matchesLetter(val, round.letter)
               ? $t('round.letterHint').replace('{letter}', round.letter)
               : ''}
@@ -260,6 +311,33 @@
     </div>
   {/if}
 </div>
+
+<Modal open={avatarPickerOpen}>
+  <p class="avatar-title">{$t('setup.avatar')}</p>
+  <div class="emoji-grid">
+    {#each AVATAR_EMOJI as emoji (emoji)}
+      <button type="button" class="emoji-option" onclick={() => pickAvatar(emoji)}>{emoji}</button>
+    {/each}
+  </div>
+  <div class="avatar-actions">
+    <Button variant="secondary" block onclick={() => avatarFileInput?.click()}
+      >{$t('setup.avatar.upload')}</Button
+    >
+    <Button variant="ghost" block onclick={() => pickAvatar(undefined)}
+      >{$t('common.remove')}</Button
+    >
+    <Button variant="ghost" block onclick={() => (avatarPickerOpen = false)}
+      >{$t('common.close')}</Button
+    >
+  </div>
+  <input
+    type="file"
+    accept="image/*"
+    hidden
+    bind:this={avatarFileInput}
+    onchange={(e) => void onAvatarFile(e)}
+  />
+</Modal>
 
 <style>
   .join {
@@ -313,11 +391,65 @@
     padding-inline: var(--space-3);
     font-weight: var(--font-weight-subheading);
   }
+  .name-row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+  }
+  .name-row :global(.field) {
+    flex: 1;
+  }
+  .avatar-btn {
+    background: none;
+    border: none;
+    padding: var(--space-1);
+    min-inline-size: 48px;
+    min-block-size: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: var(--radius-pill);
+  }
+  .avatar-title {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-heading);
+    margin-block-end: var(--space-3);
+  }
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+    margin-block-end: var(--space-4);
+  }
+  .emoji-option {
+    min-block-size: 48px;
+    font-size: 28px;
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .avatar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
   .letter-row {
     display: flex;
     align-items: center;
     gap: var(--space-4);
     justify-content: center;
+    /* Pinned while the (often long) category list scrolls, so the letter and
+       the ticking timer stay in view. Bleeds into the shell padding so cards
+       vanish cleanly behind it. */
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-sticky);
+    background: var(--color-bg);
+    margin-inline: calc(-1 * var(--space-4));
+    padding-inline: var(--space-4);
+    padding-block: var(--space-2);
   }
   .round-title {
     text-align: center;

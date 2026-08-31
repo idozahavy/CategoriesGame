@@ -4,6 +4,7 @@
   import Chip from '../lib/ui/Chip.svelte';
   import { t, uiLanguage, availablePacks } from '../lib/i18n';
   import { theme } from '../lib/theme';
+  import { soundOn } from '../lib/sound';
   import { screen } from '../lib/stores';
   import { listSaves } from '../lib/db';
   import { setActiveRoom } from '../lib/p2p';
@@ -52,6 +53,15 @@
       >☀️ {$t('home.theme.light')}</Chip
     >
     <Chip on={$theme === 'dark'} onclick={() => theme.set('dark')}>🌙 {$t('home.theme.dark')}</Chip>
+    <Chip on={$soundOn} onclick={() => soundOn.set(!$soundOn)}>
+      {$soundOn ? '🔊' : '🔇'}
+      {$t('home.sound')}
+    </Chip>
+  </div>
+
+  <div class="languages">
+    <Chip on={false} onclick={() => screen.set('leaderboard')}>🏆 {$t('board.title')}</Chip>
+    <Chip on={false} onclick={() => screen.set('learned')}>📚 {$t('learned.title')}</Chip>
   </div>
 </div>
 

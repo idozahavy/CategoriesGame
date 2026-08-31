@@ -5,6 +5,7 @@
     error = '',
     disabled = false,
     label = '',
+    enterkeyhint,
     oninput,
     onkeydown,
   }: {
@@ -13,6 +14,8 @@
     error?: string;
     disabled?: boolean;
     label?: string;
+    /** Mobile keyboards label the Enter key with this action. */
+    enterkeyhint?: 'next' | 'done' | 'go' | 'enter' | 'send' | 'search';
     oninput?: (e: Event) => void;
     onkeydown?: (e: KeyboardEvent) => void;
   } = $props();
@@ -26,6 +29,7 @@
     bind:value
     {placeholder}
     {disabled}
+    {enterkeyhint}
     {oninput}
     {onkeydown}
   />

@@ -1,5 +1,4 @@
 import type { LanguagePack } from '../types';
-import { heWords } from '../words/he';
 
 /** Hebrew language pack. */
 export const he: LanguagePack = {
@@ -31,7 +30,7 @@ export const he: LanguagePack = {
     'ת',
   ],
   ui: {
-    'app.title': 'קטגוריות!',
+    'app.title': 'Kategoria!',
     'home.new': 'משחק חדש',
     'home.join': 'הצטרפות למשחק',
     'home.resume': 'המשך משחק',
@@ -44,6 +43,28 @@ export const he: LanguagePack = {
     'setup.players': 'מי משחק?',
     'setup.addPlayer': 'הוספת שחקן',
     'setup.playerName': 'שם',
+    'setup.avatar': 'תמונה',
+    'setup.avatar.upload': 'העלאת תמונה',
+    'setup.wikidata': 'בדיקת קטגוריה מקוונת (ויקינתונים)',
+    'setup.funFact': 'עובדות על מילים (מקוון)',
+    'setup.soloName': 'אני',
+    'setup.online': 'תוספות מקוונות',
+    'setup.addBot': 'הוספת רובוט',
+    'setup.botName': 'רובי',
+    'setup.packs': 'בחירה מהירה',
+    'setup.pack.classic': 'קלאסי',
+    'setup.pack.nature': 'טבע',
+    'setup.pack.town': 'בעיר',
+    'setup.pack.home': 'בבית',
+    'round.botThinking': '{name} חושב…',
+    'review.funFact': 'הידעתם?',
+    'lobby.scan': 'או סרקו כדי להצטרף!',
+    'home.sound': 'צלילים',
+    'learned.title': 'מילים שנלמדו',
+    'learned.empty': 'עוד אין כאן כלום — שחקו והמשחק ילמד!',
+    'board.title': 'טבלת המשפחה',
+    'board.empty': 'שחקו משחק כדי למלא את הטבלה!',
+    'board.stats': '{games} משחקים · {wins} ניצחונות',
     'setup.style.local': 'מסך אחד משותף',
     'setup.style.local.hint': 'מעבירים את המכשיר בין השחקנים',
     'setup.style.remote': 'טלפונים מצטרפים',
@@ -62,6 +83,7 @@ export const he: LanguagePack = {
     'setup.categories.hint': 'בחרנו חמש קטגוריות אהובות — הקישו כדי לשנות!',
     'setup.addCategory': 'הוספת קטגוריה משלכם',
     'setup.rounds': 'סיבובים',
+    'setup.rounds.endless': 'בלי סוף',
     'setup.timer': 'טיימר',
     'setup.timer.none': 'בלי טיימר',
     'setup.timer.relaxed': 'רגוע (3 דקות)',
@@ -93,6 +115,7 @@ export const he: LanguagePack = {
     'error.roomCreate': 'לא הצלחנו לפתוח חדר — בדקו את החיבור לאינטרנט ונסו שוב.',
 
     'round.title': 'סיבוב {n} מתוך {total}',
+    'round.settings': 'הגדרות המשחק',
     'round.letter': 'אות',
     'round.done': 'סיימתי!',
     'round.pass': 'העברה ל{name}',
@@ -116,6 +139,8 @@ export const he: LanguagePack = {
 
     'score.title': 'ניקוד',
     'score.winner': '{name} ניצח/ה! 🎉',
+    'score.endGame': 'סיום המשחק',
+    'score.oneMore': 'עוד סיבוב!',
     'score.playAgain': 'משחק נוסף',
     'score.home': 'מסך הבית',
 
@@ -160,6 +185,11 @@ export const he: LanguagePack = {
     object: 'חפץ',
     sport: 'ספורט',
     color: 'צבע',
+    fruit: 'פרי',
+    ocean: 'חיית ים',
+    vehicle: 'כלי רכב',
+    kitchen: 'כלי מטבח',
+    clothing: 'בגד',
+    body: 'איבר בגוף',
   },
-  words: heWords,
 };

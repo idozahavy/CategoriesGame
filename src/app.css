@@ -15,6 +15,9 @@ html {
   background: var(--color-bg);
 }
 
+/* svh, not dvh: the stable small-viewport height. dvh shrinks when the mobile
+   keyboard (or expanding browser UI) squashes the viewport, collapsing the
+   whole flex layout mid-typing. */
 body {
   min-block-size: 100dvh;
 }

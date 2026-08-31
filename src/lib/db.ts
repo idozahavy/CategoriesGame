@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import type { GameState, SaveSummary } from './types';
+import type { GameState, PlayerProfile, SaveSummary } from './types';
 
 /** Words the app has confirmed over past games (dictionary hits, accepted votes). */
 interface LearnedEntry {
@@ -21,17 +21,22 @@ interface GameDB extends DBSchema {
     key: string;
     value: LearnedEntry;
   };
+  profiles: {
+    key: string;
+    value: PlayerProfile;
+  };
 }
 
 const DB_NAME = 'categories-game';
 const STORE = 'saves';
 const LEARNED_STORE = 'learned';
+const PROFILE_STORE = 'profiles';
 
 let dbPromise: Promise<IDBPDatabase<GameDB>> | null = null;
 
 function db(): Promise<IDBPDatabase<GameDB>> {
   if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, 2, {
+    dbPromise = openDB(DB_NAME, 3, {
       upgrade(d, oldVersion) {
         if (oldVersion < 1) {
           const store = d.createObjectStore(STORE, { keyPath: 'id' });
@@ -39,6 +44,9 @@ function db(): Promise<IDBPDatabase<GameDB>> {
         }
         if (oldVersion < 2) {
           d.createObjectStore(LEARNED_STORE, { keyPath: 'key' });
+        }
+        if (oldVersion < 3) {
+          d.createObjectStore(PROFILE_STORE, { keyPath: 'key' });
         }
       },
     });
@@ -74,6 +82,65 @@ export async function listLearnedWords(): Promise<LearnedEntry[]> {
   return (await db()).getAll(LEARNED_STORE);
 }
 
+/** Remove one learned word; drops the whole entry when it was the last word. */
+export async function removeLearnedWord(
+  language: string,
+  categoryId: string,
+  word: string,
+): Promise<void> {
+  const key = learnedKey(language, categoryId);
+  const d = await db();
+  const entry = await d.get(LEARNED_STORE, key);
+  if (!entry) return;
+  entry.words = entry.words.filter((w) => w !== word);
+  if (entry.words.length === 0) await d.delete(LEARNED_STORE, key);
+  else await d.put(LEARNED_STORE, entry);
+}
+
+function profileKey(name: string): string {
+  return name.trim().toLocaleLowerCase();
+}
+
+/** Profiles by most recently played. */
+export async function listProfiles(): Promise<PlayerProfile[]> {
+  const all = await (await db()).getAll(PROFILE_STORE);
+  return all.sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+/** Remember (or refresh) a player's name + avatar when a game starts. */
+export async function touchProfile(name: string, avatar: string | undefined): Promise<void> {
+  const key = profileKey(name);
+  if (key === '') return;
+  const d = await db();
+  const existing = await d.get(PROFILE_STORE, key);
+  const profile: PlayerProfile = existing ?? {
+    key,
+    name: name.trim(),
+    gamesPlayed: 0,
+    wins: 0,
+    totalPoints: 0,
+    updatedAt: 0,
+  };
+  profile.name = name.trim();
+  if (avatar !== undefined) profile.avatar = avatar;
+  profile.updatedAt = Date.now();
+  await d.put(PROFILE_STORE, profile);
+}
+
+/** Add one finished game to a player's lifetime stats. */
+export async function recordGameResult(name: string, points: number, won: boolean): Promise<void> {
+  const key = profileKey(name);
+  if (key === '') return;
+  const d = await db();
+  const profile = await d.get(PROFILE_STORE, key);
+  if (!profile) return; // only players saved at game start are tracked
+  profile.gamesPlayed += 1;
+  if (won) profile.wins += 1;
+  profile.totalPoints += points;
+  profile.updatedAt = Date.now();
+  await d.put(PROFILE_STORE, profile);
+}
+
 export async function saveGame(state: GameState): Promise<void> {
   state.updatedAt = Date.now();
   await (await db()).put(STORE, state);
@@ -97,6 +164,7 @@ export async function listSaves(): Promise<SaveSummary[]> {
       playerNames: g.players.map((p) => p.name),
       roundsPlayed: g.rounds.filter((r) => r.phase === 'done').length,
       roundCount: g.settings.roundCount,
+      endless: g.settings.endless === true,
       language: g.settings.language,
       status: g.status,
       remote: g.settings.remote === true,

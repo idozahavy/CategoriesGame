@@ -1,11 +1,16 @@
 <script lang="ts">
-  let { name, score, colorIndex }: { name: string; score: number; colorIndex: number } = $props();
+  import Avatar from './Avatar.svelte';
+
+  let {
+    name,
+    score,
+    colorIndex,
+    avatar = undefined,
+  }: { name: string; score: number; colorIndex: number; avatar?: string } = $props();
 </script>
 
 <div class="row">
-  <div class="avatar" style="background: var(--color-player-{colorIndex});">
-    {name.slice(0, 1).toLocaleUpperCase()}
-  </div>
+  <Avatar {name} {avatar} {colorIndex} size={40} />
   <b class="name">{name}</b>
   <span class="score">{score}</span>
 </div>
@@ -19,17 +24,6 @@
     padding-inline: var(--space-3);
     border-radius: var(--radius-md);
     background: var(--color-bg);
-  }
-  .avatar {
-    inline-size: 40px;
-    block-size: 40px;
-    border-radius: var(--radius-pill);
-    color: var(--color-surface);
-    font-weight: var(--font-weight-display);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
   }
   .name {
     overflow: hidden;

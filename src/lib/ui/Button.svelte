@@ -35,12 +35,14 @@
     border-block-end: var(--border-edge-width) solid transparent;
     transition:
       transform var(--duration-fast) var(--easing-spring),
-      border-block-end-width var(--duration-fast) var(--easing-spring),
+      border-block-end-color var(--duration-fast) var(--easing-spring),
       background-color var(--duration-fast) var(--easing-standard);
   }
+  /* Pressed state must not change border-width: the edge border is layout, and
+     collapsing it shifts every element below the button. Hide it instead. */
   .btn:active:not(:disabled) {
     transform: translateY(var(--border-edge-width));
-    border-block-end-width: 0;
+    border-block-end-color: transparent;
   }
   .block {
     display: block;

@@ -3,6 +3,10 @@
   import { screen, game } from './lib/stores';
   import { pack, uiLanguage, persistLanguage } from './lib/i18n';
   import { theme, persistTheme } from './lib/theme';
+  import { loadGame } from './lib/db';
+  import { screenForGame } from './lib/game';
+  import { readActiveGameId, persistActiveGame } from './lib/session';
+  import { reopenRoom, setActiveRoom } from './lib/p2p';
   import Home from './screens/Home.svelte';
   import NewGame from './screens/NewGame.svelte';
   import Join from './screens/Join.svelte';
@@ -10,6 +14,8 @@
   import Round from './screens/Round.svelte';
   import Review from './screens/Review.svelte';
   import Scoreboard from './screens/Scoreboard.svelte';
+  import LearnedWords from './screens/LearnedWords.svelte';
+  import Leaderboard from './screens/Leaderboard.svelte';
 
   // Keep <html dir/lang> in sync with the active language (RTL support),
   // and remember the choice across visits.
@@ -32,11 +38,53 @@
       ($screen === 'round' || $screen === 'review' || $screen === 'scoreboard'),
   );
 
+  // Captured before the persist effect below first runs (it clears the record
+  // while the screen is still 'home').
+  const restoreGameId = readActiveGameId();
+
+  // Remember which game is on screen, so a reload lands back in it.
+  $effect(() => {
+    persistActiveGame($screen, $game);
+  });
+
+  /** Reload/tab-restore mid-game: load the save and jump back to its screen. */
+  async function restoreActiveGame(id: string): Promise<void> {
+    try {
+      const loaded = await loadGame(id);
+      // Bail if the game is gone/over, or the player already navigated away.
+      if (!loaded || loaded.status === 'finished' || $screen !== 'home') return;
+      if (loaded.settings.remote === true && loaded.settings.roomCode !== undefined) {
+        try {
+          setActiveRoom(
+            await reopenRoom(
+              loaded.settings.roomCode,
+              loaded.players.map((p) => ({
+                playerId: p.id,
+                name: p.name,
+                avatar: p.avatar,
+              })),
+            ),
+          );
+        } catch {
+          // Room couldn't be reopened — the host can still end the round alone.
+        }
+      }
+      if ($screen !== 'home') return; // navigated away while the room reopened
+      game.set(loaded);
+      screen.set(screenForGame(loaded));
+    } catch {
+      // Storage failed — stay on the home screen.
+    }
+  }
+
   // The app has no router, so the browser back button would leave the page
   // entirely (jarring mid-game, especially back-swipes on touch). Keep one
   // sentinel entry so back returns to the Home screen instead — any running
   // game is already autosaved and reachable via Resume.
   onMount(() => {
+    // Opened from a scanned QR code (?join=CODE) — jump straight to joining.
+    if (new URLSearchParams(location.search).get('join') !== null) screen.set('join');
+    else if (restoreGameId !== null) void restoreActiveGame(restoreGameId);
     history.pushState({ inApp: true }, '');
     const onPop = (): void => {
       history.pushState({ inApp: true }, '');
@@ -64,6 +112,10 @@
     <Review />
   {:else if $screen === 'scoreboard'}
     <Scoreboard />
+  {:else if $screen === 'learned'}
+    <LearnedWords />
+  {:else if $screen === 'leaderboard'}
+    <Leaderboard />
   {/if}
 </main>
 

@@ -1,12 +1,25 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import Button from '../lib/ui/Button.svelte';
   import TextInput from '../lib/ui/TextInput.svelte';
   import Chip from '../lib/ui/Chip.svelte';
   import TopBar from '../lib/ui/TopBar.svelte';
+  import Modal from '../lib/ui/Modal.svelte';
+  import Avatar from '../lib/ui/Avatar.svelte';
+  import { AVATAR_EMOJI, fileToAvatar } from '../lib/avatar';
+  import QRCode from 'qrcode';
   import { t, categoryName, uiLanguage, availablePacks } from '../lib/i18n';
   import { screen, game } from '../lib/stores';
-  import { saveGame } from '../lib/db';
-  import { createGame, startNextRound, newId, DEFAULT_CATEGORY_IDS } from '../lib/game';
+  import { saveGame, listProfiles, touchProfile } from '../lib/db';
+  import { BOT_AVATAR } from '../lib/bot';
+  import type { PlayerProfile } from '../lib/types';
+  import {
+    createGame,
+    startNextRound,
+    newId,
+    DEFAULT_CATEGORY_IDS,
+    TIMER_OPTIONS,
+  } from '../lib/game';
   import { createRoom, setActiveRoom, type HostRoom, type GuestInfo } from '../lib/p2p';
   import type {
     CategoryDef,
@@ -17,7 +30,7 @@
     ValidationMode,
   } from '../lib/types';
 
-  type PlayerDraft = { id: string; name: string };
+  type PlayerDraft = { id: string; name: string; avatar?: string; isBot?: boolean };
 
   const CATEGORY_EMOJI: Record<string, string> = {
     animal: '🐶',
@@ -30,6 +43,12 @@
     object: '📦',
     sport: '⚽',
     color: '🎨',
+    fruit: '🍎',
+    ocean: '🐠',
+    vehicle: '🚗',
+    kitchen: '🍴',
+    clothing: '👕',
+    body: '👃',
   };
   const BUILTIN_CATEGORY_KEYS = [
     'animal',
@@ -42,19 +61,30 @@
     'object',
     'sport',
     'color',
+    'fruit',
+    'ocean',
+    'vehicle',
+    'kitchen',
+    'clothing',
+    'body',
+  ];
+
+  /** One-tap themed category sets. */
+  const CATEGORY_PACKS: { key: string; emoji: string; ids: string[] }[] = [
+    { key: 'setup.pack.classic', emoji: '⭐', ids: [...DEFAULT_CATEGORY_IDS] },
+    { key: 'setup.pack.nature', emoji: '🌿', ids: ['animal', 'plant', 'fruit', 'ocean', 'color'] },
+    {
+      key: 'setup.pack.town',
+      emoji: '🏙️',
+      ids: ['city', 'country', 'profession', 'vehicle', 'sport'],
+    },
+    { key: 'setup.pack.home', emoji: '🏠', ids: ['kitchen', 'clothing', 'object', 'food', 'body'] },
   ];
   const builtinCategories: CategoryDef[] = BUILTIN_CATEGORY_KEYS.map((k) => ({
     id: k,
     nameKey: k,
     emoji: CATEGORY_EMOJI[k],
   }));
-
-  const TIMER_OPTIONS: { value: number | null; key: string }[] = [
-    { value: null, key: 'setup.timer.none' },
-    { value: 180, key: 'setup.timer.relaxed' },
-    { value: 120, key: 'setup.timer.normal' },
-    { value: 60, key: 'setup.timer.fast' },
-  ];
 
   const MAX_CATEGORY_NAME_LENGTH = 24;
 
@@ -72,6 +102,71 @@
   let roomError = $state('');
   let openingRoom = $state(false);
   let guestList = $state<GuestInfo[]>([]);
+  let profiles = $state<PlayerProfile[]>([]);
+  let qrDataUrl = $state('');
+  let avatarPickerFor = $state<string | null>(null);
+  let avatarFileInput: HTMLInputElement | undefined = $state();
+
+  function pickAvatar(avatar: string | undefined): void {
+    const p = players.find((p) => p.id === avatarPickerFor);
+    if (p) p.avatar = avatar;
+    avatarPickerFor = null;
+  }
+
+  async function onAvatarFile(event: Event): Promise<void> {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const avatar = await fileToAvatar(file);
+    if (avatar !== null) pickAvatar(avatar);
+  }
+
+  onMount(async () => {
+    try {
+      profiles = await listProfiles();
+    } catch {
+      profiles = []; // storage unavailable — no quick-pick row
+    }
+  });
+
+  /** Saved players not already in the list — one tap fills a seat. */
+  const profileSuggestions = $derived(
+    profiles.filter((prof) => !players.some((p) => p.name.trim().toLocaleLowerCase() === prof.key)),
+  );
+
+  function pickProfile(prof: PlayerProfile): void {
+    const empty = players.find((p) => p.name.trim() === '');
+    if (empty) {
+      empty.name = prof.name;
+      empty.avatar = prof.avatar;
+    } else if (players.length < 8) {
+      players.push({ id: newId(), name: prof.name, avatar: prof.avatar });
+    }
+    stepError = '';
+  }
+
+  function addBot(): void {
+    if (players.length >= 8) return;
+    const base = $t('setup.botName');
+    const taken = new Set(players.map((p) => p.name.trim().toLocaleLowerCase()));
+    let name = base;
+    for (let n = 2; taken.has(name.toLocaleLowerCase()); n++) name = `${base} ${String(n)}`;
+    players.push({ id: newId(), name, avatar: BOT_AVATAR, isBot: true });
+    stepError = '';
+  }
+
+  /** QR code for the lobby — scanning opens the app on the join screen. */
+  $effect(() => {
+    if (roomCode === '') {
+      qrDataUrl = '';
+      return;
+    }
+    const url = `${location.origin}${location.pathname}?join=${roomCode}`;
+    void QRCode.toDataURL(url, { width: 220, margin: 1 })
+      .then((u) => (qrDataUrl = u))
+      .catch(() => (qrDataUrl = ''));
+  });
 
   // Step 2
   let mode = $state<GameMode>('classic');
@@ -84,6 +179,9 @@
   let scoring = $state<ScoringSystem>('unique');
   let timerSeconds = $state<number | null>(120);
   let roundCount = $state(3);
+  let endless = $state(false);
+  let wikidataCheck = $state(true);
+  let funFacts = $state(true);
   let validation = $state<ValidationMode>('hybrid');
   let gameLanguage = $state($uiLanguage);
 
@@ -167,7 +265,7 @@
   function validateStep(): string {
     if (playStyle === 'remote') {
       if (guestList.length === 0) return $t('setup.error.noGuests');
-    } else {
+    } else if (players.length > 1) {
       const names = players.map((p) => p.name.trim());
       if (names.some((n) => n === '')) return $t('setup.error.emptyName');
       if (new Set(names.map((n) => n.toLocaleLowerCase())).size !== names.length) {
@@ -208,12 +306,21 @@
           id: g.playerId,
           name: g.name,
           colorIndex: (i % 8) + 1,
+          avatar: g.avatar,
         }))
       : players.map((p, i) => ({
           id: p.id,
-          name: p.name.trim(),
+          // A lone player may skip typing a name — call them "Me" in their language.
+          name: p.name.trim() === '' ? $t('setup.soloName') : p.name.trim(),
           colorIndex: i + 1,
+          avatar: p.avatar,
+          isBot: p.isBot,
         }));
+    // Remember the humans for quick-pick and the family leaderboard (the
+    // anonymous solo default stays out of both).
+    for (const p of finalPlayers) {
+      if (p.isBot !== true && p.name !== $t('setup.soloName')) void touchProfile(p.name, p.avatar);
+    }
     if (remote) room?.lock();
     // Copy to plain objects: $state proxies can't pass structuredClone/IndexedDB.
     const categories = allCategories
@@ -226,8 +333,12 @@
       validation,
       categories,
       roundCount,
+      endless,
+      wikidataCheck,
+      funFacts,
       timerSeconds,
       remote,
+      roomCode: remote ? roomCode : undefined,
     };
     const state = createGame(settings, finalPlayers);
     startNextRound(state);
@@ -264,12 +375,34 @@
       </div>
 
       {#if playStyle === 'local'}
+        {#if profileSuggestions.length > 0}
+          <div class="chip-row">
+            {#each profileSuggestions as prof (prof.key)}
+              <Chip on={false} onclick={() => pickProfile(prof)}>
+                <span class="profile-chip">
+                  <Avatar name={prof.name} avatar={prof.avatar} size={22} />
+                  {prof.name}
+                </span>
+              </Chip>
+            {/each}
+          </div>
+        {/if}
         <div class="players-list">
           {#each players as player, i (player.id)}
             <div class="player-row">
+              <button
+                type="button"
+                class="avatar-btn"
+                aria-label={$t('setup.avatar')}
+                onclick={() => (avatarPickerFor = player.id)}
+              >
+                <Avatar name={player.name} avatar={player.avatar} colorIndex={i + 1} size={44} />
+              </button>
               <TextInput
                 bind:value={player.name}
-                placeholder={`${$t('setup.playerName')} ${i + 1}`}
+                placeholder={players.length === 1
+                  ? $t('setup.soloName')
+                  : `${$t('setup.playerName')} ${i + 1}`}
                 oninput={() => (stepError = '')}
               />
               {#if i > 0}
@@ -278,9 +411,14 @@
             </div>
           {/each}
         </div>
-        <Button variant="secondary" onclick={addPlayer} disabled={players.length >= 8}>
-          {$t('setup.addPlayer')}
-        </Button>
+        <div class="add-row">
+          <Button variant="secondary" onclick={addPlayer} disabled={players.length >= 8}>
+            {$t('setup.addPlayer')}
+          </Button>
+          <Button variant="ghost" onclick={addBot} disabled={players.length >= 8}>
+            🤖 {$t('setup.addBot')}
+          </Button>
+        </div>
       {:else if openingRoom}
         <p class="section-hint">{$t('lobby.opening')}</p>
       {:else if roomError}
@@ -292,6 +430,10 @@
         <div class="code-card">
           <span class="code-label">{$t('lobby.code')}</span>
           <div class="room-code">{roomCode}</div>
+          {#if qrDataUrl !== ''}
+            <img class="qr" src={qrDataUrl} alt={roomCode} />
+            <span class="code-label">{$t('lobby.scan')}</span>
+          {/if}
         </div>
         <p class="section-hint">{$t('lobby.hint')}</p>
         {#if guestList.length === 0}
@@ -300,7 +442,10 @@
           <p class="joined-count">{$t('lobby.joined').replace('{n}', String(guestList.length))}</p>
           <div class="roster">
             {#each guestList as g (g.playerId)}
-              <span class="roster-chip">{g.name}</span>
+              <span class="roster-chip">
+                <Avatar name={g.name} avatar={g.avatar} size={22} />
+                {g.name}
+              </span>
             {/each}
           </div>
         {/if}
@@ -325,6 +470,19 @@
           <span class="mode-title">{$t('setup.mode.single')}</span>
           <span class="mode-hint">{$t('setup.mode.single.hint')}</span>
         </button>
+      </div>
+
+      <h2 class="section-title">{$t('setup.packs')}</h2>
+      <div class="chip-row">
+        {#each CATEGORY_PACKS as pack (pack.key)}
+          <Chip
+            on={[...selectedCategoryIds].sort().join() === [...pack.ids].sort().join()}
+            onclick={() => (selectedCategoryIds = [...pack.ids])}
+          >
+            {pack.emoji}
+            {$t(pack.key)}
+          </Chip>
+        {/each}
       </div>
 
       <h2 class="section-title">{$t('setup.categories')}</h2>
@@ -400,13 +558,22 @@
 
       <h2 class="section-title">{$t('setup.rounds')}</h2>
       <div class="stepper">
-        <Button variant="secondary" onclick={() => (roundCount = Math.max(1, roundCount - 1))}
-          >−</Button
+        <Button
+          variant="secondary"
+          onclick={() => {
+            endless = false;
+            roundCount = Math.max(1, roundCount - 1);
+          }}>−</Button
         >
-        <span class="stepper-value">{roundCount}</span>
-        <Button variant="secondary" onclick={() => (roundCount = Math.min(10, roundCount + 1))}
-          >+</Button
+        <span class="stepper-value">{endless ? '∞' : roundCount}</span>
+        <Button
+          variant="secondary"
+          onclick={() => {
+            endless = false;
+            roundCount = Math.min(10, roundCount + 1);
+          }}>+</Button
         >
+        <Chip on={endless} onclick={() => (endless = !endless)}>{$t('setup.rounds.endless')}</Chip>
       </div>
 
       <details class="advanced">
@@ -433,6 +600,17 @@
             {/each}
           </select>
         </label>
+        <div class="toggle-field">
+          <span class="select-label">{$t('setup.online')}</span>
+          <div class="chip-row">
+            <Chip on={wikidataCheck} onclick={() => (wikidataCheck = !wikidataCheck)}
+              >{wikidataCheck ? '✓ ' : ''}{$t('setup.wikidata')}</Chip
+            >
+            <Chip on={funFacts} onclick={() => (funFacts = !funFacts)}
+              >{funFacts ? '✓ ' : ''}{$t('setup.funFact')}</Chip
+            >
+          </div>
+        </div>
       </details>
     {/if}
   </div>
@@ -457,6 +635,33 @@
     {/if}
   </div>
 </div>
+
+<Modal open={avatarPickerFor !== null}>
+  <p class="avatar-title">{$t('setup.avatar')}</p>
+  <div class="emoji-grid">
+    {#each AVATAR_EMOJI as emoji (emoji)}
+      <button type="button" class="emoji-option" onclick={() => pickAvatar(emoji)}>{emoji}</button>
+    {/each}
+  </div>
+  <div class="avatar-actions">
+    <Button variant="secondary" block onclick={() => avatarFileInput?.click()}
+      >{$t('setup.avatar.upload')}</Button
+    >
+    <Button variant="ghost" block onclick={() => pickAvatar(undefined)}
+      >{$t('common.remove')}</Button
+    >
+    <Button variant="ghost" block onclick={() => (avatarPickerFor = null)}
+      >{$t('common.close')}</Button
+    >
+  </div>
+  <input
+    type="file"
+    accept="image/*"
+    hidden
+    bind:this={avatarFileInput}
+    onchange={(e) => void onAvatarFile(e)}
+  />
+</Modal>
 
 <style>
   .wizard {
@@ -486,6 +691,62 @@
   .player-row :global(.field) {
     flex: 1;
   }
+  .avatar-btn {
+    background: none;
+    border: none;
+    padding: var(--space-1);
+    min-inline-size: 48px;
+    min-block-size: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: var(--radius-pill);
+  }
+  .avatar-title {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-heading);
+    margin-block-end: var(--space-3);
+  }
+  .emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-2);
+    margin-block-end: var(--space-4);
+  }
+  .emoji-option {
+    min-block-size: 48px;
+    font-size: 28px;
+    background: var(--color-bg);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .avatar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .add-row {
+    display: flex;
+    gap: var(--space-2);
+  }
+  .profile-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .roster-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .qr {
+    inline-size: 140px;
+    block-size: 140px;
+    border-radius: var(--radius-md);
+    margin-block-start: var(--space-2);
+  }
   .section-title {
     font-size: var(--font-size-h2);
     font-weight: var(--font-weight-heading);
@@ -503,6 +764,8 @@
     align-items: flex-start;
     gap: var(--space-1);
     text-align: start;
+    /* Buttons don't inherit text color — without this titles render ButtonText-black in dark mode. */
+    color: var(--color-text);
     background: var(--color-surface);
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-lg);
@@ -578,7 +841,10 @@
   }
   .select-field {
     display: block;
-    margin-block-start: var(--space-2);
+    margin-block-start: var(--space-3);
+  }
+  .toggle-field {
+    margin-block-start: var(--space-3);
   }
   .select-label {
     display: block;

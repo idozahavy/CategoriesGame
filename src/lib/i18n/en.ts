@@ -1,14 +1,13 @@
 import type { LanguagePack } from '../types';
-import { enWords } from '../words/en';
 
-/** English — the default language pack. Word lists live in ./words/en/*.json (merged at build). */
+/** English — the default language pack. Word lists live in ../words/en.json (lazy-loaded). */
 export const en: LanguagePack = {
   code: 'en',
   name: 'English',
   dir: 'ltr',
   letters: 'A B C D E F G H I J K L M N O P R S T W'.split(' '),
   ui: {
-    'app.title': 'Categories!',
+    'app.title': 'Kategoria!',
     'home.new': 'New Game',
     'home.join': 'Join Game',
     'home.resume': 'Resume Game',
@@ -21,6 +20,28 @@ export const en: LanguagePack = {
     'setup.players': 'Who is playing?',
     'setup.addPlayer': 'Add player',
     'setup.playerName': 'Name',
+    'setup.avatar': 'Picture',
+    'setup.avatar.upload': 'Upload a picture',
+    'setup.wikidata': 'Online category check (Wikidata)',
+    'setup.funFact': 'Fun word facts (online)',
+    'setup.soloName': 'Me',
+    'setup.online': 'Online extras',
+    'setup.addBot': 'Add robot',
+    'setup.botName': 'Robo',
+    'setup.packs': 'Quick picks',
+    'setup.pack.classic': 'Classic',
+    'setup.pack.nature': 'Nature',
+    'setup.pack.town': 'Around town',
+    'setup.pack.home': 'At home',
+    'round.botThinking': '{name} is thinking…',
+    'review.funFact': 'Did you know?',
+    'lobby.scan': 'Or scan to join!',
+    'home.sound': 'Sound',
+    'learned.title': 'Learned words',
+    'learned.empty': 'Nothing here yet — play and the game will learn!',
+    'board.title': 'Family leaderboard',
+    'board.empty': 'Play a game to fill the board!',
+    'board.stats': '{games} games · {wins} wins',
     'setup.style.local': 'One shared screen',
     'setup.style.local.hint': 'Pass this device around',
     'setup.style.remote': 'Phones join in',
@@ -39,6 +60,7 @@ export const en: LanguagePack = {
     'setup.categories.hint': 'We picked five favorites — tap to change them!',
     'setup.addCategory': 'Add your own',
     'setup.rounds': 'Rounds',
+    'setup.rounds.endless': 'Endless',
     'setup.timer': 'Timer',
     'setup.timer.none': 'No timer',
     'setup.timer.relaxed': 'Relaxed (3 min)',
@@ -70,6 +92,7 @@ export const en: LanguagePack = {
     'error.roomCreate': "Couldn't open a room — check your internet and try again.",
 
     'round.title': 'Round {n} of {total}',
+    'round.settings': 'Game settings',
     'round.letter': 'Letter',
     'round.done': 'Done!',
     'round.pass': 'Pass to {name}',
@@ -93,6 +116,8 @@ export const en: LanguagePack = {
 
     'score.title': 'Scores',
     'score.winner': '{name} wins! 🎉',
+    'score.endGame': 'End the game',
+    'score.oneMore': 'One more round!',
     'score.playAgain': 'Play again',
     'score.home': 'Home',
 
@@ -137,6 +162,11 @@ export const en: LanguagePack = {
     object: 'Thing',
     sport: 'Sport',
     color: 'Color',
+    fruit: 'Fruit',
+    ocean: 'Sea animal',
+    vehicle: 'Vehicle',
+    kitchen: 'Kitchen thing',
+    clothing: 'Clothes',
+    body: 'Body part',
   },
-  words: enWords,
 };

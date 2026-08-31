@@ -15,7 +15,7 @@ export interface RoundCategory {
 }
 
 export type GuestMessage =
-  | { type: 'hello'; name: string }
+  | { type: 'hello'; name: string; avatar?: string }
   | { type: 'answers'; roundIndex: number; answers: Record<string, string> };
 
 export type HostMessage =
@@ -37,6 +37,7 @@ export type HostMessage =
 export interface GuestInfo {
   playerId: string;
   name: string;
+  avatar?: string;
 }
 
 export type JoinFailure = 'not-found' | 'network';
@@ -66,10 +67,27 @@ function sanitizeName(raw: unknown): string {
   return name === '' ? 'Player' : name;
 }
 
+/** Longest accepted avatar payload — a ≤512px WebP data URL stays well under this. */
+const MAX_AVATAR_LENGTH = 400_000;
+
+/** Accept only a short emoji string or a bounded data:image URL from guests. */
+function sanitizeAvatar(raw: unknown): string | undefined {
+  if (typeof raw !== 'string' || raw === '') return undefined;
+  if (raw.startsWith('data:image/') && raw.length <= MAX_AVATAR_LENGTH) return raw;
+  if (!raw.startsWith('data:') && raw.length <= 8) return raw;
+  return undefined;
+}
+
 function isGuestMessage(v: unknown): v is GuestMessage {
   if (typeof v !== 'object' || v === null) return false;
   const m = v as Record<string, unknown>;
-  if (m['type'] === 'hello') return typeof m['name'] === 'string';
+  if (m['type'] === 'hello') {
+    if (typeof m['name'] !== 'string') return false;
+    const avatar = m['avatar'];
+    return (
+      avatar === undefined || (typeof avatar === 'string' && avatar.length <= MAX_AVATAR_LENGTH)
+    );
+  }
   if (m['type'] === 'answers') {
     if (typeof m['roundIndex'] !== 'number') return false;
     const answers = m['answers'];
@@ -139,14 +157,62 @@ export function createRoom(attempts = 3): Promise<HostRoom> {
   });
 }
 
-function buildHostRoom(code: string, peer: Peer): HostRoom {
+/**
+ * Re-register a room under its original code after the host page reloaded.
+ * The room starts locked with an empty (disconnected) seat per known player,
+ * so guests rejoin their seats by name exactly like a dropped-connection
+ * reconnect. Retries briefly — the broker may still hold the pre-reload peer.
+ */
+export function reopenRoom(code: string, players: GuestInfo[], attempts = 3): Promise<HostRoom> {
+  return new Promise((resolve, reject) => {
+    const normalized = normalizeRoomCode(code);
+    const peer = new Peer(PEER_PREFIX + normalized);
+    let settled = false;
+
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      peer.destroy();
+      reject(new Error('network'));
+    }, JOIN_TIMEOUT_MS);
+
+    peer.on('open', () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolve(buildHostRoom(normalized, peer, players));
+    });
+
+    peer.on('error', (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      peer.destroy();
+      if (err.type === 'unavailable-id' && attempts > 1) {
+        setTimeout(() => {
+          resolve(reopenRoom(code, players, attempts - 1));
+        }, 2000);
+      } else {
+        reject(new Error('network'));
+      }
+    });
+  });
+}
+
+function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
   interface Seat {
     /** null while the guest is disconnected (kept for reconnects after lock). */
     conn: DataConnection | null;
     name: string;
+    avatar?: string;
   }
   const seats = new Map<string, Seat>();
   let locked = false;
+  if (seed) {
+    // Reopened room: every player already has a seat, waiting for its guest.
+    for (const p of seed) seats.set(p.playerId, { conn: null, name: p.name, avatar: p.avatar });
+    locked = true;
+  }
   let guestsChangeCb: ((guests: GuestInfo[]) => void) | null = null;
   let guestMessageCb: ((playerId: string, msg: GuestMessage) => void) | null = null;
   let seatCounter = 0;
@@ -155,7 +221,7 @@ function buildHostRoom(code: string, peer: Peer): HostRoom {
   let lastScores: HostMessage | null = null;
 
   const guests = (): GuestInfo[] =>
-    [...seats.entries()].map(([playerId, s]) => ({ playerId, name: s.name }));
+    [...seats.entries()].map(([playerId, s]) => ({ playerId, name: s.name, avatar: s.avatar }));
 
   const broadcast = (msg: HostMessage): void => {
     if (msg.type === 'round') {
@@ -215,7 +281,11 @@ function buildHostRoom(code: string, peer: Peer): HostRoom {
         }
         seatCounter += 1;
         const playerId = `guest-${String(seatCounter)}-${String(Date.now() % 100000)}`;
-        seats.set(playerId, { conn, name: uniqueName(wanted) });
+        seats.set(playerId, {
+          conn,
+          name: uniqueName(wanted),
+          avatar: sanitizeAvatar(data.avatar),
+        });
         seatId = playerId;
         void conn.send({ type: 'welcome', playerId } satisfies HostMessage);
         notifyRoster();
@@ -293,7 +363,7 @@ export interface GuestSession {
 }
 
 /** Join a room by code; rejects with Error('not-found' | 'network'). */
-export function joinRoom(code: string, name: string): Promise<GuestSession> {
+export function joinRoom(code: string, name: string, avatar?: string): Promise<GuestSession> {
   return new Promise((resolve, reject) => {
     const peer = new Peer();
     let settled = false;
@@ -320,7 +390,7 @@ export function joinRoom(code: string, name: string): Promise<GuestSession> {
     peer.on('open', () => {
       const conn = peer.connect(PEER_PREFIX + normalizeRoomCode(code), { reliable: true });
       conn.on('open', () => {
-        void conn.send({ type: 'hello', name } satisfies GuestMessage);
+        void conn.send({ type: 'hello', name, avatar } satisfies GuestMessage);
       });
       conn.on('data', (data) => {
         if (!isHostMessage(data)) return;

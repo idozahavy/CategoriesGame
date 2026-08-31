@@ -8,8 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Categories!',
-        short_name: 'Categories!',
+        name: 'Kategoria',
+        short_name: 'Kategoria',
         description: 'Kid-friendly word game — find words, beat the clock, have fun!',
         // Colors mirror design/tokens.json (light theme bg + primary).
         theme_color: '#0E7C72',
@@ -26,7 +26,7 @@ export default defineConfig({
         // Precache the whole static build (JS, CSS, fonts, word lists) so
         // solo and pass-&-play work fully offline; dictionary checking and
         // P2P already degrade gracefully without network.
-        globPatterns: ['**/*.{js,css,html,png,woff2}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
       },
     }),
   ],

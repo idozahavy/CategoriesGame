@@ -1,8 +1,9 @@
 <script lang="ts">
   import { game, screen, updateGame } from '../lib/stores';
   import { t } from '../lib/i18n';
-  import { totalScores, createGame, startNextRound } from '../lib/game';
-  import { saveGame } from '../lib/db';
+  import { totalScores, createGame, startNextRound, isFinished } from '../lib/game';
+  import { saveGame, recordGameResult } from '../lib/db';
+  import { playFanfare, vibrate } from '../lib/sound';
   import { getActiveRoom, setActiveRoom } from '../lib/p2p';
   import Button from '../lib/ui/Button.svelte';
   import ScoreRow from '../lib/ui/ScoreRow.svelte';
@@ -11,14 +12,57 @@
     if (!$game) screen.set('home');
   });
 
-  // Reaching the scoreboard ends the game.
-  $effect(() => {
-    if ($game && $game.status !== 'finished') {
-      updateGame((g) => {
-        g.status = 'finished';
-      });
+  // An unfinished game (endless, or peeking mid-way) gets a live-standings
+  // view — the game only ends here when its rounds ran out or via the
+  // explicit "end game" button.
+  const isOver = $derived($game !== null && ($game.status === 'finished' || isFinished($game)));
+
+  /** Ends the game for real: lifetime stats land and the fanfare plays. */
+  function finalize(): void {
+    const g = $game;
+    if (!g || g.status === 'finished') return;
+    if (g.statsRecorded !== true) {
+      const totals = totalScores(g);
+      const top = Math.max(0, ...totals.values());
+      for (const p of g.players) {
+        if (p.isBot === true) continue;
+        void recordGameResult(p.name, totals.get(p.id) ?? 0, (totals.get(p.id) ?? 0) === top);
+      }
     }
+    playFanfare();
+    vibrate(200);
+    updateGame((s) => {
+      s.status = 'finished';
+      s.statsRecorded = true;
+    });
+  }
+
+  // A game that played all its rounds is over the moment it lands here.
+  $effect(() => {
+    if ($game && $game.status !== 'finished' && isFinished($game)) finalize();
   });
+
+  let advancing = false;
+  function nextRound(): void {
+    if (advancing) return;
+    advancing = true;
+    updateGame((g) => {
+      startNextRound(g);
+    });
+    screen.set('round');
+  }
+
+  /** The scoreboard never traps a game: even an ended one can pick up again. */
+  function oneMoreRound(): void {
+    if (advancing) return;
+    advancing = true;
+    updateGame((g) => {
+      g.status = 'playing';
+      if (g.settings.endless !== true) g.settings.roundCount += 1;
+      startNextRound(g);
+    });
+    screen.set('round');
+  }
 
   const standings = $derived.by(() => {
     if (!$game) return [];
@@ -37,7 +81,7 @@
   // Remote game: guests see the final scores on their own devices too.
   let sentScores = false;
   $effect(() => {
-    if ($game?.settings.remote !== true || sentScores || standings.length === 0) return;
+    if (!isOver || $game?.settings.remote !== true || sentScores || standings.length === 0) return;
     sentScores = true;
     getActiveRoom()?.broadcast({
       type: 'scores',
@@ -76,16 +120,18 @@
 </script>
 
 {#if $game}
-  <div class="confetti" aria-hidden="true">
-    {#each confettiDots as i (i)}
-      <span
-        class="dot"
-        style="inset-inline-start:{dotLeft(i)}; background:{dotColor(i)}; animation-delay:{dotDelay(
-          i,
-        )};"
-      ></span>
-    {/each}
-  </div>
+  {#if isOver}
+    <div class="confetti" aria-hidden="true">
+      {#each confettiDots as i (i)}
+        <span
+          class="dot"
+          style="inset-inline-start:{dotLeft(i)}; background:{dotColor(
+            i,
+          )}; animation-delay:{dotDelay(i)};"
+        ></span>
+      {/each}
+    </div>
+  {/if}
 
   <h1 class="title">{$t('score.title')}</h1>
 
@@ -93,17 +139,30 @@
     {#each standings as s (s.player.id)}
       <div class="row-wrap" class:top={s.score === topScore}>
         {#if s.score === topScore}<span class="crown">👑</span>{/if}
-        <ScoreRow name={s.player.name} score={s.score} colorIndex={s.player.colorIndex} />
+        <ScoreRow
+          name={s.player.name}
+          score={s.score}
+          colorIndex={s.player.colorIndex}
+          avatar={s.player.avatar}
+        />
       </div>
     {/each}
   </div>
 
-  <p class="winner">{winnerText}</p>
+  {#if isOver}
+    <p class="winner">{winnerText}</p>
 
-  <div class="actions">
-    <Button variant="accent" block onclick={playAgain}>{$t('score.playAgain')}</Button>
-    <Button variant="secondary" block onclick={goHome}>{$t('score.home')}</Button>
-  </div>
+    <div class="actions">
+      <Button variant="secondary" block onclick={oneMoreRound}>{$t('score.oneMore')}</Button>
+      <Button variant="accent" block onclick={playAgain}>{$t('score.playAgain')}</Button>
+      <Button variant="ghost" block onclick={goHome}>{$t('score.home')}</Button>
+    </div>
+  {:else}
+    <div class="actions">
+      <Button variant="primary" block onclick={nextRound}>{$t('review.next')}</Button>
+      <Button variant="danger" block onclick={finalize}>{$t('score.endGame')}</Button>
+    </div>
+  {/if}
 {/if}
 
 <style>

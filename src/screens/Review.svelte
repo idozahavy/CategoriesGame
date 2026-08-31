@@ -2,7 +2,8 @@
   import { onMount } from 'svelte';
   import { game, screen, updateGame } from '../lib/stores';
   import { t, categoryName } from '../lib/i18n';
-  import { checkWord, learnWord } from '../lib/validation';
+  import { checkWord, learnWord, wordFact } from '../lib/validation';
+  import { playDing } from '../lib/sound';
   import { scoreRound, isFinished, startNextRound } from '../lib/game';
   import type { AnswerEntry } from '../lib/types';
   import TopBar from '../lib/ui/TopBar.svelte';
@@ -21,6 +22,12 @@
     object: '📦',
     sport: '⚽',
     color: '🎨',
+    fruit: '🍎',
+    ocean: '🐠',
+    vehicle: '🚗',
+    kitchen: '🍴',
+    clothing: '👕',
+    body: '👃',
   };
   const DEFAULT_EMOJI = '📝';
 
@@ -35,6 +42,10 @@
   let currentVote = $state<AnswerEntry | null>(null);
   let scored = $state(false);
   let advancing = $state(false);
+  let fact = $state<{ word: string; text: string } | null>(null);
+
+  /** A robot never votes and doesn't make a game multiplayer for checks. */
+  const humanCount = $derived(($game?.players ?? []).filter((p) => p.isBot !== true).length);
 
   function categoryFor(catId: string) {
     return $game?.settings.categories.find((c) => c.id === catId) ?? null;
@@ -55,27 +66,34 @@
     if (!r) return;
     const pending = r.answers.filter((a) => a.status === 'pending' && a.word !== '');
     const votes: AnswerEntry[] = [];
-    for (const a of pending) {
-      let verdict: 'valid' | 'invalid' | 'vote';
-      try {
-        verdict = await checkWord(
-          a.word,
-          a.categoryId,
-          r.letter,
-          g.settings.language,
-          g.settings.validation,
-          g.players.length === 1,
-        );
-      } catch {
-        verdict = 'vote';
-      }
+    // All words at once — checks are independent and usually cache-warm
+    // (prefetched as words were submitted), so this resolves near-instantly.
+    const verdicts = await Promise.all(
+      pending.map(async (a) => {
+        try {
+          return await checkWord(
+            a.word,
+            a.categoryId,
+            r.letter,
+            g.settings.language,
+            g.settings.validation,
+            humanCount === 1,
+            g.settings.wikidataCheck !== false,
+          );
+        } catch {
+          return 'vote' as const;
+        }
+      }),
+    );
+    pending.forEach((a, i) => {
+      const verdict = verdicts[i];
       if (verdict === 'invalid') {
         markInvalid(a.playerId, a.categoryId);
       } else if (verdict === 'vote') {
-        if (g.players.length > 1) votes.push(a);
+        if (humanCount > 1) votes.push(a);
         // solo: auto-accept, stays pending until scored
       }
-    }
+    });
     checking = false;
     voteQueue = votes;
     advanceVote();
@@ -112,6 +130,21 @@
       const r = g.rounds[g.currentRound];
       if (r) scoreRound(g, r);
     });
+    playDing();
+    void loadFact();
+  }
+
+  /** Optional "did you know" for the round's best unique word. */
+  async function loadFact(): Promise<void> {
+    const g = $game;
+    const r = g ? g.rounds[g.currentRound] : null;
+    if (!g || !r || g.settings.funFacts === false) return;
+    const best = r.answers
+      .filter((a) => a.status === 'valid' && a.word !== '')
+      .sort((a, b) => b.word.length - a.word.length)[0];
+    if (!best) return;
+    const text = await wordFact(best.word, g.settings.language);
+    if (text !== null) fact = { word: best.word, text };
   }
 
   function next() {
@@ -183,6 +216,17 @@
           </ul>
         </Card>
       {/each}
+      {#if fact !== null}
+        <Card>
+          <div class="fact">
+            <span class="fact-emoji">✨</span>
+            <div class="fact-body">
+              <b class="fact-title">{$t('review.funFact')}</b>
+              <span class="fact-text">{fact.word} — {fact.text}</span>
+            </div>
+          </div>
+        </Card>
+      {/if}
     </div>
 
     <div class="bottom-actions">
@@ -192,6 +236,7 @@
         <Button variant="primary" block disabled={advancing} onclick={next}
           >{$t('review.next')}</Button
         >
+        <Button variant="ghost" block onclick={finish}>{$t('review.finish')}</Button>
       {/if}
     </div>
   {/if}
@@ -300,6 +345,26 @@
   }
   .bottom-actions {
     display: flex;
+    gap: var(--space-3);
+  }
+  .fact {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+  .fact-emoji {
+    font-size: 24px;
+  }
+  .fact-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .fact-title {
+    font-weight: var(--font-weight-subheading);
+  }
+  .fact-text {
+    color: var(--color-muted);
   }
   .vote-emoji {
     font-size: 48px;

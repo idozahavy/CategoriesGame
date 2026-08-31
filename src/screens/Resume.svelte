@@ -7,6 +7,8 @@
   import { t } from '../lib/i18n';
   import { screen, game } from '../lib/stores';
   import { listSaves, loadGame, deleteGame } from '../lib/db';
+  import { screenForGame } from '../lib/game';
+  import { reopenRoom, setActiveRoom } from '../lib/p2p';
   import type { SaveSummary } from '../lib/types';
 
   let saves = $state<SaveSummary[]>([]);
@@ -20,8 +22,8 @@
   async function refresh(): Promise<void> {
     loading = true;
     try {
-      // Finished games have nothing to resume; remote games would need guests to rejoin.
-      saves = (await listSaves()).filter((s) => s.status !== 'finished' && !s.remote);
+      // Finished games have nothing to resume.
+      saves = (await listSaves()).filter((s) => s.status !== 'finished');
     } finally {
       loading = false;
     }
@@ -30,15 +32,20 @@
   async function continueGame(id: string): Promise<void> {
     const loaded = await loadGame(id);
     if (!loaded) return;
-    game.set(loaded);
-    const current = loaded.rounds[loaded.currentRound];
-    if (current?.phase === 'review') {
-      screen.set('review');
-    } else if (loaded.status === 'playing' && current?.phase === 'entry') {
-      screen.set('round');
-    } else {
-      screen.set('scoreboard');
+    if (loaded.settings.remote === true && loaded.settings.roomCode !== undefined) {
+      // Reopen the room under its old code so guests can rejoin their seats.
+      try {
+        const room = await reopenRoom(
+          loaded.settings.roomCode,
+          loaded.players.map((p) => ({ playerId: p.id, name: p.name, avatar: p.avatar })),
+        );
+        setActiveRoom(room);
+      } catch {
+        // Room couldn't be reopened — the host can still end the round alone.
+      }
     }
+    game.set(loaded);
+    screen.set(screenForGame(loaded));
   }
 
   function askDelete(id: string): void {
@@ -80,8 +87,15 @@
               <b class="players">{save.playerNames.join(', ')}</b>
               <span class="progress">
                 {$t('resume.progress')
-                  .replace('{n}', String(Math.min(save.roundsPlayed + 1, save.roundCount)))
-                  .replace('{total}', String(save.roundCount))}
+                  .replace(
+                    '{n}',
+                    String(
+                      save.endless
+                        ? save.roundsPlayed + 1
+                        : Math.min(save.roundsPlayed + 1, save.roundCount),
+                    ),
+                  )
+                  .replace('{total}', save.endless ? '∞' : String(save.roundCount))}
               </span>
               <span class="date">
                 {new Date(save.updatedAt).toLocaleDateString()}

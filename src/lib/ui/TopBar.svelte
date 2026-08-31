@@ -1,9 +1,11 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   let {
     title,
     onback,
     backLabel = 'Back',
-  }: { title: string; onback?: () => void; backLabel?: string } = $props();
+    action,
+  }: { title: string; onback?: () => void; backLabel?: string; action?: Snippet } = $props();
 </script>
 
 <header class="topbar">
@@ -23,6 +25,9 @@
     </button>
   {/if}
   <h1 class="title">{title}</h1>
+  {#if action}
+    {@render action()}
+  {/if}
 </header>
 
 <style>
@@ -34,6 +39,7 @@
     padding: var(--space-2);
   }
   .title {
+    flex: 1;
     font-size: var(--font-size-h2);
     font-weight: var(--font-weight-heading);
     line-height: var(--line-height-h2);

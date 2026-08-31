@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:lan": "vite --host --port 5180",
     "build": "vite build",
+    "deploy": "npm run build && npx wrangler pages deploy dist --project-name=kategoria --branch=main",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "eslint .",
@@ -20,6 +22,7 @@
     "@eslint/js": "^9.15.0",
     "@sveltejs/vite-plugin-svelte": "^5.0.0",
     "@tsconfig/svelte": "^5.0.4",
+    "@types/qrcode": "^1.5.6",
     "eslint": "^9.15.0",
     "eslint-plugin-svelte": "^2.46.0",
     "globals": "^15.12.0",
@@ -35,6 +38,7 @@
   "dependencies": {
     "@fontsource-variable/nunito": "^5.1.0",
     "idb": "^8.0.0",
-    "peerjs": "^1.5.5"
+    "peerjs": "^1.5.5",
+    "qrcode": "^1.5.4"
   }
 }

@@ -2,10 +2,18 @@ import { derived, writable, get } from 'svelte/store';
 import type { LanguagePack } from '../types';
 import { en } from './en';
 import { he } from './he';
+import { es } from './es';
+import { ar } from './ar';
+import { fr } from './fr';
+import { ru } from './ru';
 
 const packs = new Map<string, LanguagePack>([
   [en.code, en],
   [he.code, he],
+  [es.code, es],
+  [ar.code, ar],
+  [fr.code, fr],
+  [ru.code, ru],
 ]);
 
 export function registerPack(pack: LanguagePack): void {

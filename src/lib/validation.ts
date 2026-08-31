@@ -1,7 +1,8 @@
 import type { ValidationMode } from './types';
 import { getPack } from './i18n';
 import { matchesLetter } from './game';
-import { addLearnedWord, getLearnedWords } from './db';
+import { addLearnedWord, getLearnedWords, removeLearnedWord } from './db';
+import { ensureWords, getWords } from './words';
 
 export type WordVerdict =
   | 'valid' // accepted automatically
@@ -22,6 +23,7 @@ export async function checkWord(
   language: string,
   mode: ValidationMode,
   solo = false,
+  wikidata = true,
 ): Promise<WordVerdict> {
   const trimmed = word.trim();
   if (trimmed.length < 2) return 'invalid'; // a lone letter is never a word
@@ -33,11 +35,23 @@ export async function checkWord(
   const useDictionary = mode === 'hybrid' || mode === 'dictionary';
 
   if (useBundled) {
+    await ensureWords(language);
     if (inBundledList(trimmed, categoryId, language)) return 'valid';
     if (await inLearnedList(trimmed, categoryId, language)) return 'valid';
   }
 
   if (useDictionary) {
+    if (wikidata && categoryId in WIKIDATA_CLASS) {
+      const fit = await inWikidataCategory(trimmed, categoryId, language);
+      if (fit === 'fit') {
+        void learnWord(language, categoryId, trimmed);
+        return 'valid';
+      }
+      // Wikidata knows types, the existence check below doesn't — a definitive
+      // "doesn't fit" goes to the group instead of auto-passing as "exists".
+      if (fit === 'nofit') return 'vote';
+      // 'error' (offline/slow/unmapped) — fall through to the existence check.
+    }
     const known = await inPublicDictionary(trimmed, language);
     if (known === 'known') {
       // Remember it so future games validate instantly and offline.
@@ -49,6 +63,22 @@ export async function checkWord(
 
   if (mode === 'bundled') return 'vote';
   return 'vote';
+}
+
+/**
+ * Fire-and-forget check for a just-submitted word: warms the word-list,
+ * learned-word, and dictionary caches so the review screen resolves instantly.
+ */
+export function prefetchWordCheck(
+  word: string,
+  categoryId: string,
+  letter: string,
+  language: string,
+  mode: ValidationMode,
+  solo = false,
+  wikidata = true,
+): void {
+  void checkWord(word, categoryId, letter, language, mode, solo, wikidata).catch(() => undefined);
 }
 
 /** In-memory cache over the persistent learned-words store, one set per lang:category. */
@@ -93,11 +123,165 @@ export async function learnWord(language: string, categoryId: string, word: stri
   }
 }
 
+/** Un-learn a word (bad group vote etc.): drops it from cache and storage. */
+export async function forgetWord(
+  language: string,
+  categoryId: string,
+  word: string,
+): Promise<void> {
+  const normalized = word.trim().toLocaleLowerCase();
+  learnedCache.get(`${language}:${categoryId}`)?.delete(normalized);
+  try {
+    await removeLearnedWord(language, categoryId, normalized);
+  } catch {
+    // storage unavailable — the cache removal still applies this session
+  }
+}
+
+const factCache = new Map<string, string | null>();
+
+/**
+ * A one-line "did you know" description of the word from Wikidata, in the
+ * given language. Never throws; null when nothing kid-worthy is found.
+ */
+export async function wordFact(word: string, language: string): Promise<string | null> {
+  const w = word.trim().toLocaleLowerCase();
+  const key = `${language}:${w}`;
+  const cached = factCache.get(key);
+  if (cached !== undefined) return cached;
+  try {
+    const url =
+      'https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&limit=5&format=json&origin=*' +
+      `&search=${encodeURIComponent(w)}&language=${language}&uselang=${language}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      search?: { description?: string; match?: { text?: string } }[];
+    };
+    const hit = (data.search ?? []).find(
+      (s) =>
+        s.match?.text?.toLocaleLowerCase() === w &&
+        typeof s.description === 'string' &&
+        s.description !== '',
+    );
+    const fact = hit?.description ?? null;
+    factCache.set(key, fact);
+    return fact;
+  } catch {
+    return null;
+  }
+}
+
+/** Lists must be loaded first via ensureWords(); unloaded languages match nothing. */
 export function inBundledList(word: string, categoryId: string, language: string): boolean {
-  const list = getPack(language).words[categoryId];
+  const list = getWords(language)[categoryId];
   if (!list) return false;
   const w = word.trim().toLocaleLowerCase();
   return list.includes(w);
+}
+
+/**
+ * Wikidata class per builtin category, for the category-fit check.
+ * `object` is deliberately unmapped — "physical object" is too broad to help.
+ */
+const WIKIDATA_CLASS: Record<string, string> = {
+  animal: 'Q729',
+  food: 'Q2095',
+  city: 'Q486972', // human settlement — covers cities, towns, villages
+  country: 'Q6256',
+  name: 'Q202444', // given name
+  plant: 'Q756',
+  profession: 'Q28640',
+  sport: 'Q349',
+  color: 'Q1075',
+};
+
+const wikidataCache = new Map<string, 'fit' | 'nofit'>();
+
+/** WDQS throttles bursty anonymous clients — run at most one check at a time. */
+let wikidataQueue: Promise<unknown> = Promise.resolve();
+
+/**
+ * After a failure (timeout/429), skip Wikidata for a minute instead of letting
+ * every queued check burn its full timeout — words fall through to the
+ * existence check immediately.
+ */
+let wikidataDownUntil = 0;
+const WIKIDATA_COOLDOWN_MS = 60_000;
+
+/**
+ * Resolve a word to Wikidata item ids in the given language. The search API is
+ * case-insensitive and knows aliases, but matches prefixes too — keep only
+ * results whose matched label/alias is exactly the word.
+ */
+async function searchWikidataIds(word: string, language: string): Promise<string[]> {
+  const url =
+    'https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&limit=5&format=json&origin=*' +
+    `&search=${encodeURIComponent(word)}&language=${language}&uselang=${language}`;
+  const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+  if (!res.ok) throw new Error(`wbsearchentities ${String(res.status)}`);
+  const data = (await res.json()) as {
+    search?: { id: string; match?: { text?: string } }[];
+  };
+  return (data.search ?? [])
+    .filter((s) => s.match?.text?.toLocaleLowerCase() === word)
+    .map((s) => s.id)
+    .filter((id) => /^Q\d+$/.test(id));
+}
+
+/**
+ * Ask Wikidata whether the word names something of the category's class, in
+ * the given language. Two steps: entity search (fast), then one ASK query from
+ * the fixed candidate ids walking instance-of/subclass-of plus parent-taxon
+ * (animals and plants live in the biology taxonomy, not the ontology).
+ * Never throws; timeouts and unmapped categories come back as 'error'.
+ */
+export async function inWikidataCategory(
+  word: string,
+  categoryId: string,
+  language: string,
+): Promise<'fit' | 'nofit' | 'error'> {
+  const target = WIKIDATA_CLASS[categoryId];
+  if (target === undefined) return 'error';
+  const w = word.trim().toLocaleLowerCase();
+  const key = `${language}:${categoryId}:${w}`;
+  const cached = wikidataCache.get(key);
+  if (cached) return cached;
+  if (Date.now() < wikidataDownUntil) return 'error';
+  const run = wikidataQueue.then(async (): Promise<'fit' | 'nofit' | 'error'> => {
+    // An identical check queued ahead of us may have already resolved.
+    const settled = wikidataCache.get(key);
+    if (settled) return settled;
+    if (Date.now() < wikidataDownUntil) return 'error';
+    try {
+      const ids = await searchWikidataIds(w, language);
+      if (ids.length === 0) {
+        wikidataCache.set(key, 'nofit'); // Wikidata doesn't know the word at all
+        return 'nofit';
+      }
+      const query = `ASK { VALUES ?item { ${ids.map((id) => `wd:${id}`).join(' ')} } ?item (wdt:P31|wdt:P279|wdt:P171)* wd:${target} . }`;
+      const res = await fetch(
+        `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`,
+        {
+          signal: AbortSignal.timeout(8000),
+          headers: { Accept: 'application/sparql-results+json' },
+        },
+      );
+      if (!res.ok) {
+        wikidataDownUntil = Date.now() + WIKIDATA_COOLDOWN_MS;
+        return 'error';
+      }
+      const data = (await res.json()) as { boolean?: boolean };
+      const verdict = data.boolean === true ? 'fit' : 'nofit';
+      wikidataCache.set(key, verdict);
+      return verdict;
+    } catch {
+      wikidataDownUntil = Date.now() + WIKIDATA_COOLDOWN_MS;
+      return 'error';
+    }
+  });
+  wikidataQueue = run.catch(() => undefined);
+  return run;
 }
 
 const dictCache = new Map<string, 'known' | 'unknown'>();
