@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { game, screen, updateGame } from '../lib/stores';
   import { t, categoryName } from '../lib/i18n';
-  import { checkWord } from '../lib/validation';
+  import { checkWord, learnWord } from '../lib/validation';
   import { scoreRound, isFinished, startNextRound } from '../lib/game';
   import type { AnswerEntry } from '../lib/types';
   import TopBar from '../lib/ui/TopBar.svelte';
@@ -64,6 +64,7 @@
           r.letter,
           g.settings.language,
           g.settings.validation,
+          g.players.length === 1,
         );
       } catch {
         verdict = 'vote';
@@ -93,7 +94,13 @@
   function castVote(accept: boolean) {
     const a = currentVote;
     if (!a) return;
-    if (!accept) markInvalid(a.playerId, a.categoryId);
+    if (accept) {
+      // The group confirmed it's a real word for this category — remember it.
+      const lang = $game?.settings.language;
+      if (lang) void learnWord(lang, a.categoryId, a.word);
+    } else {
+      markInvalid(a.playerId, a.categoryId);
+    }
     voteQueue = voteQueue.slice(1);
     advanceVote();
   }

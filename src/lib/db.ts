@@ -1,29 +1,77 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { GameState, SaveSummary } from './types';
 
+/** Words the app has confirmed over past games (dictionary hits, accepted votes). */
+interface LearnedEntry {
+  /** `${language}:${categoryId}` */
+  key: string;
+  language: string;
+  categoryId: string;
+  /** Normalized (trimmed, lowercased), deduplicated. */
+  words: string[];
+}
+
 interface GameDB extends DBSchema {
   saves: {
     key: string;
     value: GameState;
     indexes: { updatedAt: number };
   };
+  learned: {
+    key: string;
+    value: LearnedEntry;
+  };
 }
 
 const DB_NAME = 'categories-game';
 const STORE = 'saves';
+const LEARNED_STORE = 'learned';
 
 let dbPromise: Promise<IDBPDatabase<GameDB>> | null = null;
 
 function db(): Promise<IDBPDatabase<GameDB>> {
   if (!dbPromise) {
-    dbPromise = openDB(DB_NAME, 1, {
-      upgrade(d) {
-        const store = d.createObjectStore(STORE, { keyPath: 'id' });
-        store.createIndex('updatedAt', 'updatedAt');
+    dbPromise = openDB(DB_NAME, 2, {
+      upgrade(d, oldVersion) {
+        if (oldVersion < 1) {
+          const store = d.createObjectStore(STORE, { keyPath: 'id' });
+          store.createIndex('updatedAt', 'updatedAt');
+        }
+        if (oldVersion < 2) {
+          d.createObjectStore(LEARNED_STORE, { keyPath: 'key' });
+        }
       },
     });
   }
   return dbPromise;
+}
+
+function learnedKey(language: string, categoryId: string): string {
+  return `${language}:${categoryId}`;
+}
+
+export async function getLearnedWords(language: string, categoryId: string): Promise<string[]> {
+  const entry = await (await db()).get(LEARNED_STORE, learnedKey(language, categoryId));
+  return entry?.words ?? [];
+}
+
+/** Add one normalized word to the persistent per-language/category list (idempotent). */
+export async function addLearnedWord(
+  language: string,
+  categoryId: string,
+  word: string,
+): Promise<void> {
+  const key = learnedKey(language, categoryId);
+  const d = await db();
+  const entry = (await d.get(LEARNED_STORE, key)) ?? { key, language, categoryId, words: [] };
+  if (entry.words.includes(word)) return;
+  entry.words.push(word);
+  await d.put(LEARNED_STORE, entry);
+}
+
+/** Everything learned so far, for export/inspection. */
+export async function listLearnedWords(): Promise<LearnedEntry[]> {
+  return (await db()).getAll(LEARNED_STORE);
 }
 
 export async function saveGame(state: GameState): Promise<void> {
