@@ -5,3 +5,5 @@ _Log undefined visual decisions here instead of improvising; the next `design-sc
 - App name/logo: mockups use a placeholder "🎪 Categories!" title. A real name + wordmark treatment is undecided.
 - Shared-screen (TV) type scale: tokens define the phone scale; a multiplier for the host/TV view (e.g., ×1.5) is not yet formalized.
 - Confetti/celebration visual spec (colors, particle count, duration) — motion tokens exist, the celebration composition itself is undefined.
+- Room-code display (P2P lobby): provisionally a surface card with the code in `--font-size-display` primary color at 0.25em letter-spacing (NewGame.svelte `.code-card`). Needs a real decision (own token/pattern? QR code?).
+- Remote waiting chips (host round screen): provisional pill chips flipping to success colors when a player has submitted (Round.svelte `.wait-chip`). Register as a component if kept.

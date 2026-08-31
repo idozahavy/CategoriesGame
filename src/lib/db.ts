@@ -51,5 +51,6 @@ export async function listSaves(): Promise<SaveSummary[]> {
       roundCount: g.settings.roundCount,
       language: g.settings.language,
       status: g.status,
+      remote: g.settings.remote === true,
     }));
 }

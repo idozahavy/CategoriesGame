@@ -20,8 +20,8 @@
   async function refresh(): Promise<void> {
     loading = true;
     try {
-      // Finished games have nothing left to resume.
-      saves = (await listSaves()).filter((s) => s.status !== 'finished');
+      // Finished games have nothing to resume; remote games would need guests to rejoin.
+      saves = (await listSaves()).filter((s) => s.status !== 'finished' && !s.remote);
     } finally {
       loading = false;
     }

@@ -3,6 +3,7 @@
   import { game, screen, updateGame } from '../lib/stores';
   import { t, categoryName } from '../lib/i18n';
   import { setAnswer, matchesLetter } from '../lib/game';
+  import { getActiveRoom, setActiveRoom, type GuestMessage } from '../lib/p2p';
   import TopBar from '../lib/ui/TopBar.svelte';
   import Modal from '../lib/ui/Modal.svelte';
   import Button from '../lib/ui/Button.svelte';
@@ -30,14 +31,32 @@
     if (!$game) screen.set('home');
   });
 
-  // Pass-the-device panel at round entry when several players share the screen.
+  const remote = $derived($game?.settings.remote === true);
+
+  // Pass-the-device panel at round entry when several players share the screen
+  // (remote guests each have their own device — no handoff needed).
   onMount(() => {
-    handoffOpen = players.length > 1;
+    handoffOpen = !remote && players.length > 1;
+    const room = remote ? getActiveRoom() : null;
+    if (!room) return;
+    room.onGuestMessage((playerId, msg) => {
+      handleGuestAnswers(playerId, msg);
+    });
+    return () => {
+      room.onGuestMessage(null);
+    };
   });
 
   const round = $derived($game ? $game.rounds[$game.currentRound] : null);
   const players = $derived($game?.players ?? []);
   const activePlayer = $derived(players.find((p) => p.id === round?.activePlayerId) ?? null);
+  const submittedSet = $derived(new Set(round?.submittedIds ?? []));
+  // Primitive-valued deriveds so the timer effect below only restarts when the
+  // turn/round actually changes — not on every game clone (e.g. remote answers).
+  const timerSeconds = $derived($game?.settings.timerSeconds ?? null);
+  const activePid = $derived(round?.activePlayerId ?? null);
+  const roundPhase = $derived(round?.phase ?? null);
+  const roundIndex = $derived(round?.index ?? -1);
 
   let answers = $state<Record<string, string>>({});
   let handoffOpen = $state(false);
@@ -61,14 +80,12 @@
 
   // Per-turn countdown; paused while the handoff panel is covering the screen.
   $effect(() => {
-    const seconds = $game?.settings.timerSeconds ?? null;
-    const pid = activePlayer?.id;
-    const phase = round?.phase;
-    if (!seconds || !pid || phase !== 'entry' || handoffOpen) {
+    void roundIndex; // restart per round
+    if (!timerSeconds || !activePid || roundPhase !== 'entry' || handoffOpen) {
       timeLeft = null;
       return;
     }
-    timeLeft = seconds;
+    timeLeft = timerSeconds;
     const id = setInterval(() => {
       timeLeft = (timeLeft ?? 1) - 1;
       if ((timeLeft ?? 0) <= 0) {
@@ -78,6 +95,60 @@
     }, 1000);
     return () => clearInterval(id);
   });
+
+  // Host: send each new round to the guests' devices exactly once.
+  let lastBroadcastIndex = -1;
+  $effect(() => {
+    const g = $game;
+    const r = round;
+    if (!remote || !g || !r || r.phase !== 'entry' || r.index === lastBroadcastIndex) return;
+    lastBroadcastIndex = r.index;
+    getActiveRoom()?.broadcast({
+      type: 'round',
+      roundIndex: r.index,
+      roundCount: g.settings.roundCount,
+      letter: r.letter,
+      seconds: g.settings.timerSeconds,
+      categories: r.categoryIds.map((catId) => {
+        const cat = categoryFor(catId);
+        return {
+          id: catId,
+          label: cat ? $categoryName(cat) : catId,
+          emoji: CATEGORY_EMOJI[catId] ?? DEFAULT_EMOJI,
+        };
+      }),
+    });
+  });
+
+  function handleGuestAnswers(playerId: string, msg: GuestMessage): void {
+    if (msg.type !== 'answers') return;
+    let allIn = false;
+    updateGame((g) => {
+      const r = g.rounds[g.currentRound];
+      if (!r || r.phase !== 'entry' || r.index !== msg.roundIndex) return;
+      for (const catId of r.categoryIds) {
+        const word = msg.answers[catId];
+        if (word !== undefined && word.trim() !== '') setAnswer(r, playerId, catId, word);
+      }
+      const submitted = new Set(r.submittedIds ?? []);
+      submitted.add(playerId);
+      r.submittedIds = [...submitted];
+      if (g.players.every((p) => submitted.has(p.id))) {
+        r.phase = 'review';
+        allIn = true;
+      }
+    });
+    getActiveRoom()?.sendTo(playerId, { type: 'received' });
+    if (allIn) screen.set('review');
+  }
+
+  function forceReview(): void {
+    updateGame((g) => {
+      const r = g.rounds[g.currentRound];
+      if (r && r.phase === 'entry') r.phase = 'review';
+    });
+    screen.set('review');
+  }
 
   function categoryFor(catId: string) {
     return $game?.settings.categories.find((c) => c.id === catId) ?? null;
@@ -112,9 +183,12 @@
 
   function handleTimeUp() {
     showTimeUp = true;
+    // The 1.2s pause doubles as a grace window in remote mode: guests'
+    // buzzer-beater answers still land while the round is officially open.
     setTimeout(() => {
       showTimeUp = false;
-      submitTurn();
+      if (remote) forceReview();
+      else submitTurn();
     }, 1200);
   }
 
@@ -124,6 +198,7 @@
 
   function confirmLeave() {
     showLeaveConfirm = false;
+    if (remote) setActiveRoom(null); // ends the room; guests are told
     screen.set('home');
   }
 </script>
@@ -152,26 +227,40 @@
       {/if}
     </div>
 
-    <div class="cards">
-      {#each round.categoryIds as catId (catId)}
-        {@const cat = categoryFor(catId)}
-        {@const val = answers[catId] ?? ''}
-        <Card>
-          <div class="cat-header">
-            <span class="cat-emoji">{CATEGORY_EMOJI[catId] ?? DEFAULT_EMOJI}</span>
-            <span class="cat-name">{cat ? $categoryName(cat) : catId}</span>
-          </div>
-          <TextInput
-            bind:value={() => answers[catId] ?? '', (v) => (answers[catId] = v)}
-            error={val !== '' && !matchesLetter(val, round.letter)
-              ? $t('round.letterHint').replace('{letter}', round.letter)
-              : ''}
-          />
-        </Card>
-      {/each}
-    </div>
+    {#if remote}
+      <div class="waiting-box">
+        <p class="waiting-title">{$t('round.waitingFor')}</p>
+        <div class="waiting-chips">
+          {#each players as p (p.id)}
+            <span class="wait-chip" class:done={submittedSet.has(p.id)}>
+              {submittedSet.has(p.id) ? '✔ ' : ''}{p.name}
+            </span>
+          {/each}
+        </div>
+      </div>
+      <Button variant="secondary" block onclick={forceReview}>{$t('round.finishNow')}</Button>
+    {:else}
+      <div class="cards">
+        {#each round.categoryIds as catId (catId)}
+          {@const cat = categoryFor(catId)}
+          {@const val = answers[catId] ?? ''}
+          <Card>
+            <div class="cat-header">
+              <span class="cat-emoji">{CATEGORY_EMOJI[catId] ?? DEFAULT_EMOJI}</span>
+              <span class="cat-name">{cat ? $categoryName(cat) : catId}</span>
+            </div>
+            <TextInput
+              bind:value={() => answers[catId] ?? '', (v) => (answers[catId] = v)}
+              error={val !== '' && !matchesLetter(val, round.letter)
+                ? $t('round.letterHint').replace('{letter}', round.letter)
+                : ''}
+            />
+          </Card>
+        {/each}
+      </div>
 
-    <Button variant="primary" block onclick={submitTurn}>{$t('round.done')}</Button>
+      <Button variant="primary" block onclick={submitTurn}>{$t('round.done')}</Button>
+    {/if}
   {/if}
 
   <Modal open={showLeaveConfirm}>
@@ -226,6 +315,37 @@
     flex-direction: column;
     gap: var(--space-3);
     flex: 1;
+  }
+  .waiting-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+  }
+  .waiting-title {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-heading);
+  }
+  .waiting-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+  .wait-chip {
+    background: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-pill);
+    padding-block: var(--space-2);
+    padding-inline: var(--space-4);
+    font-weight: var(--font-weight-subheading);
+  }
+  .wait-chip.done {
+    background: var(--color-success);
+    color: var(--color-on-success);
+    border-color: var(--color-success);
   }
   .cat-header {
     display: flex;

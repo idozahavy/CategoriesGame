@@ -25,7 +25,8 @@
 - Every mutation of a running game goes through `updateGame()` (it persists to IndexedDB and returns a deep clone so `$derived` chains re-evaluate — same-reference mutation gets memoized away). Never mutate `$game` directly.
 - `GameState` must hold only plain data: copy anything sourced from `$state` (e.g. `.map((x) => ({ ...x }))`) before putting it into a game — `$state` proxies throw `DataCloneError` in `structuredClone` and IndexedDB.
 - Pure functions in `game.ts` take state explicitly; no store access outside components/`stores.ts`.
-- No network calls except `validation.ts` (public dictionary); every fetch has a timeout and degrades gracefully (never throws to the UI).
+- No network calls except `validation.ts` (public dictionary) and `p2p.ts` (WebRTC signaling via PeerJS); every network operation has a timeout and degrades gracefully (never throws raw errors to the UI).
+- P2P: the host screen is authoritative; guests render what the host sends. All messages received over a DataConnection are untrusted — validate with the type guards in `p2p.ts` before use. The live room lives only in `p2p.ts`'s `activeRoom` singleton, never inside `GameState`.
 
 ## UI text & styling
 
@@ -52,4 +53,5 @@ Prefix by area: `feat:`, `fix:`, `chore:`, `design:` / `design-approve:` / `desi
 
 ## Changelog
 
+- 1.1.0 (2026-08-31) — P2P layer: allow network in `p2p.ts`; host-authoritative message rules; `$state`-proxy plain-data rule for `GameState`.
 - 1.0.0 (2026-08-30) — Initial code scheme: current-style Prettier, strict type-checked ESLint, npm-scripts enforcement (user-approved).

@@ -7,6 +7,7 @@
   import { screen, game } from '../lib/stores';
   import { saveGame } from '../lib/db';
   import { createGame, startNextRound, newId, DEFAULT_CATEGORY_IDS } from '../lib/game';
+  import { createRoom, setActiveRoom, type HostRoom, type GuestInfo } from '../lib/p2p';
   import type {
     CategoryDef,
     GameMode,
@@ -63,6 +64,14 @@
 
   // Step 1
   let players = $state<PlayerDraft[]>([{ id: newId(), name: '' }]);
+  let playStyle = $state<'local' | 'remote'>('local');
+  // The room object stays non-reactive (it holds live connections); only the
+  // bits the template shows are $state.
+  let room: HostRoom | null = null;
+  let roomCode = $state('');
+  let roomError = $state('');
+  let openingRoom = $state(false);
+  let guestList = $state<GuestInfo[]>([]);
 
   // Step 2
   let mode = $state<GameMode>('classic');
@@ -79,12 +88,46 @@
   let gameLanguage = $state('en');
 
   const allCategories: CategoryDef[] = $derived([...builtinCategories, ...customCategories]);
+  const playerCount = $derived(playStyle === 'remote' ? guestList.length : players.length);
   const canProceedCategories = $derived(selectedCategoryIds.length > 0);
   const stepTitle = $derived.by(() => {
     if (step === 1) return $t('setup.players');
     if (step === 2) return $t('setup.mode');
     return $t('setup.step3');
   });
+
+  function selectLocal(): void {
+    playStyle = 'local';
+    stepError = '';
+    if (room) {
+      setActiveRoom(null); // closes the room; joined guests are told it ended
+      room = null;
+      roomCode = '';
+      guestList = [];
+    }
+  }
+
+  async function selectRemote(): Promise<void> {
+    playStyle = 'remote';
+    stepError = '';
+    if (room || openingRoom) return;
+    openingRoom = true;
+    roomError = '';
+    try {
+      const r = await createRoom();
+      room = r;
+      setActiveRoom(r);
+      roomCode = r.code;
+      r.onGuestsChange((guests) => {
+        guestList = guests;
+      });
+      guestList = r.guests();
+    } catch {
+      roomError = $t('error.roomCreate');
+    } finally {
+      openingRoom = false;
+    }
+  }
 
   function addPlayer(): void {
     if (players.length >= 8) return;
@@ -122,10 +165,14 @@
 
   /** Empty string when everything up to the current step is valid; the error message otherwise. */
   function validateStep(): string {
-    const names = players.map((p) => p.name.trim());
-    if (names.some((n) => n === '')) return $t('setup.error.emptyName');
-    if (new Set(names.map((n) => n.toLocaleLowerCase())).size !== names.length) {
-      return $t('setup.error.duplicateName');
+    if (playStyle === 'remote') {
+      if (guestList.length === 0) return $t('setup.error.noGuests');
+    } else {
+      const names = players.map((p) => p.name.trim());
+      if (names.some((n) => n === '')) return $t('setup.error.emptyName');
+      if (new Set(names.map((n) => n.toLocaleLowerCase())).size !== names.length) {
+        return $t('setup.error.duplicateName');
+      }
     }
     if (step >= 2 && selectedCategoryIds.length === 0) return $t('setup.error.noCategories');
     return '';
@@ -155,11 +202,19 @@
     stepError = validateStep();
     if (stepError !== '') return;
     starting = true;
-    const finalPlayers: PlayerDef[] = players.map((p, i) => ({
-      id: p.id,
-      name: p.name.trim(),
-      colorIndex: i + 1,
-    }));
+    const remote = playStyle === 'remote';
+    const finalPlayers: PlayerDef[] = remote
+      ? guestList.map((g, i) => ({
+          id: g.playerId,
+          name: g.name,
+          colorIndex: (i % 8) + 1,
+        }))
+      : players.map((p, i) => ({
+          id: p.id,
+          name: p.name.trim(),
+          colorIndex: i + 1,
+        }));
+    if (remote) room?.lock();
     // Copy to plain objects: $state proxies can't pass structuredClone/IndexedDB.
     const categories = allCategories
       .filter((c) => selectedCategoryIds.includes(c.id))
@@ -172,6 +227,7 @@
       categories,
       roundCount,
       timerSeconds,
+      remote,
     };
     const state = createGame(settings, finalPlayers);
     startNextRound(state);
@@ -186,23 +242,69 @@
 
   <div class="step-content">
     {#if step === 1}
-      <div class="players-list">
-        {#each players as player, i (player.id)}
-          <div class="player-row">
-            <TextInput
-              bind:value={player.name}
-              placeholder={`${$t('setup.playerName')} ${i + 1}`}
-              oninput={() => (stepError = '')}
-            />
-            {#if i > 0}
-              <Button variant="ghost" onclick={() => removePlayer(player.id)}>✕</Button>
-            {/if}
-          </div>
-        {/each}
+      <div class="mode-grid">
+        <button
+          type="button"
+          class="mode-card"
+          class:selected={playStyle === 'local'}
+          onclick={selectLocal}
+        >
+          <span class="mode-title">{$t('setup.style.local')}</span>
+          <span class="mode-hint">{$t('setup.style.local.hint')}</span>
+        </button>
+        <button
+          type="button"
+          class="mode-card"
+          class:selected={playStyle === 'remote'}
+          onclick={() => void selectRemote()}
+        >
+          <span class="mode-title">{$t('setup.style.remote')}</span>
+          <span class="mode-hint">{$t('setup.style.remote.hint')}</span>
+        </button>
       </div>
-      <Button variant="secondary" onclick={addPlayer} disabled={players.length >= 8}>
-        {$t('setup.addPlayer')}
-      </Button>
+
+      {#if playStyle === 'local'}
+        <div class="players-list">
+          {#each players as player, i (player.id)}
+            <div class="player-row">
+              <TextInput
+                bind:value={player.name}
+                placeholder={`${$t('setup.playerName')} ${i + 1}`}
+                oninput={() => (stepError = '')}
+              />
+              {#if i > 0}
+                <Button variant="ghost" onclick={() => removePlayer(player.id)}>✕</Button>
+              {/if}
+            </div>
+          {/each}
+        </div>
+        <Button variant="secondary" onclick={addPlayer} disabled={players.length >= 8}>
+          {$t('setup.addPlayer')}
+        </Button>
+      {:else if openingRoom}
+        <p class="section-hint">{$t('lobby.opening')}</p>
+      {:else if roomError}
+        <p class="step-error">{roomError}</p>
+        <Button variant="secondary" onclick={() => void selectRemote()}
+          >{$t('join.tryAgain')}</Button
+        >
+      {:else if roomCode}
+        <div class="code-card">
+          <span class="code-label">{$t('lobby.code')}</span>
+          <div class="room-code">{roomCode}</div>
+        </div>
+        <p class="section-hint">{$t('lobby.hint')}</p>
+        {#if guestList.length === 0}
+          <p class="section-hint">{$t('lobby.waiting')}</p>
+        {:else}
+          <p class="joined-count">{$t('lobby.joined').replace('{n}', String(guestList.length))}</p>
+          <div class="roster">
+            {#each guestList as g (g.playerId)}
+              <span class="roster-chip">{g.name}</span>
+            {/each}
+          </div>
+        {/if}
+      {/if}
     {:else if step === 2}
       <div class="mode-grid">
         <button
@@ -263,7 +365,7 @@
         <Button variant="secondary" onclick={addCustomCategory}>{$t('setup.addCategory')}</Button>
       </div>
     {:else}
-      {#if players.length > 1}
+      {#if playerCount > 1}
         <h2 class="section-title">{$t('setup.scoring')}</h2>
         <div class="mode-grid">
           <button
@@ -499,6 +601,47 @@
   .section-hint {
     color: var(--color-muted);
     font-size: var(--font-size-small);
+  }
+  .code-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    background: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-4);
+  }
+  .code-label {
+    color: var(--color-muted);
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-subheading);
+  }
+  .room-code {
+    font-size: var(--font-size-display);
+    font-weight: var(--font-weight-display);
+    line-height: var(--line-height-display);
+    letter-spacing: 0.25em;
+    padding-inline-start: 0.25em; /* visually recenters the letter-spaced code */
+    color: var(--color-primary);
+  }
+  .joined-count {
+    font-weight: var(--font-weight-subheading);
+    color: var(--color-primary);
+  }
+  .roster {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .roster-chip {
+    background: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-pill);
+    padding-block: var(--space-1);
+    padding-inline: var(--space-3);
+    font-weight: var(--font-weight-subheading);
   }
   .footer {
     flex-shrink: 0;

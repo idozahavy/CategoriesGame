@@ -4,12 +4,15 @@
   import { t } from '../lib/i18n';
   import { screen } from '../lib/stores';
   import { listSaves } from '../lib/db';
+  import { setActiveRoom } from '../lib/p2p';
 
   let hasSaves = $state(false);
 
   onMount(async () => {
+    // Arriving home always ends any hosted room (e.g. via the browser back trap).
+    setActiveRoom(null);
     try {
-      hasSaves = (await listSaves()).some((s) => s.status !== 'finished');
+      hasSaves = (await listSaves()).some((s) => s.status !== 'finished' && !s.remote);
     } catch {
       hasSaves = false;
     }

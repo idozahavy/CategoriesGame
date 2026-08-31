@@ -42,6 +42,8 @@ export interface GameSettings {
   roundCount: number;
   /** null = no timer. */
   timerSeconds: number | null;
+  /** true = players answer on their own devices via a P2P room (host screen orchestrates). */
+  remote?: boolean;
 }
 
 export type AnswerStatus = 'pending' | 'valid' | 'shared' | 'invalid';
@@ -65,6 +67,8 @@ export interface RoundState {
   phase: RoundPhase;
   /** Which player is currently entering words (pass-&-play), null = simultaneous/host. */
   activePlayerId: string | null;
+  /** Remote mode: players who already sent their answers this round. */
+  submittedIds?: string[];
 }
 
 export type GameStatus = 'setup' | 'playing' | 'finished';
@@ -90,6 +94,8 @@ export interface SaveSummary {
   roundCount: number;
   language: LanguageCode;
   status: GameStatus;
+  /** Remote (P2P) games can't be resumed — guests would need to rejoin. */
+  remote: boolean;
 }
 
 export type Screen = 'home' | 'new-game' | 'join' | 'resume' | 'round' | 'review' | 'scoreboard';

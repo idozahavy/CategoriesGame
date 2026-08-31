@@ -3,6 +3,7 @@
   import { t } from '../lib/i18n';
   import { totalScores, createGame, startNextRound } from '../lib/game';
   import { saveGame } from '../lib/db';
+  import { getActiveRoom, setActiveRoom } from '../lib/p2p';
   import Button from '../lib/ui/Button.svelte';
   import ScoreRow from '../lib/ui/ScoreRow.svelte';
 
@@ -33,6 +34,18 @@
   );
   const winnerText = $derived($t('score.winner').replace('{name}', winnerNames.join(' & ')));
 
+  // Remote game: guests see the final scores on their own devices too.
+  let sentScores = false;
+  $effect(() => {
+    if ($game?.settings.remote !== true || sentScores || standings.length === 0) return;
+    sentScores = true;
+    getActiveRoom()?.broadcast({
+      type: 'scores',
+      rows: standings.map((s) => ({ name: s.player.name, score: s.score })),
+      winner: winnerNames.join(' & '),
+    });
+  });
+
   const confettiDots = Array.from({ length: 24 }, (_, i) => i);
   function dotColor(i: number) {
     return `var(--color-player-${(i % 8) + 1})`;
@@ -57,6 +70,7 @@
     updateGame((g) => {
       g.status = 'finished';
     });
+    if ($game?.settings.remote === true) setActiveRoom(null);
     screen.set('home');
   }
 </script>
