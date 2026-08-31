@@ -1,26 +1,21 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import Button from '../lib/ui/Button.svelte';
-  import TextInput from '../lib/ui/TextInput.svelte';
-  import Chip from '../lib/ui/Chip.svelte';
-  import TopBar from '../lib/ui/TopBar.svelte';
-  import Modal from '../lib/ui/Modal.svelte';
-  import Avatar from '../lib/ui/Avatar.svelte';
-  import { AVATAR_EMOJI, fileToAvatar } from '../lib/avatar';
   import QRCode from 'qrcode';
-  import { t, categoryName, uiLanguage, availablePacks } from '../lib/i18n';
-  import { screen, game } from '../lib/stores';
-  import { saveGame, listProfiles, touchProfile } from '../lib/db';
+  import { onMount } from 'svelte';
+
+  import { AVATAR_EMOJI, fileToAvatar } from '../lib/avatar';
   import { BOT_AVATAR } from '../lib/bot';
-  import type { PlayerProfile } from '../lib/types';
+  import { listProfiles, saveGame, touchProfile } from '../lib/db';
   import {
     createGame,
-    startNextRound,
-    newId,
     DEFAULT_CATEGORY_IDS,
+    newId,
+    startNextRound,
     TIMER_OPTIONS,
   } from '../lib/game';
-  import { createRoom, setActiveRoom, type HostRoom, type GuestInfo } from '../lib/p2p';
+  import { availablePacks, categoryName, t, uiLanguage } from '../lib/i18n';
+  import { createRoom, type GuestInfo, type HostRoom, setActiveRoom } from '../lib/p2p';
+  import { game, screen } from '../lib/stores';
+  import type { PlayerProfile } from '../lib/types';
   import type {
     CategoryDef,
     GameMode,
@@ -29,6 +24,12 @@
     ScoringSystem,
     ValidationMode,
   } from '../lib/types';
+  import Avatar from '../lib/ui/Avatar.svelte';
+  import Button from '../lib/ui/Button.svelte';
+  import Chip from '../lib/ui/Chip.svelte';
+  import Modal from '../lib/ui/Modal.svelte';
+  import TextInput from '../lib/ui/TextInput.svelte';
+  import TopBar from '../lib/ui/TopBar.svelte';
 
   type PlayerDraft = { id: string; name: string; avatar?: string; isBot?: boolean };
 

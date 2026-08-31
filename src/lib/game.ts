@@ -1,5 +1,5 @@
-import type { GameSettings, GameState, PlayerDef, RoundState, Screen } from './types';
 import { getPack } from './i18n';
+import type { GameSettings, GameState, PlayerDef, RoundState, Screen } from './types';
 
 export const DEFAULT_CATEGORY_IDS = ['animal', 'food', 'city', 'name', 'object'] as const;
 

@@ -18,7 +18,7 @@
 - `src/lib/ui/` — presentational components only (PascalCase). No game logic, no store imports, no data fetching; inputs via `$props`.
 - `src/lib/` — logic/services in lowercase modules: `types.ts` (all shared domain types — extend it, don't redeclare shapes locally), `game.ts` (pure game rules), `db.ts` (IndexedDB only), `validation.ts` (word checking), `stores.ts`.
 - `src/lib/i18n/` — one `LanguagePack` per file; `src/lib/words/` — word-list data.
-- Imports: relative paths within `src`; import types with `import type`.
+- Imports: relative paths within `src`; import types with `import type`; order is enforced by `simple-import-sort` (external packages, then `./`/`../` modules) — `npm run lint:fix` sorts, don't hand-order.
 
 ## Domain rules
 
@@ -53,6 +53,7 @@ Prefix by area: `feat:`, `fix:`, `chore:`, `design:` / `design-approve:` / `desi
 
 ## Changelog
 
+- 1.3.0 (2026-08-31) — import auto-sorting via eslint-plugin-simple-import-sort (user-approved).
 - 1.2.0 (2026-08-31) — i18n completeness gate (`npm run check:i18n`); UI language persisted + auto-detected; five gates instead of four.
 - 1.1.0 (2026-08-31) — P2P layer: allow network in `p2p.ts`; host-authoritative message rules; `$state`-proxy plain-data rule for `GameState`.
 - 1.0.0 (2026-08-30) — Initial code scheme: current-style Prettier, strict type-checked ESLint, npm-scripts enforcement (user-approved).

@@ -1,13 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import Button from '../lib/ui/Button.svelte';
-  import Chip from '../lib/ui/Chip.svelte';
-  import { t, uiLanguage, availablePacks } from '../lib/i18n';
-  import { theme } from '../lib/theme';
+
+  import { listSaves } from '../lib/db';
+  import { availablePacks, t, uiLanguage } from '../lib/i18n';
+  import { setActiveRoom } from '../lib/p2p';
   import { soundOn } from '../lib/sound';
   import { screen } from '../lib/stores';
-  import { listSaves } from '../lib/db';
-  import { setActiveRoom } from '../lib/p2p';
+  import { theme } from '../lib/theme';
+  import Button from '../lib/ui/Button.svelte';
+  import Chip from '../lib/ui/Chip.svelte';
 
   let hasSaves = $state(false);
 

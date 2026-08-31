@@ -1,7 +1,8 @@
 import js from '@eslint/js';
-import ts from 'typescript-eslint';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
+import ts from 'typescript-eslint';
 
 export default ts.config(
   { ignores: ['dist/', 'node_modules/', 'design/'] },
@@ -10,6 +11,11 @@ export default ts.config(
   ...svelte.configs['flat/recommended'],
   {
     languageOptions: { globals: { ...globals.browser } },
+    plugins: { 'simple-import-sort': simpleImportSort },
+    rules: {
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
+    },
   },
   // Svelte components parse <script lang="ts"> with the TS parser inside the svelte parser.
   {

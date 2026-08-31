@@ -1,15 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { game, screen, updateGame } from '../lib/stores';
-  import { t, categoryName } from '../lib/i18n';
-  import { checkWord, learnWord, wordFact } from '../lib/validation';
+
+  import { isFinished, scoreRound, startNextRound } from '../lib/game';
+  import { categoryName, t } from '../lib/i18n';
   import { playDing } from '../lib/sound';
-  import { scoreRound, isFinished, startNextRound } from '../lib/game';
+  import { game, screen, updateGame } from '../lib/stores';
   import type { AnswerEntry } from '../lib/types';
-  import TopBar from '../lib/ui/TopBar.svelte';
-  import Modal from '../lib/ui/Modal.svelte';
   import Button from '../lib/ui/Button.svelte';
   import Card from '../lib/ui/Card.svelte';
+  import Modal from '../lib/ui/Modal.svelte';
+  import TopBar from '../lib/ui/TopBar.svelte';
+  import { checkWord, learnWord, wordFact } from '../lib/validation';
 
   const CATEGORY_EMOJI: Record<string, string> = {
     animal: '🐶',

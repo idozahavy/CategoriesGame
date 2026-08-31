@@ -1,6 +1,8 @@
 import '@fontsource-variable/nunito';
 import './app.css';
+
 import { mount } from 'svelte';
+
 import App from './App.svelte';
 import { applyDir } from './lib/i18n';
 

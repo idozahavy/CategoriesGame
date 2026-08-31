@@ -1,5 +1,5 @@
-import { ensureWords, getWords } from './words';
 import { matchesLetter } from './game';
+import { ensureWords, getWords } from './words';
 
 /** The robot player: picks words from the bundled lists on its turn. */
 

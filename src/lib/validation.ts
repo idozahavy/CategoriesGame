@@ -1,7 +1,7 @@
-import type { ValidationMode } from './types';
-import { getPack } from './i18n';
-import { matchesLetter, normalizeWord } from './game';
 import { addLearnedWord, getLearnedWords, removeLearnedWord } from './db';
+import { matchesLetter, normalizeWord } from './game';
+import { getPack } from './i18n';
+import type { ValidationMode } from './types';
 import { ensureWords, getWords } from './words';
 
 /** Per-request timeout for the quick dictionary/entity lookups. */

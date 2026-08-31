@@ -1,6 +1,7 @@
 import { writable } from 'svelte/store';
-import type { GameState, Screen } from './types';
+
 import { saveGame } from './db';
+import type { GameState, Screen } from './types';
 
 export const screen = writable<Screen>('home');
 

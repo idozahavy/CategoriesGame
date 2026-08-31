@@ -1,8 +1,8 @@
 // Verifies every language pack defines the same UI keys and category names.
 // Usage: node scripts/check-i18n.mjs   (exit 1 on any gap)
-import process from 'node:process';
 import { readdirSync, readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const i18nDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'lib', 'i18n');

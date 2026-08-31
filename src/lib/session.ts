@@ -1,5 +1,5 @@
-import type { GameState, Screen } from './types';
 import { readStorage, removeStorage, writeStorage } from './storage';
+import type { GameState, Screen } from './types';
 
 /**
  * Remembers which game was on screen so a page reload (or the mobile browser

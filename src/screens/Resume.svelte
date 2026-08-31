@@ -1,15 +1,16 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+
+  import { deleteGame, listSaves, loadGame } from '../lib/db';
+  import { screenForGame } from '../lib/game';
+  import { t } from '../lib/i18n';
+  import { reopenRoom, setActiveRoom } from '../lib/p2p';
+  import { game, screen } from '../lib/stores';
+  import type { SaveSummary } from '../lib/types';
   import Button from '../lib/ui/Button.svelte';
   import Card from '../lib/ui/Card.svelte';
   import Modal from '../lib/ui/Modal.svelte';
   import TopBar from '../lib/ui/TopBar.svelte';
-  import { t } from '../lib/i18n';
-  import { screen, game } from '../lib/stores';
-  import { listSaves, loadGame, deleteGame } from '../lib/db';
-  import { screenForGame } from '../lib/game';
-  import { reopenRoom, setActiveRoom } from '../lib/p2p';
-  import type { SaveSummary } from '../lib/types';
 
   let saves = $state<SaveSummary[]>([]);
   let loading = $state(true);

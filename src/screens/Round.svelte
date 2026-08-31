@@ -1,22 +1,23 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
-  import { game, screen, updateGame } from '../lib/stores';
-  import { t, categoryName } from '../lib/i18n';
-  import { setAnswer, matchesLetter, TIMER_OPTIONS } from '../lib/game';
-  import type { GameState, RoundState, ScoringSystem, ValidationMode } from '../lib/types';
-  import Chip from '../lib/ui/Chip.svelte';
-  import { prefetchWordCheck } from '../lib/validation';
-  import { botAnswers, BOT_THINK_MS } from '../lib/bot';
+
+  import { BOT_THINK_MS, botAnswers } from '../lib/bot';
+  import { matchesLetter, setAnswer, TIMER_OPTIONS } from '../lib/game';
+  import { categoryName, t } from '../lib/i18n';
+  import { getActiveRoom, type GuestMessage, setActiveRoom } from '../lib/p2p';
   import { playTick } from '../lib/sound';
-  import { getActiveRoom, setActiveRoom, type GuestMessage } from '../lib/p2p';
-  import TopBar from '../lib/ui/TopBar.svelte';
-  import Modal from '../lib/ui/Modal.svelte';
+  import { game, screen, updateGame } from '../lib/stores';
+  import type { GameState, RoundState, ScoringSystem, ValidationMode } from '../lib/types';
+  import Avatar from '../lib/ui/Avatar.svelte';
   import Button from '../lib/ui/Button.svelte';
   import Card from '../lib/ui/Card.svelte';
-  import TextInput from '../lib/ui/TextInput.svelte';
+  import Chip from '../lib/ui/Chip.svelte';
   import LetterTile from '../lib/ui/LetterTile.svelte';
+  import Modal from '../lib/ui/Modal.svelte';
+  import TextInput from '../lib/ui/TextInput.svelte';
   import TimerPill from '../lib/ui/TimerPill.svelte';
-  import Avatar from '../lib/ui/Avatar.svelte';
+  import TopBar from '../lib/ui/TopBar.svelte';
+  import { prefetchWordCheck } from '../lib/validation';
 
   const CATEGORY_EMOJI: Record<string, string> = {
     animal: '🐶',

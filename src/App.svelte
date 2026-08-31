@@ -1,21 +1,22 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { screen, game } from './lib/stores';
-  import { pack, uiLanguage, persistLanguage } from './lib/i18n';
-  import { theme, persistTheme } from './lib/theme';
+
   import { loadGame } from './lib/db';
   import { screenForGame } from './lib/game';
-  import { readActiveGameId, persistActiveGame } from './lib/session';
+  import { pack, persistLanguage, uiLanguage } from './lib/i18n';
   import { reopenRoom, setActiveRoom } from './lib/p2p';
+  import { persistActiveGame, readActiveGameId } from './lib/session';
+  import { game, screen } from './lib/stores';
+  import { persistTheme, theme } from './lib/theme';
   import Home from './screens/Home.svelte';
-  import NewGame from './screens/NewGame.svelte';
   import Join from './screens/Join.svelte';
-  import Resume from './screens/Resume.svelte';
-  import Round from './screens/Round.svelte';
-  import Review from './screens/Review.svelte';
-  import Scoreboard from './screens/Scoreboard.svelte';
-  import LearnedWords from './screens/LearnedWords.svelte';
   import Leaderboard from './screens/Leaderboard.svelte';
+  import LearnedWords from './screens/LearnedWords.svelte';
+  import NewGame from './screens/NewGame.svelte';
+  import Resume from './screens/Resume.svelte';
+  import Review from './screens/Review.svelte';
+  import Round from './screens/Round.svelte';
+  import Scoreboard from './screens/Scoreboard.svelte';
 
   // Keep <html dir/lang> in sync with the active language (RTL support),
   // and remember the choice across visits.

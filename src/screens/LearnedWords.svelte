@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { screen } from '../lib/stores';
-  import { t, getPack } from '../lib/i18n';
+
   import { listLearnedWords } from '../lib/db';
-  import { forgetWord } from '../lib/validation';
-  import TopBar from '../lib/ui/TopBar.svelte';
+  import { getPack, t } from '../lib/i18n';
+  import { screen } from '../lib/stores';
   import Card from '../lib/ui/Card.svelte';
+  import TopBar from '../lib/ui/TopBar.svelte';
+  import { forgetWord } from '../lib/validation';
 
   interface Group {
     language: string;

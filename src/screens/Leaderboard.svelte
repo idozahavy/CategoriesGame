@@ -1,11 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { screen } from '../lib/stores';
-  import { t } from '../lib/i18n';
+
   import { listProfiles } from '../lib/db';
+  import { t } from '../lib/i18n';
+  import { screen } from '../lib/stores';
   import type { PlayerProfile } from '../lib/types';
-  import TopBar from '../lib/ui/TopBar.svelte';
   import Avatar from '../lib/ui/Avatar.svelte';
+  import TopBar from '../lib/ui/TopBar.svelte';
 
   let profiles = $state<PlayerProfile[]>([]);
   let loaded = $state(false);

@@ -1,4 +1,5 @@
 import Peer, { type DataConnection } from 'peerjs';
+
 import { newId } from './game';
 import { readStorage, writeStorage } from './storage';
 

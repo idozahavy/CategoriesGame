@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store';
+
 import { readStorage, writeStorage } from './storage';
 
 /** Light/dark theme — dark values live under [data-theme="dark"] in the design tokens. */

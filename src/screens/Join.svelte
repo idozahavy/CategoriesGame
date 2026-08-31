@@ -1,18 +1,19 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import Button from '../lib/ui/Button.svelte';
-  import TextInput from '../lib/ui/TextInput.svelte';
-  import Card from '../lib/ui/Card.svelte';
-  import TopBar from '../lib/ui/TopBar.svelte';
-  import Modal from '../lib/ui/Modal.svelte';
-  import Avatar from '../lib/ui/Avatar.svelte';
+
   import { AVATAR_EMOJI, fileToAvatar } from '../lib/avatar';
-  import LetterTile from '../lib/ui/LetterTile.svelte';
-  import TimerPill from '../lib/ui/TimerPill.svelte';
-  import { t } from '../lib/i18n';
-  import { screen } from '../lib/stores';
   import { matchesLetter } from '../lib/game';
-  import { joinRoom, normalizeRoomCode, type GuestSession, type HostMessage } from '../lib/p2p';
+  import { t } from '../lib/i18n';
+  import { type GuestSession, type HostMessage, joinRoom, normalizeRoomCode } from '../lib/p2p';
+  import { screen } from '../lib/stores';
+  import Avatar from '../lib/ui/Avatar.svelte';
+  import Button from '../lib/ui/Button.svelte';
+  import Card from '../lib/ui/Card.svelte';
+  import LetterTile from '../lib/ui/LetterTile.svelte';
+  import Modal from '../lib/ui/Modal.svelte';
+  import TextInput from '../lib/ui/TextInput.svelte';
+  import TimerPill from '../lib/ui/TimerPill.svelte';
+  import TopBar from '../lib/ui/TopBar.svelte';
 
   type GuestPhase = 'form' | 'connecting' | 'lobby' | 'entry' | 'waiting' | 'scores' | 'error';
   type RoundMsg = Extract<HostMessage, { type: 'round' }>;

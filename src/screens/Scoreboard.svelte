@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { game, screen, updateGame } from '../lib/stores';
+  import { recordGameResult, saveGame } from '../lib/db';
+  import { createGame, isFinished, startNextRound, totalScores } from '../lib/game';
   import { t } from '../lib/i18n';
-  import { totalScores, createGame, startNextRound, isFinished } from '../lib/game';
-  import { saveGame, recordGameResult } from '../lib/db';
-  import { playFanfare, vibrate } from '../lib/sound';
   import { getActiveRoom, setActiveRoom } from '../lib/p2p';
+  import { playFanfare, vibrate } from '../lib/sound';
+  import { game, screen, updateGame } from '../lib/stores';
   import Button from '../lib/ui/Button.svelte';
   import ScoreRow from '../lib/ui/ScoreRow.svelte';
 

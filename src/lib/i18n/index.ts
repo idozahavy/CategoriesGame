@@ -1,11 +1,12 @@
-import { derived, writable, get } from 'svelte/store';
-import type { LanguagePack } from '../types';
+import { derived, get, writable } from 'svelte/store';
+
 import { readStorage, writeStorage } from '../storage';
-import { en } from './en';
-import { he } from './he';
-import { es } from './es';
+import type { LanguagePack } from '../types';
 import { ar } from './ar';
+import { en } from './en';
+import { es } from './es';
 import { fr } from './fr';
+import { he } from './he';
 import { ru } from './ru';
 
 const packs = new Map<string, LanguagePack>([
