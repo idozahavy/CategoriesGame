@@ -49,9 +49,10 @@ Prefix by area: `feat:`, `fix:`, `chore:`, `design:` / `design-approve:` / `desi
 
 ## Verify
 
-`npm run format:check` · `npm run lint` · `npm run check` (svelte-check) · `npm run verify:design`. All four must pass before a commit that touches `src/`.
+`npm run format:check` · `npm run lint` · `npm run check` (svelte-check) · `npm run check:i18n` · `npm run verify:design`. All five must pass before a commit that touches `src/`.
 
 ## Changelog
 
+- 1.2.0 (2026-08-31) — i18n completeness gate (`npm run check:i18n`); UI language persisted + auto-detected; five gates instead of four.
 - 1.1.0 (2026-08-31) — P2P layer: allow network in `p2p.ts`; host-authoritative message rules; `$state`-proxy plain-data rule for `GameState`.
 - 1.0.0 (2026-08-30) — Initial code scheme: current-style Prettier, strict type-checked ESLint, npm-scripts enforcement (user-approved).

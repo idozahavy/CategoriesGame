@@ -12,6 +12,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "check:i18n": "node scripts/check-i18n.mjs",
     "verify:design": "node design/scripts/verify-design.mjs --pretty",
     "build:styleguide": "node design/scripts/build-style-guide.mjs"
   },

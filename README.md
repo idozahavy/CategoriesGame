@@ -1,6 +1,6 @@
 # Categories! 🎪
 
-A kid-friendly Scattergories-style word game. Play alone or together on one shared screen (phone-to-phone joining planned). No backend — a static web app.
+A kid-friendly Scattergories-style word game. Play alone, together on one shared screen, or with everyone joining from their own phone via a room code (WebRTC, no backend — a static web app).
 
 ## Features
 
@@ -19,8 +19,16 @@ npm run dev
 ```
 
 - `npm run check` — type-check (svelte-check)
+- `npm run check:i18n` — every language pack must define every UI key and category name
 - `npm run verify:design` — design-scheme linter (tokens-only styling, contrast, RTL-safe CSS)
 - `npm run build:styleguide` — regenerate `design/style-guide.html` + `design/exports/tokens.css` from `design/tokens.json`
+
+## Adding a language
+
+1. Copy `src/lib/i18n/en.ts` to `<code>.ts` and translate every `ui` string and `categoryNames` entry; set `code`, native `name`, `dir` (`ltr`/`rtl`), and the `letters` the round wheel may draw.
+2. Add a word list module in `src/lib/words/<code>.ts` (categoryId → lowercase words) and reference it from the pack.
+3. Register the pack in the `packs` map in `src/lib/i18n/index.ts`.
+4. Run `npm run check:i18n` — it fails if any key is missing. The language then appears automatically in the Home switcher and the game-language setting; RTL layouts come free via logical CSS.
 
 ## Design system
 

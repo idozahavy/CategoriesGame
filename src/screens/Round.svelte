@@ -218,6 +218,7 @@
         .replace('{n}', String(round.index + 1))
         .replace('{total}', String($game.settings.roundCount))}
       onback={onBack}
+      backLabel={$t('setup.back')}
     />
 
     <div class="letter-row">

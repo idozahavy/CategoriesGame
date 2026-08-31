@@ -13,6 +13,7 @@ export const en: LanguagePack = {
     'home.join': 'Join Game',
     'home.resume': 'Resume Game',
     'home.tagline': 'Find words. Beat the clock. Have fun!',
+    'home.languageLabel': 'Language',
 
     'setup.players': 'Who is playing?',
     'setup.addPlayer': 'Add player',
@@ -119,6 +120,7 @@ export const en: LanguagePack = {
     'common.cancel': 'Cancel',
     'common.ok': 'OK',
     'common.close': 'Close',
+    'common.remove': 'Remove',
   },
   categoryNames: {
     animal: 'Animal',

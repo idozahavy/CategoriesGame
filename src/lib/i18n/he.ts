@@ -36,6 +36,7 @@ export const he: LanguagePack = {
     'home.join': 'הצטרפות למשחק',
     'home.resume': 'המשך משחק',
     'home.tagline': 'מוצאים מילים. מנצחים את השעון. נהנים!',
+    'home.languageLabel': 'שפה',
 
     'setup.players': 'מי משחק?',
     'setup.addPlayer': 'הוספת שחקן',
@@ -142,6 +143,7 @@ export const he: LanguagePack = {
     'common.cancel': 'ביטול',
     'common.ok': 'אישור',
     'common.close': 'סגירה',
+    'common.remove': 'הסרה',
   },
   categoryNames: {
     animal: 'חיה',

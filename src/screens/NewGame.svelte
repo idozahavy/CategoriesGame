@@ -85,7 +85,7 @@
   let timerSeconds = $state<number | null>(120);
   let roundCount = $state(3);
   let validation = $state<ValidationMode>('hybrid');
-  let gameLanguage = $state('en');
+  let gameLanguage = $state($uiLanguage);
 
   const allCategories: CategoryDef[] = $derived([...builtinCategories, ...customCategories]);
   const playerCount = $derived(playStyle === 'remote' ? guestList.length : players.length);
@@ -238,7 +238,7 @@
 </script>
 
 <div class="wizard">
-  <TopBar title={stepTitle} onback={goBack} />
+  <TopBar title={stepTitle} onback={goBack} backLabel={$t('setup.back')} />
 
   <div class="step-content">
     {#if step === 1}
@@ -344,7 +344,7 @@
             <button
               type="button"
               class="chip-remove"
-              aria-label="Remove"
+              aria-label={$t('common.remove')}
               onclick={() => removeCustomCategory(cat.id)}
             >
               ✕

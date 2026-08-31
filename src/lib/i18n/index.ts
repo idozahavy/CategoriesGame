@@ -20,8 +20,34 @@ export function getPack(code: string): LanguagePack {
   return packs.get(code) ?? en;
 }
 
+const LANGUAGE_STORAGE_KEY = 'categories-ui-language';
+
+/** Saved choice first, then the browser's preferred language, then English. */
+function detectInitialLanguage(): string {
+  try {
+    const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (saved !== null && packs.has(saved)) return saved;
+  } catch {
+    // storage unavailable (private mode etc.) — fall through to detection
+  }
+  for (const tag of navigator.languages) {
+    const short = tag.toLocaleLowerCase().split('-')[0] ?? '';
+    if (packs.has(short)) return short;
+  }
+  return 'en';
+}
+
+/** Remember the choice for the next visit. Called reactively from App.svelte. */
+export function persistLanguage(code: string): void {
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
+  } catch {
+    // storage unavailable — the session still works, just won't be remembered
+  }
+}
+
 /** Language of the UI (game content language can differ per game). */
-export const uiLanguage = writable<string>('en');
+export const uiLanguage = writable<string>(detectInitialLanguage());
 
 export const pack = derived(uiLanguage, (code) => getPack(code));
 

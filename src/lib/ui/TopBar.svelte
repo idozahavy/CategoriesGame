@@ -1,10 +1,14 @@
 <script lang="ts">
-  let { title, onback }: { title: string; onback?: () => void } = $props();
+  let {
+    title,
+    onback,
+    backLabel = 'Back',
+  }: { title: string; onback?: () => void; backLabel?: string } = $props();
 </script>
 
 <header class="topbar">
   {#if onback}
-    <button type="button" class="iconbtn" aria-label="Back" onclick={onback}>
+    <button type="button" class="iconbtn" aria-label={backLabel} onclick={onback}>
       <svg
         width="24"
         height="24"

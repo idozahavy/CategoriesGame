@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import Button from '../lib/ui/Button.svelte';
-  import { t } from '../lib/i18n';
+  import Chip from '../lib/ui/Chip.svelte';
+  import { t, uiLanguage, availablePacks } from '../lib/i18n';
   import { screen } from '../lib/stores';
   import { listSaves } from '../lib/db';
   import { setActiveRoom } from '../lib/p2p';
@@ -37,6 +38,13 @@
       </Button>
     {/if}
   </div>
+
+  <div class="languages" role="group" aria-label={$t('home.languageLabel')}>
+    <span class="globe" aria-hidden="true">🌐</span>
+    {#each availablePacks() as p (p.code)}
+      <Chip on={$uiLanguage === p.code} onclick={() => uiLanguage.set(p.code)}>{p.name}</Chip>
+    {/each}
+  </div>
 </div>
 
 <style>
@@ -67,5 +75,16 @@
     gap: var(--space-3);
     inline-size: 100%;
     max-inline-size: 320px;
+  }
+  .languages {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-5);
+  }
+  .globe {
+    font-size: 20px;
   }
 </style>

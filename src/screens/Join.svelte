@@ -129,7 +129,7 @@
 </script>
 
 <div class="join">
-  <TopBar title={$t('join.title')} onback={leave} />
+  <TopBar title={$t('join.title')} onback={leave} backLabel={$t('setup.back')} />
 
   {#if phase === 'form'}
     <div class="content">

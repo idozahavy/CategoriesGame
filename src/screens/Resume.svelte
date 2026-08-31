@@ -58,7 +58,11 @@
 </script>
 
 <div class="resume">
-  <TopBar title={$t('resume.title')} onback={() => screen.set('home')} />
+  <TopBar
+    title={$t('resume.title')}
+    onback={() => screen.set('home')}
+    backLabel={$t('setup.back')}
+  />
 
   {#if !loading && saves.length === 0}
     <div class="empty">
