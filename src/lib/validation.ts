@@ -4,6 +4,11 @@ import { matchesLetter, normalizeWord } from './game';
 import { addLearnedWord, getLearnedWords, removeLearnedWord } from './db';
 import { ensureWords, getWords } from './words';
 
+/** Per-request timeout for the quick dictionary/entity lookups. */
+const LOOKUP_TIMEOUT_MS = 4000;
+/** SPARQL is slower than the entity APIs — give it more room before giving up. */
+const SPARQL_TIMEOUT_MS = 8000;
+
 export type WordVerdict =
   | 'valid' // accepted automatically
   | 'invalid' // rejected automatically (wrong letter / empty)
@@ -153,7 +158,7 @@ export async function wordFact(word: string, language: string): Promise<string |
     const url =
       'https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&limit=5&format=json&origin=*' +
       `&search=${encodeURIComponent(w)}&language=${language}&uselang=${language}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
     if (!res.ok) return null;
     const data = (await res.json()) as {
       search?: { description?: string; match?: { text?: string } }[];
@@ -218,7 +223,7 @@ async function searchWikidataIds(word: string, language: string): Promise<string
   const url =
     'https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&limit=5&format=json&origin=*' +
     `&search=${encodeURIComponent(word)}&language=${language}&uselang=${language}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+  const res = await fetch(url, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`wbsearchentities ${String(res.status)}`);
   const data = (await res.json()) as {
     search?: { id: string; match?: { text?: string } }[];
@@ -263,7 +268,7 @@ export async function inWikidataCategory(
       const res = await fetch(
         `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`,
         {
-          signal: AbortSignal.timeout(8000),
+          signal: AbortSignal.timeout(SPARQL_TIMEOUT_MS),
           headers: { Accept: 'application/sparql-results+json' },
         },
       );
@@ -302,7 +307,7 @@ export async function inPublicDictionary(
     const url = `https://${domain}.wiktionary.org/w/api.php?action=query&titles=${encodeURIComponent(
       word.toLocaleLowerCase(),
     )}&format=json&origin=*`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    const res = await fetch(url, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
     if (!res.ok) return 'error';
     const data = (await res.json()) as { query?: { pages?: Record<string, { missing?: string }> } };
     const pages = data.query?.pages ?? {};

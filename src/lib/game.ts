@@ -114,6 +114,13 @@ function speedRanks(state: GameState, round: RoundState): Map<string, number> {
   return ranks;
 }
 
+/** Points for a valid word (any valid word in 'simple' scoring, unique ones in 'unique'). */
+const VALID_POINTS = 10;
+/** Points when another player wrote the same word ('unique' scoring only). */
+const SHARED_POINTS = 5;
+/** speedScoring never drops a valid word below this. */
+const MIN_SPEED_POINTS = 1;
+
 /**
  * Assign points after validity was decided (answers with status 'invalid' stay 0).
  * unique: unique valid word 10, shared valid word 5. simple: any valid word 10.
@@ -137,13 +144,16 @@ export function scoreRound(state: GameState, round: RoundState): void {
       );
       if (scoring === 'unique' && sameWord.length > 0) {
         answer.status = 'shared';
-        answer.points = 5;
+        answer.points = SHARED_POINTS;
       } else {
         answer.status = 'valid';
-        answer.points = 10;
+        answer.points = VALID_POINTS;
       }
       if (ranks) {
-        answer.points = Math.max(answer.points - (ranks.get(answer.playerId) ?? 0), 1);
+        answer.points = Math.max(
+          answer.points - (ranks.get(answer.playerId) ?? 0),
+          MIN_SPEED_POINTS,
+        );
       }
     }
   }

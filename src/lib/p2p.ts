@@ -54,6 +54,10 @@ const CODE_LENGTH = 4;
 const MAX_NAME_LENGTH = 20;
 const MAX_DEVICE_ID_LENGTH = 64;
 const JOIN_TIMEOUT_MS = 12000;
+/** Wait for the last outgoing message to flush before tearing the connection down. */
+const CLOSE_FLUSH_MS = 500;
+/** Pause between retries when the broker still holds our peer id from a previous session. */
+const REOPEN_RETRY_MS = 2000;
 
 const DEVICE_ID_KEY = 'categories-device-id';
 const sessionDeviceId = newId();
@@ -222,7 +226,7 @@ export function reopenRoom(code: string, players: GuestInfo[], attempts = 3): Pr
       if (err.type === 'unavailable-id' && attempts > 1) {
         setTimeout(() => {
           resolve(reopenRoom(code, players, attempts - 1));
-        }, 2000);
+        }, REOPEN_RETRY_MS);
       } else {
         reject(new Error('network'));
       }
@@ -355,7 +359,7 @@ function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
             void conn.send({ type: 'busy' } satisfies HostMessage);
             setTimeout(() => {
               conn.close();
-            }, 500);
+            }, CLOSE_FLUSH_MS);
             return;
           }
           const [playerId, seat] = existing;
@@ -414,7 +418,7 @@ function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
       broadcast({ type: 'ended' });
       setTimeout(() => {
         peer.destroy();
-      }, 500);
+      }, CLOSE_FLUSH_MS);
       seats.clear();
     },
   };

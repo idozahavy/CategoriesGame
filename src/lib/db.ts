@@ -37,16 +37,16 @@ let dbPromise: Promise<IDBPDatabase<GameDB>> | null = null;
 function db(): Promise<IDBPDatabase<GameDB>> {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, 3, {
-      upgrade(d, oldVersion) {
+      upgrade(database, oldVersion) {
         if (oldVersion < 1) {
-          const store = d.createObjectStore(STORE, { keyPath: 'id' });
+          const store = database.createObjectStore(STORE, { keyPath: 'id' });
           store.createIndex('updatedAt', 'updatedAt');
         }
         if (oldVersion < 2) {
-          d.createObjectStore(LEARNED_STORE, { keyPath: 'key' });
+          database.createObjectStore(LEARNED_STORE, { keyPath: 'key' });
         }
         if (oldVersion < 3) {
-          d.createObjectStore(PROFILE_STORE, { keyPath: 'key' });
+          database.createObjectStore(PROFILE_STORE, { keyPath: 'key' });
         }
       },
     });
