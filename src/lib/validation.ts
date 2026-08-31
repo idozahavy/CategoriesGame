@@ -9,6 +9,14 @@ const LOOKUP_TIMEOUT_MS = 4000;
 /** SPARQL is slower than the entity APIs — give it more room before giving up. */
 const SPARQL_TIMEOUT_MS = 8000;
 
+/** Wikidata entity search for a word, matching and answering in the given language. */
+function wbSearchUrl(search: string, language: string): string {
+  return (
+    'https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&limit=5&format=json&origin=*' +
+    `&search=${encodeURIComponent(search)}&language=${language}&uselang=${language}`
+  );
+}
+
 export type WordVerdict =
   | 'valid' // accepted automatically
   | 'invalid' // rejected automatically (wrong letter / empty)
@@ -83,6 +91,7 @@ export function prefetchWordCheck(
   solo = false,
   wikidata = true,
 ): void {
+  // checkWord never throws by contract; the catch is a belt for future edits.
   void checkWord(word, categoryId, letter, language, mode, solo, wikidata).catch(() => undefined);
 }
 
@@ -150,15 +159,14 @@ const factCache = new Map<string, string | null>();
  * given language. Never throws; null when nothing kid-worthy is found.
  */
 export async function wordFact(word: string, language: string): Promise<string | null> {
-  const w = word.trim().toLocaleLowerCase();
+  const w = normalizeWord(word);
   const key = `${language}:${w}`;
   const cached = factCache.get(key);
   if (cached !== undefined) return cached;
   try {
-    const url =
-      'https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&limit=5&format=json&origin=*' +
-      `&search=${encodeURIComponent(w)}&language=${language}&uselang=${language}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
+    const res = await fetch(wbSearchUrl(w, language), {
+      signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
+    });
     if (!res.ok) return null;
     const data = (await res.json()) as {
       search?: { description?: string; match?: { text?: string } }[];
@@ -181,8 +189,7 @@ export async function wordFact(word: string, language: string): Promise<string |
 export function inBundledList(word: string, categoryId: string, language: string): boolean {
   const list = getWords(language)[categoryId];
   if (!list) return false;
-  const w = word.trim().toLocaleLowerCase();
-  return list.includes(w);
+  return list.includes(normalizeWord(word));
 }
 
 /**
@@ -220,10 +227,9 @@ const WIKIDATA_COOLDOWN_MS = 60_000;
  * results whose matched label/alias is exactly the word.
  */
 async function searchWikidataIds(word: string, language: string): Promise<string[]> {
-  const url =
-    'https://www.wikidata.org/w/api.php?action=wbsearchentities&type=item&limit=5&format=json&origin=*' +
-    `&search=${encodeURIComponent(word)}&language=${language}&uselang=${language}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS) });
+  const res = await fetch(wbSearchUrl(word, language), {
+    signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`wbsearchentities ${String(res.status)}`);
   const data = (await res.json()) as {
     search?: { id: string; match?: { text?: string } }[];
@@ -285,6 +291,7 @@ export async function inWikidataCategory(
       return 'error';
     }
   });
+  // Keep the queue alive after a failed run — the next lookup must still chain.
   wikidataQueue = run.catch(() => undefined);
   return run;
 }
