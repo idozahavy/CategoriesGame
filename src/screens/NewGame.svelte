@@ -180,10 +180,10 @@
   let scoring = $state<ScoringSystem>('unique');
   let timerSeconds = $state<number | null>(120);
   let roundCount = $state(3);
-  let endless = $state(false);
-  let wikidataCheck = $state(true);
-  let funFacts = $state(true);
-  let speedScoring = $state(false);
+  let isEndless = $state(false);
+  let hasWikidataCheck = $state(true);
+  let hasFunFacts = $state(true);
+  let hasSpeedScoring = $state(false);
   let validation = $state<ValidationMode>('hybrid');
   let gameLanguage = $state($uiLanguage);
 
@@ -302,8 +302,8 @@
     stepError = validateStep();
     if (stepError !== '') return;
     starting = true;
-    const remote = playStyle === 'remote';
-    const finalPlayers: PlayerDef[] = remote
+    const isRemote = playStyle === 'remote';
+    const finalPlayers: PlayerDef[] = isRemote
       ? guestList.map((g, i) => ({
           id: g.playerId,
           name: g.name,
@@ -324,7 +324,7 @@
     for (const p of finalPlayers) {
       if (p.isBot !== true && p.name !== $t('setup.soloName')) void touchProfile(p.name, p.avatar);
     }
-    if (remote) room?.lock();
+    if (isRemote) room?.lock();
     // Copy to plain objects: $state proxies can't pass structuredClone/IndexedDB.
     const categories = allCategories
       .filter((c) => selectedCategoryIds.includes(c.id))
@@ -336,13 +336,13 @@
       validation,
       categories,
       roundCount,
-      endless,
-      wikidataCheck,
-      funFacts,
-      speedScoring,
+      isEndless,
+      hasWikidataCheck,
+      hasFunFacts,
+      hasSpeedScoring,
       timerSeconds,
-      remote,
-      roomCode: remote ? roomCode : undefined,
+      isRemote,
+      roomCode: isRemote ? roomCode : undefined,
     };
     const state = createGame(settings, finalPlayers);
     startNextRound(state);
@@ -565,19 +565,21 @@
         <Button
           variant="secondary"
           onclick={() => {
-            endless = false;
+            isEndless = false;
             roundCount = Math.max(1, roundCount - 1);
           }}>−</Button
         >
-        <span class="stepper-value">{endless ? '∞' : roundCount}</span>
+        <span class="stepper-value">{isEndless ? '∞' : roundCount}</span>
         <Button
           variant="secondary"
           onclick={() => {
-            endless = false;
+            isEndless = false;
             roundCount = Math.min(10, roundCount + 1);
           }}>+</Button
         >
-        <Chip on={endless} onclick={() => (endless = !endless)}>{$t('setup.rounds.endless')}</Chip>
+        <Chip on={isEndless} onclick={() => (isEndless = !isEndless)}
+          >{$t('setup.rounds.endless')}</Chip
+        >
       </div>
 
       <details class="advanced">
@@ -607,19 +609,19 @@
         <div class="toggle-field">
           <span class="select-label">{$t('setup.online')}</span>
           <div class="chip-row">
-            <Chip on={wikidataCheck} onclick={() => (wikidataCheck = !wikidataCheck)}
-              >{wikidataCheck ? '✓ ' : ''}{$t('setup.wikidata')}</Chip
+            <Chip on={hasWikidataCheck} onclick={() => (hasWikidataCheck = !hasWikidataCheck)}
+              >{hasWikidataCheck ? '✓ ' : ''}{$t('setup.wikidata')}</Chip
             >
-            <Chip on={funFacts} onclick={() => (funFacts = !funFacts)}
-              >{funFacts ? '✓ ' : ''}{$t('setup.funFact')}</Chip
+            <Chip on={hasFunFacts} onclick={() => (hasFunFacts = !hasFunFacts)}
+              >{hasFunFacts ? '✓ ' : ''}{$t('setup.funFact')}</Chip
             >
           </div>
         </div>
         <div class="toggle-field">
           <span class="select-label">{$t('setup.speedScoring.hint')}</span>
           <div class="chip-row">
-            <Chip on={speedScoring} onclick={() => (speedScoring = !speedScoring)}
-              >{speedScoring ? '✓ ' : ''}{$t('setup.speedScoring')}</Chip
+            <Chip on={hasSpeedScoring} onclick={() => (hasSpeedScoring = !hasSpeedScoring)}
+              >{hasSpeedScoring ? '✓ ' : ''}{$t('setup.speedScoring')}</Chip
             >
           </div>
         </div>

@@ -33,7 +33,7 @@
   async function continueGame(id: string): Promise<void> {
     const loaded = await loadGame(id);
     if (!loaded) return;
-    if (loaded.settings.remote === true && loaded.settings.roomCode !== undefined) {
+    if (loaded.settings.isRemote === true && loaded.settings.roomCode !== undefined) {
       // Reopen the room under its old code so guests can rejoin their seats.
       try {
         const room = await reopenRoom(
@@ -96,12 +96,12 @@
                   .replace(
                     '{n}',
                     String(
-                      save.endless
+                      save.isEndless
                         ? save.roundsPlayed + 1
                         : Math.min(save.roundsPlayed + 1, save.roundCount),
                     ),
                   )
-                  .replace('{total}', save.endless ? '∞' : String(save.roundCount))}
+                  .replace('{total}', save.isEndless ? '∞' : String(save.roundCount))}
               </span>
               <span class="date">
                 {new Date(save.updatedAt).toLocaleDateString()}

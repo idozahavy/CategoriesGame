@@ -60,17 +60,17 @@ export interface GameSettings {
   categories: CategoryDef[];
   roundCount: number;
   /** true = ignore roundCount and keep playing until someone taps "See scores". */
-  endless?: boolean;
+  isEndless?: boolean;
   /** false = skip the online Wikidata category-fit check (it can be slow). */
-  wikidataCheck?: boolean;
+  hasWikidataCheck?: boolean;
   /** false = no "did you know" word fact on the review screen. */
-  funFacts?: boolean;
+  hasFunFacts?: boolean;
   /** true = finish rank shaves points: fastest keeps full value, each later rank −1, floor 1. */
-  speedScoring?: boolean;
+  hasSpeedScoring?: boolean;
   /** null = no timer. */
   timerSeconds: number | null;
   /** true = players answer on their own devices via a P2P room (host screen orchestrates). */
-  remote?: boolean;
+  isRemote?: boolean;
   /** Remote games: the room's join code, so a reloaded host can reopen the room. */
   roomCode?: string;
 }
@@ -121,7 +121,7 @@ export interface GameState {
   usedLetters: string[];
   status: GameStatus;
   /** Lifetime stats already landed — a game revived with "one more round" isn't counted twice. */
-  statsRecorded?: boolean;
+  hasRecordedStats?: boolean;
 }
 
 /** Summary row shown in the Resume list (cheap to read, no full state). */
@@ -131,11 +131,11 @@ export interface SaveSummary {
   playerNames: string[];
   roundsPlayed: number;
   roundCount: number;
-  endless: boolean;
+  isEndless: boolean;
   language: LanguageCode;
   status: GameStatus;
   /** Remote (P2P) games can't be resumed — guests would need to rejoin. */
-  remote: boolean;
+  isRemote: boolean;
 }
 
 export type Screen =

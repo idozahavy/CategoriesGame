@@ -16,7 +16,7 @@
     // Arriving home always ends any hosted room (e.g. via the browser back trap).
     setActiveRoom(null);
     try {
-      hasSaves = (await listSaves()).some((s) => s.status !== 'finished' && !s.remote);
+      hasSaves = (await listSaves()).some((s) => s.status !== 'finished' && !s.isRemote);
     } catch {
       hasSaves = false;
     }

@@ -21,7 +21,7 @@
   function finalize(): void {
     const g = $game;
     if (!g || g.status === 'finished') return;
-    if (g.statsRecorded !== true) {
+    if (g.hasRecordedStats !== true) {
       const totals = totalScores(g);
       const top = Math.max(0, ...totals.values());
       for (const p of g.players) {
@@ -33,7 +33,7 @@
     vibrate(200);
     updateGame((s) => {
       s.status = 'finished';
-      s.statsRecorded = true;
+      s.hasRecordedStats = true;
     });
   }
 
@@ -58,7 +58,7 @@
     advancing = true;
     updateGame((g) => {
       g.status = 'playing';
-      if (g.settings.endless !== true) g.settings.roundCount += 1;
+      if (g.settings.isEndless !== true) g.settings.roundCount += 1;
       startNextRound(g);
     });
     screen.set('round');
@@ -81,7 +81,8 @@
   // Remote game: guests see the final scores on their own devices too.
   let sentScores = false;
   $effect(() => {
-    if (!isOver || $game?.settings.remote !== true || sentScores || standings.length === 0) return;
+    if (!isOver || $game?.settings.isRemote !== true || sentScores || standings.length === 0)
+      return;
     sentScores = true;
     getActiveRoom()?.broadcast({
       type: 'scores',
@@ -114,7 +115,7 @@
     updateGame((g) => {
       g.status = 'finished';
     });
-    if ($game?.settings.remote === true) setActiveRoom(null);
+    if ($game?.settings.isRemote === true) setActiveRoom(null);
     screen.set('home');
   }
 </script>

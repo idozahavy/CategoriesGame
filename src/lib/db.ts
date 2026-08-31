@@ -165,9 +165,9 @@ export async function listSaves(): Promise<SaveSummary[]> {
       playerNames: g.players.map((p) => p.name),
       roundsPlayed: g.rounds.filter((r) => r.phase === 'done').length,
       roundCount: g.settings.roundCount,
-      endless: g.settings.endless === true,
+      isEndless: g.settings.isEndless === true,
       language: g.settings.language,
       status: g.status,
-      remote: g.settings.remote === true,
+      isRemote: g.settings.isRemote === true,
     }));
 }

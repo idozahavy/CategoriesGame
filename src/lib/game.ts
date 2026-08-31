@@ -49,7 +49,7 @@ export function startNextRound(state: GameState): RoundState | null {
   // No-op past the configured round count, and while a round is still in
   // progress — so a double-tap on "Next round" cannot skip or add rounds.
   const current = state.rounds[state.rounds.length - 1];
-  if (!state.settings.endless && state.rounds.length >= state.settings.roundCount) return null;
+  if (!state.settings.isEndless && state.rounds.length >= state.settings.roundCount) return null;
   if (current && current.phase !== 'done') return null;
   const letter = drawLetter(state);
   state.usedLetters.push(letter);
@@ -127,8 +127,8 @@ const MIN_SPEED_POINTS = 1;
  * speedScoring: each finish rank after the fastest loses 1 point, never below 1.
  */
 export function scoreRound(state: GameState, round: RoundState): void {
-  const { scoring, speedScoring } = state.settings;
-  const ranks = speedScoring === true ? speedRanks(state, round) : null;
+  const { scoring, hasSpeedScoring } = state.settings;
+  const ranks = hasSpeedScoring === true ? speedRanks(state, round) : null;
   for (const categoryId of round.categoryIds) {
     const inCategory = round.answers.filter((a) => a.categoryId === categoryId);
     for (const answer of inCategory) {
@@ -185,6 +185,6 @@ export function screenForGame(state: GameState): Screen {
 }
 
 export function isFinished(state: GameState): boolean {
-  if (state.settings.endless) return false; // ends only when someone taps "See scores"
+  if (state.settings.isEndless) return false; // ends only when someone taps "See scores"
   return state.rounds.filter((r) => r.phase === 'done').length >= state.settings.roundCount;
 }

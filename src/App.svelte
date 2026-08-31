@@ -35,7 +35,7 @@
   // Hosting a phones-join game, this screen is the shared "TV" — scale it up
   // so letter, timer and scores read from across the room.
   const tvMode = $derived(
-    $game?.settings.remote === true &&
+    $game?.settings.isRemote === true &&
       ($screen === 'round' || $screen === 'review' || $screen === 'scoreboard'),
   );
 
@@ -54,7 +54,7 @@
       const loaded = await loadGame(id);
       // Bail if the game is gone/over, or the player already navigated away.
       if (!loaded || loaded.status === 'finished' || $screen !== 'home') return;
-      if (loaded.settings.remote === true && loaded.settings.roomCode !== undefined) {
+      if (loaded.settings.isRemote === true && loaded.settings.roomCode !== undefined) {
         try {
           setActiveRoom(
             await reopenRoom(

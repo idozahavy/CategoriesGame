@@ -78,7 +78,7 @@
             language: g.settings.language,
             mode: g.settings.validation,
             solo: humanCount === 1,
-            wikidata: g.settings.wikidataCheck !== false,
+            wikidata: g.settings.hasWikidataCheck !== false,
           });
         } catch {
           return 'vote' as const;
@@ -138,7 +138,7 @@
   async function loadFact(): Promise<void> {
     const g = $game;
     const r = g ? g.rounds[g.currentRound] : null;
-    if (!g || !r || g.settings.funFacts === false) return;
+    if (!g || !r || g.settings.hasFunFacts === false) return;
     const best = r.answers
       .filter((a) => a.status === 'valid' && a.word !== '')
       .sort((a, b) => b.word.length - a.word.length)[0];

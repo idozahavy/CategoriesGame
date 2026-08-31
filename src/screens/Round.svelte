@@ -44,13 +44,13 @@
     if (!$game) screen.set('home');
   });
 
-  const remote = $derived($game?.settings.remote === true);
+  const isRemote = $derived($game?.settings.isRemote === true);
 
   // Pass-the-device panel at round entry when several players share the screen
   // (remote guests each have their own device — no handoff needed).
   onMount(() => {
-    handoffOpen = !remote && players.length > 1;
-    const room = remote ? getActiveRoom() : null;
+    handoffOpen = !isRemote && players.length > 1;
+    const room = isRemote ? getActiveRoom() : null;
     if (!room) return;
     room.onGuestMessage((playerId, msg) => {
       handleGuestAnswers(playerId, msg);
@@ -82,7 +82,7 @@
 
   // Settings stay editable while nothing has been played yet — a wrong timer
   // or round count is cheap to fix on round one, pointless to fix later.
-  const canEditSettings = $derived(!remote && roundIndex === 0 && roundPhase === 'entry');
+  const canEditSettings = $derived(!isRemote && roundIndex === 0 && roundPhase === 'entry');
 
   // Prefill inputs for the active player each time the turn changes (fresh & empty
   // at turn start, or resumed from existing answers if reloading mid-turn).
@@ -144,13 +144,13 @@
   $effect(() => {
     const g = $game;
     const r = round;
-    if (!remote || !g || !r || r.phase !== 'entry' || r.index === lastBroadcastIndex) return;
+    if (!isRemote || !g || !r || r.phase !== 'entry' || r.index === lastBroadcastIndex) return;
     lastBroadcastIndex = r.index;
     getActiveRoom()?.broadcast({
       type: 'round',
       roundIndex: r.index,
       // 0 = endless; guests render it as ∞.
-      roundCount: g.settings.endless ? 0 : g.settings.roundCount,
+      roundCount: g.settings.isEndless ? 0 : g.settings.roundCount,
       letter: r.letter,
       // A host reload rebroadcasts mid-round — send what's left, not the full timer.
       seconds: remainingSeconds(g, r),
@@ -213,7 +213,7 @@
           language: g.settings.language,
           mode: g.settings.validation,
           solo,
-          wikidata: g.settings.wikidataCheck !== false,
+          wikidata: g.settings.hasWikidataCheck !== false,
         });
       }
     }
@@ -289,7 +289,7 @@
     const g = $game;
     const r = round;
     const p = activePlayer;
-    if (!g || !r || !p || remote || roundPhase !== 'entry' || p.isBot !== true) return;
+    if (!g || !r || !p || isRemote || roundPhase !== 'entry' || p.isBot !== true) return;
     const key = `${String(roundIndex)}:${p.id}`;
     if (botTurnKey === key) return;
     botTurnKey = key;
@@ -313,10 +313,10 @@
       () => {
         showTimeUp = false;
         if (roundIndex !== idx || roundPhase !== 'entry') return;
-        if (remote) forceReview();
+        if (isRemote) forceReview();
         else submitTurn();
       },
-      remote ? 3000 : 1200,
+      isRemote ? 3000 : 1200,
     );
   }
 
@@ -328,14 +328,14 @@
 
   function adjustRounds(delta: number): void {
     updateGame((g) => {
-      g.settings.endless = false;
+      g.settings.isEndless = false;
       g.settings.roundCount = Math.min(10, Math.max(1, g.settings.roundCount + delta));
     });
   }
 
   function toggleEndless(): void {
     updateGame((g) => {
-      g.settings.endless = g.settings.endless !== true;
+      g.settings.isEndless = g.settings.isEndless !== true;
     });
   }
 
@@ -353,13 +353,13 @@
 
   function toggleWikidata(): void {
     updateGame((g) => {
-      g.settings.wikidataCheck = g.settings.wikidataCheck === false;
+      g.settings.hasWikidataCheck = g.settings.hasWikidataCheck === false;
     });
   }
 
   function toggleFunFacts(): void {
     updateGame((g) => {
-      g.settings.funFacts = g.settings.funFacts === false;
+      g.settings.hasFunFacts = g.settings.hasFunFacts === false;
     });
   }
 
@@ -369,7 +369,7 @@
 
   function confirmLeave() {
     showLeaveConfirm = false;
-    if (remote) setActiveRoom(null); // ends the room; guests are told
+    if (isRemote) setActiveRoom(null); // ends the room; guests are told
     screen.set('home');
   }
 </script>
@@ -406,7 +406,7 @@
     <TopBar
       title={$t('round.title')
         .replace('{n}', String(round.index + 1))
-        .replace('{total}', $game.settings.endless ? '∞' : String($game.settings.roundCount))}
+        .replace('{total}', $game.settings.isEndless ? '∞' : String($game.settings.roundCount))}
       onback={onBack}
       backLabel={$t('setup.back')}
     >
@@ -431,7 +431,7 @@
       {/if}
     </div>
 
-    {#if remote}
+    {#if isRemote}
       <div class="waiting-box">
         <p class="waiting-title">{$t('round.waitingFor')}</p>
         <div class="waiting-chips">
@@ -513,10 +513,10 @@
         <div class="stepper">
           <Button variant="secondary" onclick={() => adjustRounds(-1)}>−</Button>
           <span class="stepper-value"
-            >{$game.settings.endless ? '∞' : $game.settings.roundCount}</span
+            >{$game.settings.isEndless ? '∞' : $game.settings.roundCount}</span
           >
           <Button variant="secondary" onclick={() => adjustRounds(1)}>+</Button>
-          <Chip on={$game.settings.endless === true} onclick={toggleEndless}
+          <Chip on={$game.settings.isEndless === true} onclick={toggleEndless}
             >{$t('setup.rounds.endless')}</Chip
           >
         </div>
@@ -554,11 +554,11 @@
       <div class="settings-group">
         <span class="field-label">{$t('setup.online')}</span>
         <div class="chip-row">
-          <Chip on={$game.settings.wikidataCheck !== false} onclick={toggleWikidata}
-            >{$game.settings.wikidataCheck !== false ? '✓ ' : ''}{$t('setup.wikidata')}</Chip
+          <Chip on={$game.settings.hasWikidataCheck !== false} onclick={toggleWikidata}
+            >{$game.settings.hasWikidataCheck !== false ? '✓ ' : ''}{$t('setup.wikidata')}</Chip
           >
-          <Chip on={$game.settings.funFacts !== false} onclick={toggleFunFacts}
-            >{$game.settings.funFacts !== false ? '✓ ' : ''}{$t('setup.funFact')}</Chip
+          <Chip on={$game.settings.hasFunFacts !== false} onclick={toggleFunFacts}
+            >{$game.settings.hasFunFacts !== false ? '✓ ' : ''}{$t('setup.funFact')}</Chip
           >
         </div>
       </div>
