@@ -71,15 +71,14 @@
     const verdicts = await Promise.all(
       pending.map(async (a) => {
         try {
-          return await checkWord(
-            a.word,
-            a.categoryId,
-            r.letter,
-            g.settings.language,
-            g.settings.validation,
-            humanCount === 1,
-            g.settings.wikidataCheck !== false,
-          );
+          return await checkWord(a.word, {
+            categoryId: a.categoryId,
+            letter: r.letter,
+            language: g.settings.language,
+            mode: g.settings.validation,
+            solo: humanCount === 1,
+            wikidata: g.settings.wikidataCheck !== false,
+          });
         } catch {
           return 'vote' as const;
         }

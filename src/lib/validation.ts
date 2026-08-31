@@ -22,6 +22,17 @@ export type WordVerdict =
   | 'invalid' // rejected automatically (wrong letter / empty)
   | 'vote'; // could not decide — ask the group (or auto-accept solo)
 
+export interface WordCheckOptions {
+  categoryId: string;
+  letter: string;
+  language: string;
+  mode: ValidationMode;
+  /** Playing alone — only the letter rules apply, no lookups or network calls. */
+  solo?: boolean;
+  /** Allow the Wikidata category-fit check (games can turn it off). */
+  wikidata?: boolean;
+}
+
 /**
  * Decide a word according to the game's validation mode.
  * Never throws; network failure degrades to 'vote'.
@@ -29,15 +40,8 @@ export type WordVerdict =
  * `solo`: playing alone there is no one to fool and no one to vote — only the
  * letter (and lone-letter) rules apply, and no lookups or network calls run.
  */
-export async function checkWord(
-  word: string,
-  categoryId: string,
-  letter: string,
-  language: string,
-  mode: ValidationMode,
-  solo = false,
-  wikidata = true,
-): Promise<WordVerdict> {
+export async function checkWord(word: string, options: WordCheckOptions): Promise<WordVerdict> {
+  const { categoryId, letter, language, mode, solo = false, wikidata = true } = options;
   const trimmed = word.trim();
   if (trimmed.length < 2) return 'invalid'; // a lone letter is never a word
   if (!matchesLetter(trimmed, letter)) return 'invalid';
@@ -82,34 +86,30 @@ export async function checkWord(
  * Fire-and-forget check for a just-submitted word: warms the word-list,
  * learned-word, and dictionary caches so the review screen resolves instantly.
  */
-export function prefetchWordCheck(
-  word: string,
-  categoryId: string,
-  letter: string,
-  language: string,
-  mode: ValidationMode,
-  solo = false,
-  wikidata = true,
-): void {
+export function prefetchWordCheck(word: string, options: WordCheckOptions): void {
   // checkWord never throws by contract; the catch is a belt for future edits.
-  void checkWord(word, categoryId, letter, language, mode, solo, wikidata).catch(() => undefined);
+  void checkWord(word, options).catch(() => undefined);
 }
 
-/** In-memory cache over the persistent learned-words store, one set per lang:category. */
-const learnedCache = new Map<string, Set<string>>();
+/**
+ * In-memory cache over the persistent learned-words store, one set per
+ * lang:category. Holds promises so concurrent callers (review checks all words
+ * at once) share one load instead of racing to overwrite each other's set.
+ */
+const learnedCache = new Map<string, Promise<Set<string>>>();
 
-async function learnedSet(language: string, categoryId: string): Promise<Set<string>> {
+function learnedSet(language: string, categoryId: string): Promise<Set<string>> {
   const key = `${language}:${categoryId}`;
-  const cached = learnedCache.get(key);
-  if (cached) return cached;
-  let set: Set<string>;
-  try {
-    set = new Set(await getLearnedWords(language, categoryId));
-  } catch {
-    set = new Set(); // storage unavailable — behave as if nothing was learned
+  let cached = learnedCache.get(key);
+  if (!cached) {
+    cached = getLearnedWords(language, categoryId).then(
+      (words) => new Set(words),
+      // storage unavailable — behave as if nothing was learned
+      () => new Set<string>(),
+    );
+    learnedCache.set(key, cached);
   }
-  learnedCache.set(key, set);
-  return set;
+  return cached;
 }
 
 export async function inLearnedList(
@@ -144,7 +144,8 @@ export async function forgetWord(
   word: string,
 ): Promise<void> {
   const normalized = normalizeWord(word);
-  learnedCache.get(`${language}:${categoryId}`)?.delete(normalized);
+  const cached = learnedCache.get(`${language}:${categoryId}`);
+  if (cached) (await cached).delete(normalized);
   try {
     await removeLearnedWord(language, categoryId, normalized);
   } catch {

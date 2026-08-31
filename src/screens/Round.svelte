@@ -206,15 +206,14 @@
     const solo = g.players.length === 1;
     for (const [catId, word] of Object.entries(words)) {
       if (word !== undefined && word.trim() !== '') {
-        prefetchWordCheck(
-          word,
-          catId,
-          r.letter,
-          g.settings.language,
-          g.settings.validation,
+        prefetchWordCheck(word, {
+          categoryId: catId,
+          letter: r.letter,
+          language: g.settings.language,
+          mode: g.settings.validation,
           solo,
-          g.settings.wikidataCheck !== false,
-        );
+          wikidata: g.settings.wikidataCheck !== false,
+        });
       }
     }
   }
