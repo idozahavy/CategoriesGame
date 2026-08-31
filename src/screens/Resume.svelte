@@ -37,7 +37,12 @@
       try {
         const room = await reopenRoom(
           loaded.settings.roomCode,
-          loaded.players.map((p) => ({ playerId: p.id, name: p.name, avatar: p.avatar })),
+          loaded.players.map((p) => ({
+            playerId: p.id,
+            name: p.name,
+            avatar: p.avatar,
+            deviceId: p.deviceId,
+          })),
         );
         setActiveRoom(room);
       } catch {

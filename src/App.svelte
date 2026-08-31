@@ -62,6 +62,7 @@
                 playerId: p.id,
                 name: p.name,
                 avatar: p.avatar,
+                deviceId: p.deviceId,
               })),
             ),
           );

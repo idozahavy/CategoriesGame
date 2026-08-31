@@ -74,7 +74,11 @@
   let scores = $state<ScoresMsg | null>(null);
   let answers = $state<Record<string, string>>({});
   let submitted = $state(false);
+  let showSubmitConfirm = $state(false);
   let timeLeft = $state<number | null>(null);
+  // Wall-clock anchor for the countdown, so a throttled background tab
+  // doesn't slow the timer down (the host's clock keeps running regardless).
+  let roundReceivedAt = 0;
 
   onDestroy(() => {
     session?.close();
@@ -86,8 +90,10 @@
       roster = msg.names;
     } else if (msg.type === 'round') {
       round = msg;
+      roundReceivedAt = Date.now();
       answers = {};
       submitted = false;
+      showSubmitConfirm = false;
       phase = 'entry';
     } else if (msg.type === 'scores') {
       scores = msg;
@@ -129,18 +135,20 @@
 
   function submitAnswers(): void {
     const r = round;
+    showSubmitConfirm = false;
     if (!session || !r || submitted) return;
     submitted = true;
     session.send({ type: 'answers', roundIndex: r.roundIndex, answers: { ...answers } });
     phase = 'waiting';
   }
 
-  /** Enter hops to the next category's input; on the last one it sends the answers. */
+  /** Enter hops to the next category's input; on the last one it asks to finish. */
   function onAnswerKeydown(e: KeyboardEvent, index: number): void {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     if (index >= (round?.categories.length ?? 0) - 1) {
-      submitAnswers();
+      // Enter is easy to hit by habit — confirm before ending the player's round.
+      showSubmitConfirm = true;
       return;
     }
     const inputs = document.querySelectorAll<HTMLInputElement>('.cards .inp');
@@ -148,20 +156,24 @@
   }
 
   // Local countdown mirroring the host's; auto-sends when it runs out.
+  // Wall-clock based, anchored to when the round message arrived.
   $effect(() => {
     const seconds = phase === 'entry' ? (round?.seconds ?? null) : null;
     if (!seconds) {
       timeLeft = null;
       return;
     }
-    timeLeft = seconds;
-    const id = setInterval(() => {
-      timeLeft = (timeLeft ?? 1) - 1;
-      if ((timeLeft ?? 0) <= 0) {
+    const startedAt = roundReceivedAt;
+    const tick = (): void => {
+      const left = seconds - Math.floor((Date.now() - startedAt) / 1000);
+      timeLeft = Math.max(left, 0);
+      if (left <= 0) {
         clearInterval(id);
         submitAnswers();
       }
-    }, 1000);
+    };
+    const id = setInterval(tick, 1000);
+    tick();
     return () => {
       clearInterval(id);
     };
@@ -312,6 +324,16 @@
   {/if}
 </div>
 
+<Modal open={showSubmitConfirm}>
+  <p class="modal-text">{$t('round.submitConfirm')}</p>
+  <div class="modal-actions">
+    <Button variant="secondary" block onclick={() => (showSubmitConfirm = false)}
+      >{$t('common.cancel')}</Button
+    >
+    <Button variant="primary" block onclick={submitAnswers}>{$t('round.done')}</Button>
+  </div>
+</Modal>
+
 <Modal open={avatarPickerOpen}>
   <p class="avatar-title">{$t('setup.avatar')}</p>
   <div class="emoji-grid">
@@ -410,6 +432,14 @@
     justify-content: center;
     cursor: pointer;
     border-radius: var(--radius-pill);
+  }
+  .modal-text {
+    font-weight: var(--font-weight-subheading);
+    margin-block-end: var(--space-4);
+  }
+  .modal-actions {
+    display: flex;
+    gap: var(--space-3);
   }
   .avatar-title {
     font-size: var(--font-size-h2);

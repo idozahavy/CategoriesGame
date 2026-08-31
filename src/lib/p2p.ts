@@ -1,4 +1,5 @@
 import Peer, { type DataConnection } from 'peerjs';
+import { newId } from './game';
 
 /**
  * P2P room layer (WebRTC via PeerJS + its free public broker for signaling).
@@ -15,7 +16,7 @@ export interface RoundCategory {
 }
 
 export type GuestMessage =
-  | { type: 'hello'; name: string; avatar?: string }
+  | { type: 'hello'; name: string; avatar?: string; deviceId?: string }
   | { type: 'answers'; roundIndex: number; answers: Record<string, string> };
 
 export type HostMessage =
@@ -38,6 +39,8 @@ export interface GuestInfo {
   playerId: string;
   name: string;
   avatar?: string;
+  /** The guest browser's stable key — lets the same device reclaim its seat. */
+  deviceId?: string;
 }
 
 export type JoinFailure = 'not-found' | 'network';
@@ -48,7 +51,26 @@ const PEER_PREFIX = 'kidcategories-v1-';
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ';
 const CODE_LENGTH = 4;
 const MAX_NAME_LENGTH = 20;
+const MAX_DEVICE_ID_LENGTH = 64;
 const JOIN_TIMEOUT_MS = 12000;
+
+const DEVICE_ID_KEY = 'categories-device-id';
+const sessionDeviceId = newId();
+/**
+ * Stable per-browser key sent with every hello, so a device that dropped and
+ * reconnected reclaims its own seat instead of joining as "Name 2".
+ */
+export function getDeviceId(): string {
+  try {
+    const existing = localStorage.getItem(DEVICE_ID_KEY);
+    if (existing !== null && existing !== '') return existing;
+    localStorage.setItem(DEVICE_ID_KEY, sessionDeviceId);
+    return sessionDeviceId;
+  } catch {
+    // Storage unavailable — a one-off id still dedupes within this page load.
+    return sessionDeviceId;
+  }
+}
 
 export function makeRoomCode(): string {
   let code = '';
@@ -83,9 +105,21 @@ function isGuestMessage(v: unknown): v is GuestMessage {
   const m = v as Record<string, unknown>;
   if (m['type'] === 'hello') {
     if (typeof m['name'] !== 'string') return false;
+    // PeerJS's binary serialization turns undefined into null — accept both
+    // as "absent" for the optional fields.
     const avatar = m['avatar'];
+    if (
+      avatar !== undefined &&
+      avatar !== null &&
+      (typeof avatar !== 'string' || avatar.length > MAX_AVATAR_LENGTH)
+    ) {
+      return false;
+    }
+    const deviceId = m['deviceId'];
     return (
-      avatar === undefined || (typeof avatar === 'string' && avatar.length <= MAX_AVATAR_LENGTH)
+      deviceId === undefined ||
+      deviceId === null ||
+      (typeof deviceId === 'string' && deviceId.length <= MAX_DEVICE_ID_LENGTH)
     );
   }
   if (m['type'] === 'answers') {
@@ -205,32 +239,50 @@ function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
     conn: DataConnection | null;
     name: string;
     avatar?: string;
+    deviceId?: string;
   }
   const seats = new Map<string, Seat>();
   let locked = false;
   if (seed) {
     // Reopened room: every player already has a seat, waiting for its guest.
-    for (const p of seed) seats.set(p.playerId, { conn: null, name: p.name, avatar: p.avatar });
+    for (const p of seed) {
+      seats.set(p.playerId, { conn: null, name: p.name, avatar: p.avatar, deviceId: p.deviceId });
+    }
     locked = true;
   }
   let guestsChangeCb: ((guests: GuestInfo[]) => void) | null = null;
   let guestMessageCb: ((playerId: string, msg: GuestMessage) => void) | null = null;
   let seatCounter = 0;
   // Replayed to reconnecting guests so they land on the current screen.
-  let lastRound: HostMessage | null = null;
+  let lastRound: Extract<HostMessage, { type: 'round' }> | null = null;
+  let lastRoundAt = 0;
   let lastScores: HostMessage | null = null;
 
   const guests = (): GuestInfo[] =>
-    [...seats.entries()].map(([playerId, s]) => ({ playerId, name: s.name, avatar: s.avatar }));
+    [...seats.entries()].map(([playerId, s]) => ({
+      playerId,
+      name: s.name,
+      avatar: s.avatar,
+      deviceId: s.deviceId,
+    }));
 
   const broadcast = (msg: HostMessage): void => {
     if (msg.type === 'round') {
       lastRound = msg;
+      lastRoundAt = Date.now();
       lastScores = null;
     } else if (msg.type === 'scores') {
       lastScores = msg;
     }
     for (const s of seats.values()) if (s.conn) void s.conn.send(msg);
+  };
+
+  /** The saved round message with its timer reduced by the time already spent. */
+  const replayRound = (): HostMessage | null => {
+    if (!lastRound) return null;
+    if (lastRound.seconds === null) return lastRound;
+    const elapsed = Math.floor((Date.now() - lastRoundAt) / 1000);
+    return { ...lastRound, seconds: Math.max(lastRound.seconds - elapsed, 0) };
   };
 
   const notifyRoster = (): void => {
@@ -239,8 +291,12 @@ function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
   };
 
   /** Same visible name twice would be indistinguishable on the shared screen. */
-  const uniqueName = (wanted: string): string => {
-    const taken = new Set([...seats.values()].map((s) => s.name.toLocaleLowerCase()));
+  const uniqueName = (wanted: string, excludeId?: string): string => {
+    const taken = new Set(
+      [...seats.entries()]
+        .filter(([id]) => id !== excludeId)
+        .map(([, s]) => s.name.toLocaleLowerCase()),
+    );
     if (!taken.has(wanted.toLocaleLowerCase())) return wanted;
     for (let n = 2; ; n++) {
       const candidate = `${wanted} ${String(n)}`;
@@ -251,14 +307,50 @@ function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
   peer.on('connection', (conn) => {
     let seatId: string | null = null;
 
+    /** Hand an existing seat to this (re)connection, superseding a stale one. */
+    const reclaimSeat = (playerId: string, seat: Seat): void => {
+      // Reassign before closing: the stale conn's close handler bails once the
+      // seat no longer points at it, so it can't drop the reclaimed seat.
+      const stale = seat.conn;
+      seat.conn = conn;
+      stale?.close();
+      seatId = playerId;
+      void conn.send({ type: 'welcome', playerId } satisfies HostMessage);
+      if (locked) {
+        void conn.send({ type: 'roster', names: guests().map((g) => g.name) });
+        const round = replayRound();
+        if (lastScores) void conn.send(lastScores);
+        else if (round) void conn.send(round);
+      } else {
+        notifyRoster();
+      }
+    };
+
     conn.on('data', (data) => {
       if (!isGuestMessage(data)) return;
       if (data.type === 'hello') {
         if (seatId) return; // duplicate hello on this connection
         const wanted = sanitizeName(data.name);
+        const deviceId =
+          typeof data.deviceId === 'string' && data.deviceId !== '' ? data.deviceId : undefined;
+        // A returning device reclaims its own seat — lobby or mid-game — even
+        // when its old connection is still lingering as a zombie.
+        const byDevice = deviceId
+          ? [...seats.entries()].find(([, s]) => s.deviceId === deviceId)
+          : undefined;
+        if (byDevice) {
+          const [playerId, seat] = byDevice;
+          if (!locked) {
+            // Still in the lobby: honor the latest name/avatar the guest picked.
+            seat.name = uniqueName(wanted, playerId);
+            seat.avatar = sanitizeAvatar(data.avatar) ?? seat.avatar;
+          }
+          reclaimSeat(playerId, seat);
+          return;
+        }
         if (locked) {
           // After lock, only a known player may come back (reload / dropped
-          // connection) — matched by name, since names were deduplicated.
+          // connection) — matched by name for devices that lost their id.
           const existing = [...seats.entries()].find(
             ([, s]) => s.name.toLocaleLowerCase() === wanted.toLocaleLowerCase(),
           );
@@ -270,13 +362,8 @@ function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
             return;
           }
           const [playerId, seat] = existing;
-          seat.conn?.close(); // supersede a stale duplicate connection
-          seat.conn = conn;
-          seatId = playerId;
-          void conn.send({ type: 'welcome', playerId } satisfies HostMessage);
-          void conn.send({ type: 'roster', names: guests().map((g) => g.name) });
-          if (lastScores) void conn.send(lastScores);
-          else if (lastRound) void conn.send(lastRound);
+          seat.deviceId ??= deviceId; // future drops match by device
+          reclaimSeat(playerId, seat);
           return;
         }
         seatCounter += 1;
@@ -285,6 +372,7 @@ function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
           conn,
           name: uniqueName(wanted),
           avatar: sanitizeAvatar(data.avatar),
+          deviceId,
         });
         seatId = playerId;
         void conn.send({ type: 'welcome', playerId } satisfies HostMessage);
@@ -390,7 +478,15 @@ export function joinRoom(code: string, name: string, avatar?: string): Promise<G
     peer.on('open', () => {
       const conn = peer.connect(PEER_PREFIX + normalizeRoomCode(code), { reliable: true });
       conn.on('open', () => {
-        void conn.send({ type: 'hello', name, avatar } satisfies GuestMessage);
+        // Undefined values don't survive the wire (they arrive as null) —
+        // include optional keys only when they carry a value.
+        const hello: Extract<GuestMessage, { type: 'hello' }> = {
+          type: 'hello',
+          name,
+          deviceId: getDeviceId(),
+        };
+        if (avatar !== undefined) hello.avatar = avatar;
+        void conn.send(hello);
       });
       conn.on('data', (data) => {
         if (!isHostMessage(data)) return;

@@ -99,11 +99,28 @@ export function matchesLetter(word: string, letter: string): boolean {
 }
 
 /**
+ * Finish rank per player for speed scoring: 0 = fastest. Players without a
+ * recorded time (bots, never-submitted guests) all share the last rank.
+ */
+function speedRanks(state: GameState, round: RoundState): Map<string, number> {
+  const times = round.finishTimes ?? {};
+  const ranked = state.players
+    .filter((p) => times[p.id] !== undefined)
+    .sort((a, b) => (times[a.id] ?? 0) - (times[b.id] ?? 0));
+  const ranks = new Map<string, number>();
+  ranked.forEach((p, i) => ranks.set(p.id, i));
+  for (const p of state.players) if (!ranks.has(p.id)) ranks.set(p.id, ranked.length);
+  return ranks;
+}
+
+/**
  * Assign points after validity was decided (answers with status 'invalid' stay 0).
  * unique: unique valid word 10, shared valid word 5. simple: any valid word 10.
+ * speedScoring: each finish rank after the fastest loses 1 point, never below 1.
  */
 export function scoreRound(state: GameState, round: RoundState): void {
-  const { scoring } = state.settings;
+  const { scoring, speedScoring } = state.settings;
+  const ranks = speedScoring === true ? speedRanks(state, round) : null;
   for (const categoryId of round.categoryIds) {
     const inCategory = round.answers.filter((a) => a.categoryId === categoryId);
     for (const answer of inCategory) {
@@ -121,6 +138,9 @@ export function scoreRound(state: GameState, round: RoundState): void {
       } else {
         answer.status = 'valid';
         answer.points = 10;
+      }
+      if (ranks) {
+        answer.points = Math.max(answer.points - (ranks.get(answer.playerId) ?? 0), 1);
       }
     }
   }

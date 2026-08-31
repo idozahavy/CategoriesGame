@@ -3,7 +3,7 @@
   import { game, screen, updateGame } from '../lib/stores';
   import { t, categoryName } from '../lib/i18n';
   import { setAnswer, matchesLetter, TIMER_OPTIONS } from '../lib/game';
-  import type { ScoringSystem, ValidationMode } from '../lib/types';
+  import type { GameState, RoundState, ScoringSystem, ValidationMode } from '../lib/types';
   import Chip from '../lib/ui/Chip.svelte';
   import { prefetchWordCheck } from '../lib/validation';
   import { botAnswers, BOT_THINK_MS } from '../lib/bot';
@@ -69,10 +69,12 @@
   const activePid = $derived(round?.activePlayerId ?? null);
   const roundPhase = $derived(round?.phase ?? null);
   const roundIndex = $derived(round?.index ?? -1);
+  const turnStartedAt = $derived(round?.turnStartedAt ?? null);
 
   let answers = $state<Record<string, string>>({});
   let handoffOpen = $state(false);
   let showLeaveConfirm = $state(false);
+  let showSubmitConfirm = $state(false);
   let showSettings = $state(false);
   let showTimeUp = $state(false);
   let timeLeft = $state<number | null>(null);
@@ -101,23 +103,38 @@
     });
   });
 
+  // Stamp when the turn's entry actually begins (handoff dismissed / round sent
+  // to guests). Persisted in the save, so a reload resumes the countdown from
+  // the wall clock instead of restarting it — and it feeds speed scoring.
+  $effect(() => {
+    void roundIndex;
+    if (!activePid || roundPhase !== 'entry' || handoffOpen || turnStartedAt !== null) return;
+    updateGame((g) => {
+      const r = g.rounds[g.currentRound];
+      if (r && r.phase === 'entry' && r.turnStartedAt === undefined) r.turnStartedAt = Date.now();
+    });
+  });
+
   // Per-turn countdown; paused while the handoff panel is covering the screen.
+  // Wall-clock based (not a decrement) so throttled tabs and reloads stay honest.
   $effect(() => {
     void roundIndex; // restart per round
-    if (!timerSeconds || !activePid || roundPhase !== 'entry' || handoffOpen) {
+    const startedAt = turnStartedAt;
+    if (!timerSeconds || !activePid || roundPhase !== 'entry' || handoffOpen || !startedAt) {
       timeLeft = null;
       return;
     }
-    timeLeft = timerSeconds;
-    const id = setInterval(() => {
-      timeLeft = (timeLeft ?? 1) - 1;
-      const left = timeLeft ?? 0;
+    const tick = (): void => {
+      const left = timerSeconds - Math.floor((Date.now() - startedAt) / 1000);
+      timeLeft = Math.max(left, 0);
       if (left > 0 && left <= 10) playTick();
       if (left <= 0) {
         clearInterval(id);
         handleTimeUp();
       }
-    }, 1000);
+    };
+    const id = setInterval(tick, 1000);
+    tick();
     return () => clearInterval(id);
   });
 
@@ -134,7 +151,8 @@
       // 0 = endless; guests render it as ∞.
       roundCount: g.settings.endless ? 0 : g.settings.roundCount,
       letter: r.letter,
-      seconds: g.settings.timerSeconds,
+      // A host reload rebroadcasts mid-round — send what's left, not the full timer.
+      seconds: remainingSeconds(g, r),
       categories: r.categoryIds.map((catId) => {
         const cat = categoryFor(catId);
         return {
@@ -146,6 +164,13 @@
     });
   });
 
+  function remainingSeconds(g: GameState, r: RoundState): number | null {
+    const total = g.settings.timerSeconds;
+    if (total === null) return null;
+    if (r.turnStartedAt === undefined) return total;
+    return Math.max(total - Math.floor((Date.now() - r.turnStartedAt) / 1000), 0);
+  }
+
   function handleGuestAnswers(playerId: string, msg: GuestMessage): void {
     if (msg.type !== 'answers') return;
     let allIn = false;
@@ -155,6 +180,10 @@
       for (const catId of r.categoryIds) {
         const word = msg.answers[catId];
         if (word !== undefined && word.trim() !== '') setAnswer(r, playerId, catId, word);
+      }
+      // First submission fixes the finish time; a reconnect resend can't improve it.
+      if (r.turnStartedAt !== undefined && r.finishTimes?.[playerId] === undefined) {
+        r.finishTimes = { ...r.finishTimes, [playerId]: Date.now() - r.turnStartedAt };
       }
       const submitted = new Set(r.submittedIds ?? []);
       submitted.add(playerId);
@@ -212,10 +241,16 @@
         const word = words[catId] ?? '';
         if (word.trim() !== '') setAnswer(r, pid, catId, word);
       }
+      // Bots get no finish time — speed points shouldn't reward robot reflexes.
+      const player = g.players.find((p) => p.id === pid);
+      if (r.turnStartedAt !== undefined && player?.isBot !== true) {
+        r.finishTimes = { ...r.finishTimes, [pid]: Date.now() - r.turnStartedAt };
+      }
       const idx = g.players.findIndex((p) => p.id === pid);
       const next = g.players[idx + 1];
       if (next) {
         r.activePlayerId = next.id;
+        delete r.turnStartedAt; // next player's clock starts after their handoff
       } else {
         r.phase = 'review';
         movedToReview = true;
@@ -231,15 +266,17 @@
 
   function submitTurn() {
     if (!$game || !round || !activePlayer) return;
+    showSubmitConfirm = false;
     commitTurn(activePlayer.id, answers);
   }
 
-  /** Enter hops to the next category's input; on the last one it submits the turn. */
+  /** Enter hops to the next category's input; on the last one it asks to finish. */
   function onAnswerKeydown(e: KeyboardEvent, index: number): void {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     if (index >= (round?.categoryIds.length ?? 0) - 1) {
-      submitTurn();
+      // Enter is easy to hit by habit — confirm before ending the player's round.
+      showSubmitConfirm = true;
       return;
     }
     const inputs = document.querySelectorAll<HTMLInputElement>('.cards .inp');
@@ -266,14 +303,21 @@
   });
 
   function handleTimeUp() {
+    const idx = roundIndex;
     showTimeUp = true;
-    // The 1.2s pause doubles as a grace window in remote mode: guests'
-    // buzzer-beater answers still land while the round is officially open.
-    setTimeout(() => {
-      showTimeUp = false;
-      if (remote) forceReview();
-      else submitTurn();
-    }, 1200);
+    // Remote: 3s grace so every guest's buzzer-beater auto-send can land
+    // (each phone's countdown starts slightly after the host's). The window
+    // ends early when the last guest submits — handleGuestAnswers moves the
+    // round to review itself, and the guard below turns this into a no-op.
+    setTimeout(
+      () => {
+        showTimeUp = false;
+        if (roundIndex !== idx || roundPhase !== 'entry') return;
+        if (remote) forceReview();
+        else submitTurn();
+      },
+      remote ? 3000 : 1200,
+    );
   }
 
   function setTimer(value: number | null): void {
@@ -432,6 +476,16 @@
         >{$t('common.cancel')}</Button
       >
       <Button variant="danger" block onclick={confirmLeave}>{$t('common.ok')}</Button>
+    </div>
+  </Modal>
+
+  <Modal open={showSubmitConfirm}>
+    <p class="modal-text">{$t('round.submitConfirm')}</p>
+    <div class="modal-actions">
+      <Button variant="secondary" block onclick={() => (showSubmitConfirm = false)}
+        >{$t('common.cancel')}</Button
+      >
+      <Button variant="primary" block onclick={submitTurn}>{$t('round.done')}</Button>
     </div>
   </Modal>
 

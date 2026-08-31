@@ -35,6 +35,8 @@ export interface PlayerDef {
   avatar?: string;
   /** true = the app plays this player's turns automatically. */
   isBot?: boolean;
+  /** Remote guests: stable per-browser key so the same device reclaims its seat on reconnect. */
+  deviceId?: string;
 }
 
 /** A remembered family member: quick-pick in setup, rows on the leaderboard. */
@@ -63,6 +65,8 @@ export interface GameSettings {
   wikidataCheck?: boolean;
   /** false = no "did you know" word fact on the review screen. */
   funFacts?: boolean;
+  /** true = finish rank shaves points: fastest keeps full value, each later rank −1, floor 1. */
+  speedScoring?: boolean;
   /** null = no timer. */
   timerSeconds: number | null;
   /** true = players answer on their own devices via a P2P room (host screen orchestrates). */
@@ -94,6 +98,14 @@ export interface RoundState {
   activePlayerId: string | null;
   /** Remote mode: players who already sent their answers this round. */
   submittedIds?: string[];
+  /**
+   * Epoch ms when the current entry turn began (whole round in remote mode).
+   * Persisted so a reload resumes the countdown from the wall clock instead of
+   * restarting it; cleared on pass-and-play handoff.
+   */
+  turnStartedAt?: number;
+  /** ms each player took to finish entering answers — feeds speed scoring. */
+  finishTimes?: Record<string, number>;
 }
 
 export type GameStatus = 'setup' | 'playing' | 'finished';

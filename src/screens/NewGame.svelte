@@ -182,6 +182,7 @@
   let endless = $state(false);
   let wikidataCheck = $state(true);
   let funFacts = $state(true);
+  let speedScoring = $state(false);
   let validation = $state<ValidationMode>('hybrid');
   let gameLanguage = $state($uiLanguage);
 
@@ -307,6 +308,7 @@
           name: g.name,
           colorIndex: (i % 8) + 1,
           avatar: g.avatar,
+          deviceId: g.deviceId,
         }))
       : players.map((p, i) => ({
           id: p.id,
@@ -336,6 +338,7 @@
       endless,
       wikidataCheck,
       funFacts,
+      speedScoring,
       timerSeconds,
       remote,
       roomCode: remote ? roomCode : undefined,
@@ -608,6 +611,14 @@
             >
             <Chip on={funFacts} onclick={() => (funFacts = !funFacts)}
               >{funFacts ? '✓ ' : ''}{$t('setup.funFact')}</Chip
+            >
+          </div>
+        </div>
+        <div class="toggle-field">
+          <span class="select-label">{$t('setup.speedScoring.hint')}</span>
+          <div class="chip-row">
+            <Chip on={speedScoring} onclick={() => (speedScoring = !speedScoring)}
+              >{speedScoring ? '✓ ' : ''}{$t('setup.speedScoring')}</Chip
             >
           </div>
         </div>
