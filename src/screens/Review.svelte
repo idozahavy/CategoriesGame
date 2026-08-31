@@ -34,6 +34,7 @@
   let voteQueue = $state<AnswerEntry[]>([]);
   let currentVote = $state<AnswerEntry | null>(null);
   let scored = $state(false);
+  let advancing = $state(false);
 
   function categoryFor(catId: string) {
     return $game?.settings.categories.find((c) => c.id === catId) ?? null;
@@ -107,6 +108,8 @@
   }
 
   function next() {
+    if (advancing) return;
+    advancing = true;
     updateGame((g) => {
       startNextRound(g);
     });
@@ -179,7 +182,9 @@
       {#if isFinished($game)}
         <Button variant="accent" block onclick={finish}>{$t('review.finish')}</Button>
       {:else}
-        <Button variant="primary" block onclick={next}>{$t('review.next')}</Button>
+        <Button variant="primary" block disabled={advancing} onclick={next}
+          >{$t('review.next')}</Button
+        >
       {/if}
     </div>
   {/if}

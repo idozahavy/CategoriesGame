@@ -20,7 +20,8 @@
   async function refresh(): Promise<void> {
     loading = true;
     try {
-      saves = await listSaves();
+      // Finished games have nothing left to resume.
+      saves = (await listSaves()).filter((s) => s.status !== 'finished');
     } finally {
       loading = false;
     }

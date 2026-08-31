@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { screen } from './lib/stores';
   import { pack } from './lib/i18n';
   import Home from './screens/Home.svelte';
@@ -13,6 +14,22 @@
   $effect(() => {
     document.documentElement.dir = $pack.dir;
     document.documentElement.lang = $pack.code;
+  });
+
+  // The app has no router, so the browser back button would leave the page
+  // entirely (jarring mid-game, especially back-swipes on touch). Keep one
+  // sentinel entry so back returns to the Home screen instead — any running
+  // game is already autosaved and reachable via Resume.
+  onMount(() => {
+    history.pushState({ inApp: true }, '');
+    const onPop = (): void => {
+      history.pushState({ inApp: true }, '');
+      screen.set('home');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+    };
   });
 </script>
 

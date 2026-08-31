@@ -55,7 +55,11 @@
     { value: 60, key: 'setup.timer.fast' },
   ];
 
+  const MAX_CATEGORY_NAME_LENGTH = 24;
+
   let step = $state(1);
+  let stepError = $state('');
+  let starting = $state(false);
 
   // Step 1
   let players = $state<PlayerDraft[]>([{ id: newId(), name: '' }]);
@@ -65,6 +69,7 @@
   let customCategories = $state<CategoryDef[]>([]);
   let selectedCategoryIds = $state<string[]>([...DEFAULT_CATEGORY_IDS]);
   let newCategoryName = $state('');
+  let categoryError = $state('');
 
   // Step 3
   let scoring = $state<ScoringSystem>('unique');
@@ -92,6 +97,7 @@
   }
 
   function toggleCategory(id: string): void {
+    stepError = '';
     selectedCategoryIds = selectedCategoryIds.includes(id)
       ? selectedCategoryIds.filter((x) => x !== id)
       : [...selectedCategoryIds, id];
@@ -99,11 +105,36 @@
 
   function addCustomCategory(): void {
     const name = newCategoryName.trim();
-    if (!name) return;
+    if (!name) {
+      categoryError = $t('setup.error.categoryEmpty');
+      return;
+    }
+    if (name.length > MAX_CATEGORY_NAME_LENGTH) {
+      categoryError = $t('setup.error.categoryTooLong');
+      return;
+    }
+    categoryError = '';
     const cat: CategoryDef = { id: newId(), customName: name };
     customCategories = [...customCategories, cat];
     selectedCategoryIds = [...selectedCategoryIds, cat.id];
     newCategoryName = '';
+  }
+
+  /** Empty string when everything up to the current step is valid; the error message otherwise. */
+  function validateStep(): string {
+    const names = players.map((p) => p.name.trim());
+    if (names.some((n) => n === '')) return $t('setup.error.emptyName');
+    if (new Set(names.map((n) => n.toLocaleLowerCase())).size !== names.length) {
+      return $t('setup.error.duplicateName');
+    }
+    if (step >= 2 && selectedCategoryIds.length === 0) return $t('setup.error.noCategories');
+    return '';
+  }
+
+  function nextStep(): void {
+    stepError = validateStep();
+    if (stepError !== '') return;
+    step = Math.min(3, step + 1);
   }
 
   function removeCustomCategory(id: string): void {
@@ -112,17 +143,27 @@
   }
 
   function goBack(): void {
+    stepError = '';
     if (step > 1) step -= 1;
     else screen.set('home');
   }
 
   function startGame(): void {
+    if (starting) return;
+    // The per-step checks normally ran already; re-validate in case any
+    // navigation path skipped them.
+    stepError = validateStep();
+    if (stepError !== '') return;
+    starting = true;
     const finalPlayers: PlayerDef[] = players.map((p, i) => ({
       id: p.id,
-      name: p.name.trim() || `Player ${i + 1}`,
+      name: p.name.trim(),
       colorIndex: i + 1,
     }));
-    const categories = allCategories.filter((c) => selectedCategoryIds.includes(c.id));
+    // Copy to plain objects: $state proxies can't pass structuredClone/IndexedDB.
+    const categories = allCategories
+      .filter((c) => selectedCategoryIds.includes(c.id))
+      .map((c) => ({ ...c }));
     const settings: GameSettings = {
       language: gameLanguage,
       mode,
@@ -151,6 +192,7 @@
             <TextInput
               bind:value={player.name}
               placeholder={`${$t('setup.playerName')} ${i + 1}`}
+              oninput={() => (stepError = '')}
             />
             {#if i > 0}
               <Button variant="ghost" onclick={() => removePlayer(player.id)}>✕</Button>
@@ -184,6 +226,7 @@
       </div>
 
       <h2 class="section-title">{$t('setup.categories')}</h2>
+      <p class="section-hint">{$t('setup.categories.hint')}</p>
       <div class="chip-grid">
         {#each builtinCategories as cat (cat.id)}
           <Chip on={selectedCategoryIds.includes(cat.id)} onclick={() => toggleCategory(cat.id)}>
@@ -208,7 +251,15 @@
         {/each}
       </div>
       <div class="add-category">
-        <TextInput bind:value={newCategoryName} placeholder={$t('setup.addCategory')} />
+        <TextInput
+          bind:value={newCategoryName}
+          placeholder={$t('setup.addCategory')}
+          error={categoryError}
+          oninput={() => (categoryError = '')}
+          onkeydown={(e) => {
+            if (e.key === 'Enter') addCustomCategory();
+          }}
+        />
         <Button variant="secondary" onclick={addCustomCategory}>{$t('setup.addCategory')}</Button>
       </div>
     {:else}
@@ -285,17 +336,22 @@
   </div>
 
   <div class="footer">
+    {#if stepError}
+      <p class="step-error">{stepError}</p>
+    {/if}
     {#if step < 3}
       <Button
         variant="accent"
         block
         disabled={step === 2 && !canProceedCategories}
-        onclick={() => (step += 1)}
+        onclick={nextStep}
       >
         {$t('setup.next')}
       </Button>
     {:else}
-      <Button variant="accent" block onclick={startGame}>{$t('setup.start')}</Button>
+      <Button variant="accent" block disabled={starting} onclick={startGame}
+        >{$t('setup.start')}</Button
+      >
     {/if}
   </div>
 </div>
@@ -440,7 +496,18 @@
     font-family: inherit;
     padding-inline: var(--space-4);
   }
+  .section-hint {
+    color: var(--color-muted);
+    font-size: var(--font-size-small);
+  }
   .footer {
     flex-shrink: 0;
+  }
+  .step-error {
+    color: var(--color-danger);
+    font-weight: var(--font-weight-subheading);
+    font-size: var(--font-size-small);
+    text-align: center;
+    margin-block-end: var(--space-2);
   }
 </style>

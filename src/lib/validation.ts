@@ -19,7 +19,7 @@ export async function checkWord(
   mode: ValidationMode,
 ): Promise<WordVerdict> {
   const trimmed = word.trim();
-  if (trimmed === '') return 'invalid';
+  if (trimmed.length < 2) return 'invalid'; // a lone letter is never a word
   if (!matchesLetter(trimmed, letter)) return 'invalid';
   if (mode === 'none') return 'valid';
   if (mode === 'vote') return 'vote';

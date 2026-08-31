@@ -30,7 +30,12 @@ export function drawLetter(state: GameState): string {
   return letter;
 }
 
-export function startNextRound(state: GameState): RoundState {
+export function startNextRound(state: GameState): RoundState | null {
+  // No-op past the configured round count, and while a round is still in
+  // progress — so a double-tap on "Next round" cannot skip or add rounds.
+  const current = state.rounds[state.rounds.length - 1];
+  if (state.rounds.length >= state.settings.roundCount) return null;
+  if (current && current.phase !== 'done') return null;
   const letter = drawLetter(state);
   state.usedLetters.push(letter);
   const { mode, categories } = state.settings;

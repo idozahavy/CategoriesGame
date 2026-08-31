@@ -23,6 +23,7 @@
 ## Domain rules
 
 - Every mutation of a running game goes through `updateGame()` (it persists to IndexedDB and returns a deep clone so `$derived` chains re-evaluate — same-reference mutation gets memoized away). Never mutate `$game` directly.
+- `GameState` must hold only plain data: copy anything sourced from `$state` (e.g. `.map((x) => ({ ...x }))`) before putting it into a game — `$state` proxies throw `DataCloneError` in `structuredClone` and IndexedDB.
 - Pure functions in `game.ts` take state explicitly; no store access outside components/`stores.ts`.
 - No network calls except `validation.ts` (public dictionary); every fetch has a timeout and degrades gracefully (never throws to the UI).
 
