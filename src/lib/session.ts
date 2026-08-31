@@ -1,4 +1,5 @@
 import type { GameState, Screen } from './types';
+import { readStorage, removeStorage, writeStorage } from './storage';
 
 /**
  * Remembers which game was on screen so a page reload (or the mobile browser
@@ -13,22 +14,14 @@ const SESSION_KEY = 'categories-active-game';
 const GAME_SCREENS: readonly Screen[] = ['round', 'review', 'scoreboard'];
 
 export function readActiveGameId(): string | null {
-  try {
-    return localStorage.getItem(SESSION_KEY);
-  } catch {
-    return null; // storage unavailable — nothing to restore
-  }
+  return readStorage(SESSION_KEY);
 }
 
 /** Called reactively from App.svelte on every screen/game change. */
 export function persistActiveGame(screen: Screen, game: GameState | null): void {
-  try {
-    if (game && GAME_SCREENS.includes(screen) && game.status !== 'finished') {
-      localStorage.setItem(SESSION_KEY, game.id);
-    } else {
-      localStorage.removeItem(SESSION_KEY);
-    }
-  } catch {
-    // storage unavailable — reload just won't restore the game
+  if (game && GAME_SCREENS.includes(screen) && game.status !== 'finished') {
+    writeStorage(SESSION_KEY, game.id);
+  } else {
+    removeStorage(SESSION_KEY);
   }
 }

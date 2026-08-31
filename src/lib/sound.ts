@@ -1,27 +1,16 @@
 import { writable } from 'svelte/store';
+import { readStorage, writeStorage } from './storage';
 
 /** Tiny WebAudio chimes — no audio assets, everything synthesized on demand. */
 
 const SOUND_STORAGE_KEY = 'categories-sound';
 
-function detectInitialSound(): boolean {
-  try {
-    return localStorage.getItem(SOUND_STORAGE_KEY) !== 'off';
-  } catch {
-    return true;
-  }
-}
-
-export const soundOn = writable<boolean>(detectInitialSound());
+export const soundOn = writable<boolean>(readStorage(SOUND_STORAGE_KEY) !== 'off');
 
 let enabled = true;
 soundOn.subscribe((on) => {
   enabled = on;
-  try {
-    localStorage.setItem(SOUND_STORAGE_KEY, on ? 'on' : 'off');
-  } catch {
-    // storage unavailable — the session toggle still works
-  }
+  writeStorage(SOUND_STORAGE_KEY, on ? 'on' : 'off');
 });
 
 let ctx: AudioContext | null = null;

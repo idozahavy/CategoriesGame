@@ -89,13 +89,14 @@ export function setAnswer(
   }
 }
 
-function normalize(word: string): string {
+/** Canonical form for comparing player words: trimmed, locale-lowercased. */
+export function normalizeWord(word: string): string {
   return word.trim().toLocaleLowerCase();
 }
 
 /** Does the word start with the round letter (locale-insensitive)? */
 export function matchesLetter(word: string, letter: string): boolean {
-  return normalize(word).startsWith(letter.toLocaleLowerCase());
+  return normalizeWord(word).startsWith(letter.toLocaleLowerCase());
 }
 
 /**
@@ -130,7 +131,9 @@ export function scoreRound(state: GameState, round: RoundState): void {
       }
       const sameWord = inCategory.filter(
         (o) =>
-          o !== answer && o.status !== 'invalid' && normalize(o.word) === normalize(answer.word),
+          o !== answer &&
+          o.status !== 'invalid' &&
+          normalizeWord(o.word) === normalizeWord(answer.word),
       );
       if (scoring === 'unique' && sameWord.length > 0) {
         answer.status = 'shared';

@@ -1,6 +1,6 @@
 import type { ValidationMode } from './types';
 import { getPack } from './i18n';
-import { matchesLetter } from './game';
+import { matchesLetter, normalizeWord } from './game';
 import { addLearnedWord, getLearnedWords, removeLearnedWord } from './db';
 import { ensureWords, getWords } from './words';
 
@@ -103,7 +103,7 @@ export async function inLearnedList(
   categoryId: string,
   language: string,
 ): Promise<boolean> {
-  return (await learnedSet(language, categoryId)).has(word.trim().toLocaleLowerCase());
+  return (await learnedSet(language, categoryId)).has(normalizeWord(word));
 }
 
 /** Persist a confirmed word (dictionary hit or accepted group vote) for future games. */
@@ -111,7 +111,7 @@ export async function learnWord(language: string, categoryId: string, word: stri
   // Custom categories get a fresh UUID every game — words learned under one
   // could never be looked up again. Only builtin category ids accumulate.
   if (!(categoryId in getPack(language).categoryNames)) return;
-  const normalized = word.trim().toLocaleLowerCase();
+  const normalized = normalizeWord(word);
   if (normalized.length < 2) return;
   const set = await learnedSet(language, categoryId);
   if (set.has(normalized)) return;
@@ -129,7 +129,7 @@ export async function forgetWord(
   categoryId: string,
   word: string,
 ): Promise<void> {
-  const normalized = word.trim().toLocaleLowerCase();
+  const normalized = normalizeWord(word);
   learnedCache.get(`${language}:${categoryId}`)?.delete(normalized);
   try {
     await removeLearnedWord(language, categoryId, normalized);

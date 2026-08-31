@@ -1,5 +1,6 @@
 import Peer, { type DataConnection } from 'peerjs';
 import { newId } from './game';
+import { readStorage, writeStorage } from './storage';
 
 /**
  * P2P room layer (WebRTC via PeerJS + its free public broker for signaling).
@@ -61,15 +62,11 @@ const sessionDeviceId = newId();
  * reconnected reclaims its own seat instead of joining as "Name 2".
  */
 function getDeviceId(): string {
-  try {
-    const existing = localStorage.getItem(DEVICE_ID_KEY);
-    if (existing !== null && existing !== '') return existing;
-    localStorage.setItem(DEVICE_ID_KEY, sessionDeviceId);
-    return sessionDeviceId;
-  } catch {
-    // Storage unavailable — a one-off id still dedupes within this page load.
-    return sessionDeviceId;
-  }
+  const existing = readStorage(DEVICE_ID_KEY);
+  if (existing !== null && existing !== '') return existing;
+  // Unsaved ids still dedupe within this page load.
+  writeStorage(DEVICE_ID_KEY, sessionDeviceId);
+  return sessionDeviceId;
 }
 
 export function makeRoomCode(): string {
