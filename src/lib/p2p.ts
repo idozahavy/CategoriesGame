@@ -102,7 +102,8 @@ function sanitizeAvatar(raw: unknown): string | undefined {
   return undefined;
 }
 
-function isGuestMessage(v: unknown): v is GuestMessage {
+/** Exported for tests — the security boundary for everything guests send. */
+export function isGuestMessage(v: unknown): v is GuestMessage {
   if (typeof v !== 'object' || v === null) return false;
   const m = v as Record<string, unknown>;
   if (m['type'] === 'hello') {

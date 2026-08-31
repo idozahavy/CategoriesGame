@@ -10,6 +10,8 @@
     "deploy": "npm run build && npx wrangler pages deploy dist --project-name=kategoria --branch=main",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
