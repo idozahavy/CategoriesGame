@@ -11,6 +11,7 @@
     MAX_ANSWER_LENGTH,
     normalizeRoomCode,
   } from '../lib/p2p';
+  import { hasCamera, roomCodeFromScan, startQrScan } from '../lib/qrscan';
   import { screen } from '../lib/stores';
   import Avatar from '../lib/ui/Avatar.svelte';
   import Button from '../lib/ui/Button.svelte';
@@ -34,6 +35,10 @@
   let errorKey = $state('join.error.network');
   let avatarPickerOpen = $state(false);
   let avatarFileInput: HTMLInputElement | undefined = $state();
+  const canScan = hasCamera();
+  let scannerOpen = $state(false);
+  let scanFailed = $state(false);
+  let scanVideo: HTMLVideoElement | undefined = $state();
 
   let session: GuestSession | null = null;
   let roster = $state<string[]>([]);
@@ -225,6 +230,43 @@
     if (picked !== null) pickAvatar(picked);
   }
 
+  function openScanner(): void {
+    scanFailed = false;
+    scannerOpen = true;
+  }
+
+  function onScanned(text: string): void {
+    const scanned = roomCodeFromScan(text);
+    if (scanned === '') return;
+    code = scanned;
+    codeError = '';
+    scannerOpen = false;
+    // Name already filled in? Then the scan is the last tap needed.
+    if (name.trim() !== '') void join();
+  }
+
+  // Run the camera only while the scanner modal is showing its <video>;
+  // closing the modal (or leaving the screen) releases the camera.
+  $effect(() => {
+    const video = scanVideo;
+    if (!scannerOpen || !video) return;
+    let stop: (() => void) | null = null;
+    let cancelled = false;
+    startQrScan(video, onScanned)
+      .then((s) => {
+        if (cancelled) s();
+        else stop = s;
+      })
+      .catch((e: unknown) => {
+        console.error('Camera unavailable', e);
+        scanFailed = true;
+      });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  });
+
   const roundTitle = $derived(
     round
       ? $t('round.title')
@@ -247,6 +289,9 @@
         error={codeError}
         oninput={() => (codeError = '')}
       />
+      {#if canScan}
+        <Button variant="secondary" block onclick={openScanner}>📷 {$t('join.scan')}</Button>
+      {/if}
       <div class="name-row">
         <button
           type="button"
@@ -354,6 +399,21 @@
   </div>
 </Modal>
 
+<Modal open={scannerOpen} onclose={() => (scannerOpen = false)}>
+  <p class="avatar-title">{$t('join.scan')}</p>
+  {#if scanFailed}
+    <div class="emoji">🙈</div>
+    <p class="muted">{$t('join.scan.error')}</p>
+  {:else}
+    <video class="viewfinder" bind:this={scanVideo} autoplay muted playsinline></video>
+    <p class="muted scan-hint">{$t('join.scan.hint')}</p>
+  {/if}
+  <div class="avatar-actions">
+    <Button variant="ghost" block onclick={() => (scannerOpen = false)}>{$t('common.close')}</Button
+    >
+  </div>
+</Modal>
+
 <Modal open={avatarPickerOpen} onclose={() => (avatarPickerOpen = false)}>
   <p class="avatar-title">{$t('setup.avatar')}</p>
   <div class="emoji-grid">
@@ -432,6 +492,18 @@
     padding-block: var(--space-1);
     padding-inline: var(--space-3);
     font-weight: var(--font-weight-subheading);
+  }
+  .viewfinder {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    background: var(--color-text);
+    margin-block-end: var(--space-3);
+  }
+  .scan-hint {
+    margin-block-end: var(--space-3);
   }
   .name-row {
     display: flex;
