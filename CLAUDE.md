@@ -1,6 +1,6 @@
 # CategoriesGame
 
-Kid-friendly Scattergories-style word game. Svelte + Vite + TypeScript, no backend (static build), IndexedDB saves, multi-language incl. RTL.
+Kid-friendly Scattergories-style word game. Svelte + Vite + TypeScript, static build on Cloudflare Pages plus one Pages Function (`functions/turn-credentials.ts`) that mints TURN credentials, IndexedDB saves, multi-language incl. RTL.
 
 <!-- design-scheme:start -->
 

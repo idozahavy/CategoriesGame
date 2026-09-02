@@ -9,8 +9,15 @@ const SOUND_STORAGE_KEY = 'categories-sound';
 export const soundOn = writable<boolean>(readStorage(SOUND_STORAGE_KEY) !== 'off');
 
 let enabled = true;
+let isFirstSubscription = true;
 soundOn.subscribe((on) => {
   enabled = on;
+  // Skip the initial notification fired by subscribe() itself — only persist
+  // when the user actually toggles sound, not on every module load.
+  if (isFirstSubscription) {
+    isFirstSubscription = false;
+    return;
+  }
   writeStorage(SOUND_STORAGE_KEY, on ? 'on' : 'off');
 });
 

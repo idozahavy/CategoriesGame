@@ -23,7 +23,8 @@ export function ensureWords(language: string): Promise<void> {
       cache.set(language, mod.default);
     })
     .catch(() => {
-      cache.set(language, {}); // chunk failed to load — dictionary/vote still work
+      // Chunk failed to load — dictionary/vote still work. Do NOT cache: leave
+      // the language absent so the next ensureWords() call retries the load.
     })
     .finally(() => {
       loading.delete(language);

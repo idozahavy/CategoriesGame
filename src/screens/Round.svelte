@@ -2,6 +2,7 @@
   import { onMount, untrack } from 'svelte';
 
   import { BOT_THINK_MS, botAnswers } from '../lib/bot';
+  import { categoryEmoji } from '../lib/categories';
   import { matchesLetter, setAnswer, TIMER_OPTIONS } from '../lib/game';
   import { categoryName, t } from '../lib/i18n';
   import { getActiveRoom, type GuestMessage, setActiveRoom } from '../lib/p2p';
@@ -18,26 +19,6 @@
   import TimerPill from '../lib/ui/TimerPill.svelte';
   import TopBar from '../lib/ui/TopBar.svelte';
   import { prefetchWordCheck } from '../lib/validation';
-
-  const CATEGORY_EMOJI: Record<string, string> = {
-    animal: '🐶',
-    food: '🍕',
-    city: '🏙️',
-    country: '🌍',
-    name: '🧑',
-    plant: '🌸',
-    profession: '💼',
-    object: '📦',
-    sport: '⚽',
-    color: '🎨',
-    fruit: '🍎',
-    ocean: '🐠',
-    vehicle: '🚗',
-    kitchen: '🍴',
-    clothing: '👕',
-    body: '👃',
-  };
-  const DEFAULT_EMOJI = '📝';
 
   // Guard: this screen assumes a running game.
   $effect(() => {
@@ -159,7 +140,7 @@
         return {
           id: catId,
           label: cat ? $categoryName(cat) : catId,
-          emoji: CATEGORY_EMOJI[catId] ?? DEFAULT_EMOJI,
+          emoji: categoryEmoji(cat ?? catId),
         };
       }),
     });
@@ -301,13 +282,20 @@
     const key = `${String(roundIndex)}:${p.id}`;
     if (botTurnKey === key) return;
     botTurnKey = key;
+    let cancelled = false;
     void (async () => {
       const [words] = await Promise.all([
         botAnswers(g.settings.language, r.letter, r.categoryIds),
         new Promise((resolve) => setTimeout(resolve, BOT_THINK_MS)),
       ]);
+      // The effect may have been torn down (or moved to a different turn/round)
+      // while the bot was "thinking" — don't commit a turn that's no longer current.
+      if (cancelled) return;
       commitTurn(p.id, words);
     })();
+    return () => {
+      cancelled = true;
+    };
   });
 
   function handleTimeUp() {
@@ -458,7 +446,7 @@
           {@const val = answers[catId] ?? ''}
           <Card>
             <div class="cat-header">
-              <span class="cat-emoji">{CATEGORY_EMOJI[catId] ?? DEFAULT_EMOJI}</span>
+              <span class="cat-emoji">{categoryEmoji(cat ?? catId)}</span>
               <span class="cat-name">{cat ? $categoryName(cat) : catId}</span>
             </div>
             <TextInput
@@ -477,7 +465,7 @@
     {/if}
   {/if}
 
-  <Modal open={showLeaveConfirm}>
+  <Modal open={showLeaveConfirm} onclose={() => (showLeaveConfirm = false)}>
     <p class="modal-text">{$t('round.leaveConfirm')}</p>
     <div class="modal-actions">
       <Button variant="secondary" block onclick={() => (showLeaveConfirm = false)}
@@ -487,7 +475,7 @@
     </div>
   </Modal>
 
-  <Modal open={showSubmitConfirm}>
+  <Modal open={showSubmitConfirm} onclose={() => (showSubmitConfirm = false)}>
     <p class="modal-text">{$t('round.submitConfirm')}</p>
     <div class="modal-actions">
       <Button variant="secondary" block onclick={() => (showSubmitConfirm = false)}
@@ -501,7 +489,7 @@
     <p class="modal-text">{$t('round.timeUp')}</p>
   </Modal>
 
-  <Modal open={showSettings}>
+  <Modal open={showSettings} onclose={() => (showSettings = false)}>
     <div class="settings-body">
       <p class="settings-title">{$t('round.settings')}</p>
 

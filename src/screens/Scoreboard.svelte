@@ -42,7 +42,7 @@
     if ($game && $game.status !== 'finished' && isFinished($game)) finalize();
   });
 
-  let advancing = false;
+  let advancing = $state(false);
   function nextRound(): void {
     if (advancing) return;
     advancing = true;
@@ -154,13 +154,17 @@
     <p class="winner">{winnerText}</p>
 
     <div class="actions">
-      <Button variant="secondary" block onclick={oneMoreRound}>{$t('score.oneMore')}</Button>
+      <Button variant="secondary" block disabled={advancing} onclick={oneMoreRound}
+        >{$t('score.oneMore')}</Button
+      >
       <Button variant="accent" block onclick={playAgain}>{$t('score.playAgain')}</Button>
       <Button variant="ghost" block onclick={goHome}>{$t('score.home')}</Button>
     </div>
   {:else}
     <div class="actions">
-      <Button variant="primary" block onclick={nextRound}>{$t('review.next')}</Button>
+      <Button variant="primary" block disabled={advancing} onclick={nextRound}
+        >{$t('review.next')}</Button
+      >
       <Button variant="danger" block onclick={finalize}>{$t('score.endGame')}</Button>
     </div>
   {/if}

@@ -72,10 +72,14 @@ export async function addLearnedWord(
 ): Promise<void> {
   const key = learnedKey(language, categoryId);
   const d = await db();
-  const entry = (await d.get(LEARNED_STORE, key)) ?? { key, language, categoryId, words: [] };
-  if (entry.words.includes(word)) return;
-  entry.words.push(word);
-  await d.put(LEARNED_STORE, entry);
+  const tx = d.transaction(LEARNED_STORE, 'readwrite');
+  const store = tx.objectStore(LEARNED_STORE);
+  const entry = (await store.get(key)) ?? { key, language, categoryId, words: [] };
+  if (!entry.words.includes(word)) {
+    entry.words.push(word);
+    await store.put(entry);
+  }
+  await tx.done;
 }
 
 /** Everything learned so far, for export/inspection. */
@@ -91,11 +95,15 @@ export async function removeLearnedWord(
 ): Promise<void> {
   const key = learnedKey(language, categoryId);
   const d = await db();
-  const entry = await d.get(LEARNED_STORE, key);
-  if (!entry) return;
-  entry.words = entry.words.filter((w) => w !== word);
-  if (entry.words.length === 0) await d.delete(LEARNED_STORE, key);
-  else await d.put(LEARNED_STORE, entry);
+  const tx = d.transaction(LEARNED_STORE, 'readwrite');
+  const store = tx.objectStore(LEARNED_STORE);
+  const entry = await store.get(key);
+  if (entry) {
+    entry.words = entry.words.filter((w) => w !== word);
+    if (entry.words.length === 0) await store.delete(key);
+    else await store.put(entry);
+  }
+  await tx.done;
 }
 
 function profileKey(name: string): string {

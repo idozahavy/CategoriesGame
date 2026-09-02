@@ -18,7 +18,7 @@
     gap: var(--space-2);
     border-radius: var(--radius-pill);
     font-weight: var(--font-weight-display);
-    font-size: 15px;
+    font-size: var(--font-size-small);
     min-block-size: 44px;
     padding-block: var(--space-2);
     padding-inline: var(--space-4);

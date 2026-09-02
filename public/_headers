@@ -1,0 +1,12 @@
+# Cloudflare Pages response headers (copied into dist/ by Vite as-is).
+# No full CSP yet: word checking talks to per-language Wiktionary hosts and
+# Wikidata, avatars are data: URLs — an allowlist needs a careful inventory.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: microphone=(), geolocation=(), payment=(), usb=()
+
+/turn-credentials
+  Cache-Control: no-store

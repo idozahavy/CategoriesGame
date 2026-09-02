@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  import { categoryEmoji } from '../lib/categories';
   import { isFinished, scoreRound, startNextRound } from '../lib/game';
   import { categoryName, t } from '../lib/i18n';
   import { playDing } from '../lib/sound';
@@ -11,26 +12,6 @@
   import Modal from '../lib/ui/Modal.svelte';
   import TopBar from '../lib/ui/TopBar.svelte';
   import { checkWord, learnWord, wordFact } from '../lib/validation';
-
-  const CATEGORY_EMOJI: Record<string, string> = {
-    animal: '🐶',
-    food: '🍕',
-    city: '🏙️',
-    country: '🌍',
-    name: '🧑',
-    plant: '🌸',
-    profession: '💼',
-    object: '📦',
-    sport: '⚽',
-    color: '🎨',
-    fruit: '🍎',
-    ocean: '🐠',
-    vehicle: '🚗',
-    kitchen: '🍴',
-    clothing: '👕',
-    body: '👃',
-  };
-  const DEFAULT_EMOJI = '📝';
 
   $effect(() => {
     if (!$game) screen.set('home');
@@ -171,7 +152,7 @@
 </script>
 
 {#if round && $game}
-  <TopBar title={$t('review.title')} />
+  <TopBar title={$t('review.title')} backLabel={$t('setup.back')} />
 
   {#if checking}
     <div class="spinner-wrap">
@@ -183,7 +164,7 @@
         {@const cat = categoryFor(catId)}
         <Card>
           <div class="cat-header">
-            <span class="cat-emoji">{CATEGORY_EMOJI[catId] ?? DEFAULT_EMOJI}</span>
+            <span class="cat-emoji">{categoryEmoji(cat ?? catId)}</span>
             <span class="cat-name">{cat ? $categoryName(cat) : catId}</span>
           </div>
           <ul class="answer-list">

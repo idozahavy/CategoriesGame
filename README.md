@@ -42,8 +42,9 @@ Phones-join rooms use PeerJS: the free public broker for signaling, then a direc
    npx wrangler pages secret put TURN_API_TOKEN --project-name=kategoria
    ```
 4. Redeploy (`npm run deploy`) so the function ships.
+5. Recommended: add a **rate-limiting rule** for the path `/turn-credentials` (dashboard → your zone/site → Security → WAF → Rate limiting rules; e.g. 10 requests per minute per IP). The function already rejects cross-origin callers (403), but a scripted caller can forge headers — the rate limit caps how much relay quota anyone could mint.
 
-Without the secrets — and in local dev, where the endpoint doesn't exist — the app silently falls back to STUN-only, and same-network play works exactly as before.
+Without the secrets — and in local dev, where the endpoint doesn't exist — the app silently falls back to STUN-only, and same-network play works exactly as before. Security headers for the deployed site live in [public/_headers](public/_headers).
 
 ## Design system
 

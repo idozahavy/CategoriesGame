@@ -5,7 +5,7 @@ import globals from 'globals';
 import ts from 'typescript-eslint';
 
 export default ts.config(
-  { ignores: ['dist/', 'node_modules/', 'design/'] },
+  { ignores: ['dist/', 'node_modules/', 'design/', '.wrangler/'] },
   js.configs.recommended,
   ...ts.configs.strict,
   ...svelte.configs['flat/recommended'],
@@ -26,7 +26,7 @@ export default ts.config(
   },
   // Type-checked strict rules for plain TS modules.
   {
-    files: ['src/**/*.ts'],
+    files: ['src/**/*.ts', 'functions/**/*.ts'],
     extends: [...ts.configs.strictTypeChecked],
     languageOptions: {
       parserOptions: { projectService: true },

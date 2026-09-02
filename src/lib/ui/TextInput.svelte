@@ -6,6 +6,7 @@
     disabled = false,
     label = '',
     enterkeyhint,
+    maxlength,
     oninput,
     onkeydown,
   }: {
@@ -16,6 +17,7 @@
     label?: string;
     /** Mobile keyboards label the Enter key with this action. */
     enterkeyhint?: 'next' | 'done' | 'go' | 'enter' | 'send' | 'search';
+    maxlength?: number;
     oninput?: (e: Event) => void;
     onkeydown?: (e: KeyboardEvent) => void;
   } = $props();
@@ -30,6 +32,7 @@
     {placeholder}
     {disabled}
     {enterkeyhint}
+    {maxlength}
     {oninput}
     {onkeydown}
   />

@@ -38,6 +38,19 @@ describe('isGuestMessage (untrusted P2P input)', () => {
     expect(isGuestMessage({ type: 'hello', name: 'A', deviceId: 'x'.repeat(65) })).toBe(false);
     expect(isGuestMessage({ type: 'answers', roundIndex: '0', answers: {} })).toBe(false);
     expect(isGuestMessage({ type: 'answers', roundIndex: 0, answers: { a: 1 } })).toBe(false);
+    expect(isGuestMessage({ type: 'answers', roundIndex: 0, answers: { a: 'x'.repeat(41) } })).toBe(
+      false,
+    );
+    expect(
+      isGuestMessage({
+        type: 'answers',
+        roundIndex: 0,
+        answers: Object.fromEntries(Array.from({ length: 51 }, (_, i) => [`c${String(i)}`, 'ok'])),
+      }),
+    ).toBe(false);
+    expect(
+      isGuestMessage({ type: 'answers', roundIndex: 0, answers: { ['k'.repeat(65)]: 'ok' } }),
+    ).toBe(false);
     expect(isGuestMessage({ type: 'answers', roundIndex: 0, answers: null })).toBe(false);
     expect(isGuestMessage({ type: 'nonsense' })).toBe(false);
   });

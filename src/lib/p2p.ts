@@ -54,6 +54,10 @@ const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ';
 const CODE_LENGTH = 4;
 const MAX_NAME_LENGTH = 20;
 const MAX_DEVICE_ID_LENGTH = 64;
+/** Bounds on a guest's answers payload — it lands in every save and on the shared screen. */
+export const MAX_ANSWER_LENGTH = 40;
+const MAX_ANSWER_ENTRIES = 50;
+const MAX_CATEGORY_ID_LENGTH = 64;
 const JOIN_TIMEOUT_MS = 12000;
 /** Wait for the last outgoing message to flush before tearing the connection down. */
 const CLOSE_FLUSH_MS = 500;
@@ -129,7 +133,16 @@ export function isGuestMessage(v: unknown): v is GuestMessage {
     if (typeof m['roundIndex'] !== 'number') return false;
     const answers = m['answers'];
     if (typeof answers !== 'object' || answers === null) return false;
-    return Object.values(answers).every((w) => typeof w === 'string');
+    const entries = Object.entries(answers);
+    return (
+      entries.length <= MAX_ANSWER_ENTRIES &&
+      entries.every(
+        ([categoryId, word]) =>
+          categoryId.length <= MAX_CATEGORY_ID_LENGTH &&
+          typeof word === 'string' &&
+          word.length <= MAX_ANSWER_LENGTH,
+      )
+    );
   }
   return false;
 }
@@ -144,7 +157,7 @@ function isHostMessage(v: unknown): v is HostMessage {
 }
 
 /** How long to wait for the TURN-credentials endpoint before going STUN-only. */
-const TURN_FETCH_TIMEOUT_MS = 4000;
+const TURN_FETCH_TIMEOUT_MS = 2500;
 
 /** Exported for tests — validates the /turn-credentials response before use. */
 export function isIceServerArray(v: unknown): v is RTCIceServer[] {
@@ -193,7 +206,11 @@ async function fetchPeerOptions(): Promise<PeerJSOption> {
 }
 
 function getPeerOptions(): Promise<PeerJSOption> {
-  peerOptionsPromise ??= fetchPeerOptions();
+  peerOptionsPromise ??= fetchPeerOptions().then((options) => {
+    // A failure isn't remembered — the next room or join tries the endpoint again.
+    if (options.config === undefined) peerOptionsPromise = null;
+    return options;
+  });
   return peerOptionsPromise;
 }
 
@@ -413,11 +430,14 @@ function buildHostRoom(code: string, peer: Peer, seed?: GuestInfo[]): HostRoom {
         }
         if (locked) {
           // After lock, only a known player may come back (reload / dropped
-          // connection) — matched by name for devices that lost their id.
+          // connection) — matched by name for devices that lost their id. A
+          // name alone may only fill an EMPTY seat: taking over a live one
+          // needs the seat's own deviceId, or anyone with the code and a
+          // player's name could kick that player out mid-game.
           const existing = [...seats.entries()].find(
             ([, s]) => s.name.toLocaleLowerCase() === wanted.toLocaleLowerCase(),
           );
-          if (!existing) {
+          if (!existing || existing[1].conn !== null) {
             void conn.send({ type: 'busy' } satisfies HostMessage);
             setTimeout(() => {
               conn.close();

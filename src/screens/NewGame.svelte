@@ -4,6 +4,7 @@
 
   import { AVATAR_EMOJI, fileToAvatar } from '../lib/avatar';
   import { BOT_AVATAR } from '../lib/bot';
+  import { CATEGORY_EMOJI } from '../lib/categories';
   import { listProfiles, saveGame, touchProfile } from '../lib/db';
   import {
     createGame,
@@ -33,24 +34,6 @@
 
   type PlayerDraft = { id: string; name: string; avatar?: string; isBot?: boolean };
 
-  const CATEGORY_EMOJI: Record<string, string> = {
-    animal: '🐶',
-    food: '🍕',
-    city: '🏙️',
-    country: '🌍',
-    name: '📛',
-    plant: '🌱',
-    profession: '💼',
-    object: '📦',
-    sport: '⚽',
-    color: '🎨',
-    fruit: '🍎',
-    ocean: '🐠',
-    vehicle: '🚗',
-    kitchen: '🍴',
-    clothing: '👕',
-    body: '👃',
-  };
   const BUILTIN_CATEGORY_KEYS = [
     'animal',
     'food',
@@ -410,7 +393,14 @@
                 oninput={() => (stepError = '')}
               />
               {#if i > 0}
-                <Button variant="ghost" onclick={() => removePlayer(player.id)}>✕</Button>
+                <button
+                  type="button"
+                  class="player-remove"
+                  aria-label={$t('common.remove')}
+                  onclick={() => removePlayer(player.id)}
+                >
+                  ✕
+                </button>
               {/if}
             </div>
           {/each}
@@ -650,7 +640,7 @@
   </div>
 </div>
 
-<Modal open={avatarPickerFor !== null}>
+<Modal open={avatarPickerFor !== null} onclose={() => (avatarPickerFor = null)}>
   <p class="avatar-title">{$t('setup.avatar')}</p>
   <div class="emoji-grid">
     {#each AVATAR_EMOJI as emoji (emoji)}
@@ -716,6 +706,20 @@
     justify-content: center;
     cursor: pointer;
     border-radius: var(--radius-pill);
+  }
+  .player-remove {
+    min-inline-size: 48px;
+    min-block-size: 48px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-primary);
+    font-weight: var(--font-weight-display);
+    font-size: var(--font-size-body);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .avatar-title {
     font-size: var(--font-size-h2);

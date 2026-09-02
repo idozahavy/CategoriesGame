@@ -27,7 +27,22 @@ function json(body: unknown, status: number): Response {
   });
 }
 
-export async function onRequestPost(context: { env: Env }): Promise<Response> {
+/**
+ * Only the game's own pages may mint credentials — each one is a 24h pass to
+ * relay arbitrary traffic through the account's TURN quota. Browsers stamp
+ * Sec-Fetch-Site on every request; Origin is the fallback for older ones.
+ * (Scripted callers can forge both — the Cloudflare rate-limiting rule on
+ * this path, see README, is the second layer.)
+ */
+function isSameOrigin(request: Request): boolean {
+  const fetchSite = request.headers.get('Sec-Fetch-Site');
+  if (fetchSite !== null) return fetchSite === 'same-origin';
+  const origin = request.headers.get('Origin');
+  return origin !== null && origin === new URL(request.url).origin;
+}
+
+export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
+  if (!isSameOrigin(context.request)) return json({ error: 'forbidden' }, 403);
   const { TURN_KEY_ID, TURN_API_TOKEN } = context.env;
   if (TURN_KEY_ID === undefined || TURN_API_TOKEN === undefined) {
     return json({ error: 'turn-not-configured' }, 503);

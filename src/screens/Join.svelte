@@ -4,7 +4,13 @@
   import { AVATAR_EMOJI, fileToAvatar } from '../lib/avatar';
   import { matchesLetter } from '../lib/game';
   import { t } from '../lib/i18n';
-  import { type GuestSession, type HostMessage, joinRoom, normalizeRoomCode } from '../lib/p2p';
+  import {
+    type GuestSession,
+    type HostMessage,
+    joinRoom,
+    MAX_ANSWER_LENGTH,
+    normalizeRoomCode,
+  } from '../lib/p2p';
   import { screen } from '../lib/stores';
   import Avatar from '../lib/ui/Avatar.svelte';
   import Button from '../lib/ui/Button.svelte';
@@ -139,7 +145,13 @@
     showSubmitConfirm = false;
     if (!session || !r || submitted) return;
     submitted = true;
-    session.send({ type: 'answers', roundIndex: r.roundIndex, answers: { ...answers } });
+    session.send({
+      type: 'answers',
+      roundIndex: r.roundIndex,
+      answers: Object.fromEntries(
+        Object.entries(answers).map(([id, w]) => [id, w.slice(0, MAX_ANSWER_LENGTH)]),
+      ),
+    });
     phase = 'waiting';
   }
 
@@ -287,6 +299,7 @@
           <TextInput
             bind:value={() => answers[cat.id] ?? '', (v) => (answers[cat.id] = v)}
             enterkeyhint={i === round.categories.length - 1 ? 'done' : 'next'}
+            maxlength={MAX_ANSWER_LENGTH}
             onkeydown={(e) => onAnswerKeydown(e, i)}
             error={val !== '' && !matchesLetter(val, round.letter)
               ? $t('round.letterHint').replace('{letter}', round.letter)
@@ -331,7 +344,7 @@
   {/if}
 </div>
 
-<Modal open={showSubmitConfirm}>
+<Modal open={showSubmitConfirm} onclose={() => (showSubmitConfirm = false)}>
   <p class="modal-text">{$t('round.submitConfirm')}</p>
   <div class="modal-actions">
     <Button variant="secondary" block onclick={() => (showSubmitConfirm = false)}
@@ -341,7 +354,7 @@
   </div>
 </Modal>
 
-<Modal open={avatarPickerOpen}>
+<Modal open={avatarPickerOpen} onclose={() => (avatarPickerOpen = false)}>
   <p class="avatar-title">{$t('setup.avatar')}</p>
   <div class="emoji-grid">
     {#each AVATAR_EMOJI as emoji (emoji)}

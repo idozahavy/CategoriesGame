@@ -3,9 +3,9 @@
   let {
     title,
     onback,
-    backLabel = 'Back',
+    backLabel,
     action,
-  }: { title: string; onback?: () => void; backLabel?: string; action?: Snippet } = $props();
+  }: { title: string; onback?: () => void; backLabel: string; action?: Snippet } = $props();
 </script>
 
 <header class="topbar">

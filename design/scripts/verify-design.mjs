@@ -174,6 +174,42 @@ for (const file of srcFiles) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// raw-font-size rule (Svelte <style> blocks only) — warn-level report, not a
+// gate: token coverage for font-size is incomplete project-wide, so this is
+// tracked as debt rather than blocking the build. See scheme.md hard rule 4.
+// ---------------------------------------------------------------------------
+
+const STYLE_BLOCK_RE = /<style[^>]*>([\s\S]*?)<\/style>/;
+const FONT_SIZE_RAW_RE = /font-size\s*:\s*([^;]+);/g;
+const RAW_UNIT_VALUE_RE = /-?\d+(?:\.\d+)?(?:px|rem|em)$/;
+const CASCADE_OR_PERCENT_RE = /^(inherit|initial|unset|revert|revert-layer)$|%$/;
+
+for (const file of srcFiles) {
+  if (path.extname(file) !== '.svelte') continue;
+  const rel = path.relative(repoRoot, file).split(path.sep).join('/');
+  const text = readFileSync(file, 'utf8');
+  const styleMatch = text.match(STYLE_BLOCK_RE);
+  if (!styleMatch) continue;
+  const styleBlock = styleMatch[1];
+  const linesBeforeStyle = text.slice(0, styleMatch.index + styleMatch[0].indexOf(styleBlock)).split(
+    /\r?\n/,
+  ).length - 1;
+
+  styleBlock.split(/\r?\n/).forEach((lineText, idx) => {
+    if (DESIGN_IGNORE_RE.test(lineText)) return;
+    let m;
+    FONT_SIZE_RAW_RE.lastIndex = 0;
+    while ((m = FONT_SIZE_RAW_RE.exec(lineText))) {
+      const value = m[1].trim();
+      if (value.startsWith('var(')) continue;
+      if (CASCADE_OR_PERCENT_RE.test(value)) continue;
+      if (!RAW_UNIT_VALUE_RE.test(value)) continue;
+      addFinding(rel, linesBeforeStyle + idx + 1, 'raw-font-size', 'warn');
+    }
+  });
+}
+
 // design-ignore debt report
 let ignoreCount = 0;
 for (const file of srcFiles) {
