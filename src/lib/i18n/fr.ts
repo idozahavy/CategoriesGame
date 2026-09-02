@@ -101,7 +101,8 @@ export const fr: LanguagePack = {
     'round.yourTurn': '{name}, à toi de jouer !',
     'round.timeUp': 'Temps écoulé !',
     'round.leaveConfirm': 'Quitter cette manche ? Ta progression est sauvegardée.',
-    'round.submitConfirm': 'Envoyer tes réponses et terminer ta manche ?',
+    'round.submitConfirm':
+      'Certaines catégories sont encore vides — terminer ta manche quand même ?',
     'round.letterHint': 'Ça commence par « {letter} » ?',
     'round.waitingFor': 'En attente de…',
     'round.allIn': 'Tout le monde a fini !',

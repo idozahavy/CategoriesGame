@@ -1,6 +1,6 @@
 # Categories! 🎪
 
-A kid-friendly Scattergories-style word game. Play alone, together on one shared screen, or with everyone joining from their own phone via a room code (WebRTC, no backend — a static web app).
+A kid-friendly Scattergories-style word game. Play alone, together on one shared screen, or with everyone joining from their own phone via a room code (WebRTC — a static web app, plus one tiny optional Pages Function for TURN credentials).
 
 ## Features
 
@@ -29,6 +29,21 @@ npm run dev
 2. Add a word list at `src/lib/words/<code>.json` (categoryId → lowercase words) — it is picked up by filename and lazy-loaded when the language is first played.
 3. Register the pack in the `packs` map in `src/lib/i18n/index.ts`.
 4. Run `npm run check:i18n` — it fails if any key is missing. The language then appears automatically in the Home switcher and the game-language setting; RTL layouts come free via logical CSS.
+
+## Remote rooms (WebRTC + TURN)
+
+Phones-join rooms use PeerJS: the free public broker for signaling, then a direct peer-to-peer connection. Direct connections fail on restrictive networks (cellular ↔ WiFi, office firewalls), so on Cloudflare deploys a Pages Function ([functions/turn-credentials.ts](functions/turn-credentials.ts)) mints short-lived TURN relay credentials from Cloudflare Realtime. One-time setup per Pages project:
+
+1. Cloudflare dashboard → **Realtime → TURN** → create a TURN key (note its **Key ID** and **API token**).
+2. ```bash
+   npx wrangler pages secret put TURN_KEY_ID --project-name=kategoria
+   ```
+3. ```bash
+   npx wrangler pages secret put TURN_API_TOKEN --project-name=kategoria
+   ```
+4. Redeploy (`npm run deploy`) so the function ships.
+
+Without the secrets — and in local dev, where the endpoint doesn't exist — the app silently falls back to STUN-only, and same-network play works exactly as before.
 
 ## Design system
 

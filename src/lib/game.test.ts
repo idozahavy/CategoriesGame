@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createGame,
+  drawWeighted,
   isFinished,
   matchesLetter,
   newId,
@@ -93,13 +94,15 @@ describe('startNextRound', () => {
     expect(state.usedLetters).toContain(round?.letter);
   });
 
-  it('rotates one category per round in single mode', () => {
+  it('uses exactly one of the selected categories per round in single mode', () => {
     const state = createGame(makeSettings({ mode: 'single', roundCount: 3 }), makePlayers(2));
     const first = startNextRound(state);
-    expect(first?.categoryIds).toEqual(['animal']);
+    expect(first?.categoryIds).toHaveLength(1);
+    expect(['animal', 'food']).toContain(first?.categoryIds[0]);
     if (first) first.phase = 'done';
     const second = startNextRound(state);
-    expect(second?.categoryIds).toEqual(['food']);
+    expect(second?.categoryIds).toHaveLength(1);
+    expect(['animal', 'food']).toContain(second?.categoryIds[0]);
   });
 
   it('refuses while the current round is unfinished (double-tap guard)', () => {
@@ -119,6 +122,31 @@ describe('startNextRound', () => {
     const r1 = startNextRound(endless);
     if (r1) r1.phase = 'done';
     expect(startNextRound(endless)).not.toBeNull();
+  });
+});
+
+describe('drawWeighted', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns undefined for an empty pool', () => {
+    const empty: string[] = [];
+    expect(drawWeighted(empty, () => 0)).toBeUndefined();
+  });
+
+  it('halves the chance of an item used once (weight 1/(1+uses))', () => {
+    const uses = (item: string): number => (item === 'a' ? 1 : 0);
+    // Weights: a=0.5, b=1, total=1.5 — rolls up to 0.5 land on 'a', the rest on 'b'.
+    vi.spyOn(Math, 'random').mockReturnValue(0.3); // roll 0.45
+    expect(drawWeighted(['a', 'b'], uses)).toBe('a');
+    vi.spyOn(Math, 'random').mockReturnValue(0.4); // roll 0.6
+    expect(drawWeighted(['a', 'b'], uses)).toBe('b');
+  });
+
+  it('still allows a repeat — used items keep a positive weight', () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    expect(drawWeighted(['a', 'b'], () => 5)).toBe('a');
   });
 });
 

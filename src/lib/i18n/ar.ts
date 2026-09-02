@@ -124,7 +124,7 @@ export const ar: LanguagePack = {
     'round.yourTurn': '{name}، حان دورك!',
     'round.timeUp': 'انتهى الوقت!',
     'round.leaveConfirm': 'مغادرة هذه الجولة؟ تقدّمك محفوظ.',
-    'round.submitConfirm': 'هل تريد إرسال إجاباتك وإنهاء جولتك؟',
+    'round.submitConfirm': 'بعض الفئات ما زالت فارغة — هل تريد إنهاء جولتك رغم ذلك؟',
     'round.letterHint': 'يبدأ بحرف "{letter}"؟',
     'round.waitingFor': 'في انتظار…',
     'round.allIn': 'انتهى الجميع!',

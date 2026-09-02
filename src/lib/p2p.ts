@@ -1,4 +1,4 @@
-import Peer, { type DataConnection } from 'peerjs';
+import Peer, { type DataConnection, type PeerJSOption } from 'peerjs';
 
 import { newId } from './game';
 import { readStorage, writeStorage } from './storage';
@@ -143,6 +143,60 @@ function isHostMessage(v: unknown): v is HostMessage {
   );
 }
 
+/** How long to wait for the TURN-credentials endpoint before going STUN-only. */
+const TURN_FETCH_TIMEOUT_MS = 4000;
+
+/** Exported for tests — validates the /turn-credentials response before use. */
+export function isIceServerArray(v: unknown): v is RTCIceServer[] {
+  if (!Array.isArray(v) || v.length === 0) return false;
+  return v.every((entry) => {
+    if (typeof entry !== 'object' || entry === null) return false;
+    const server = entry as Record<string, unknown>;
+    const urls = server['urls'];
+    const hasUrls =
+      typeof urls === 'string' ||
+      (Array.isArray(urls) && urls.length > 0 && urls.every((u) => typeof u === 'string'));
+    if (!hasUrls) return false;
+    const { username, credential } = server;
+    return (
+      (username === undefined || typeof username === 'string') &&
+      (credential === undefined || typeof credential === 'string')
+    );
+  });
+}
+
+/**
+ * ICE config from the deploy's Pages Function (Cloudflare Realtime TURN) —
+ * the relay that lets guests connect across networks (cellular, office WiFi).
+ * Fetched once per page load (the credentials' TTL outlives any session).
+ * When the endpoint is absent (local dev) or fails, rooms work STUN-only via
+ * PeerJS defaults, exactly as before.
+ */
+let peerOptionsPromise: Promise<PeerJSOption> | null = null;
+
+async function fetchPeerOptions(): Promise<PeerJSOption> {
+  try {
+    const res = await fetch('/turn-credentials', {
+      method: 'POST',
+      signal: AbortSignal.timeout(TURN_FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) return {};
+    const body: unknown = await res.json();
+    const iceServers =
+      typeof body === 'object' && body !== null
+        ? (body as Record<string, unknown>)['iceServers']
+        : undefined;
+    return isIceServerArray(iceServers) ? { config: { iceServers } } : {};
+  } catch {
+    return {};
+  }
+}
+
+function getPeerOptions(): Promise<PeerJSOption> {
+  peerOptionsPromise ??= fetchPeerOptions();
+  return peerOptionsPromise;
+}
+
 // ---------------------------------------------------------------------------
 // Host side
 // ---------------------------------------------------------------------------
@@ -160,10 +214,11 @@ export interface HostRoom {
 }
 
 /** Open a room on the public broker; retries with a fresh code on collision. */
-export function createRoom(attempts = 3): Promise<HostRoom> {
+export async function createRoom(attempts = 3): Promise<HostRoom> {
+  const options = await getPeerOptions();
   return new Promise((resolve, reject) => {
     const code = makeRoomCode();
-    const peer = new Peer(PEER_PREFIX + code);
+    const peer = new Peer(PEER_PREFIX + code, options);
     let settled = false;
 
     const timeout = setTimeout(() => {
@@ -200,10 +255,15 @@ export function createRoom(attempts = 3): Promise<HostRoom> {
  * so guests rejoin their seats by name exactly like a dropped-connection
  * reconnect. Retries briefly — the broker may still hold the pre-reload peer.
  */
-export function reopenRoom(code: string, players: GuestInfo[], attempts = 3): Promise<HostRoom> {
+export async function reopenRoom(
+  code: string,
+  players: GuestInfo[],
+  attempts = 3,
+): Promise<HostRoom> {
+  const options = await getPeerOptions();
   return new Promise((resolve, reject) => {
     const normalized = normalizeRoomCode(code);
-    const peer = new Peer(PEER_PREFIX + normalized);
+    const peer = new Peer(PEER_PREFIX + normalized, options);
     let settled = false;
 
     const timeout = setTimeout(() => {
@@ -454,9 +514,10 @@ export interface GuestSession {
 }
 
 /** Join a room by code; rejects with Error('not-found' | 'network'). */
-export function joinRoom(code: string, name: string, avatar?: string): Promise<GuestSession> {
+export async function joinRoom(code: string, name: string, avatar?: string): Promise<GuestSession> {
+  const options = await getPeerOptions();
   return new Promise((resolve, reject) => {
-    const peer = new Peer();
+    const peer = new Peer(options);
     let settled = false;
     let messageCb: ((msg: HostMessage) => void) | null = null;
     let closeCb: (() => void) | null = null;

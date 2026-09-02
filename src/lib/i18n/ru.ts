@@ -101,7 +101,7 @@ export const ru: LanguagePack = {
     'round.yourTurn': '{name}, твой ход!',
     'round.timeUp': 'Время вышло!',
     'round.leaveConfirm': 'Выйти из раунда? Прогресс сохранён.',
-    'round.submitConfirm': 'Отправить ответы и закончить свой раунд?',
+    'round.submitConfirm': 'Некоторые категории ещё пустые — всё равно закончить раунд?',
     'round.letterHint': 'Начинается на «{letter}»?',
     'round.waitingFor': 'Ждём…',
     'round.allIn': 'Все закончили!',

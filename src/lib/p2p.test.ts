@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isGuestMessage, makeRoomCode, normalizeRoomCode } from './p2p';
+import { isGuestMessage, isIceServerArray, makeRoomCode, normalizeRoomCode } from './p2p';
 
 describe('room codes', () => {
   it('makes 4-letter codes from the kid-safe alphabet', () => {
@@ -40,5 +40,31 @@ describe('isGuestMessage (untrusted P2P input)', () => {
     expect(isGuestMessage({ type: 'answers', roundIndex: 0, answers: { a: 1 } })).toBe(false);
     expect(isGuestMessage({ type: 'answers', roundIndex: 0, answers: null })).toBe(false);
     expect(isGuestMessage({ type: 'nonsense' })).toBe(false);
+  });
+});
+
+describe('isIceServerArray (/turn-credentials response)', () => {
+  it('accepts the Cloudflare Realtime shape (stun entry + turn entry with creds)', () => {
+    expect(
+      isIceServerArray([
+        { urls: ['stun:stun.cloudflare.com:3478'] },
+        {
+          urls: ['turn:turn.cloudflare.com:3478?transport=udp', 'turns:turn.cloudflare.com:443'],
+          username: 'u',
+          credential: 'c',
+        },
+      ]),
+    ).toBe(true);
+    expect(isIceServerArray([{ urls: 'stun:stun.cloudflare.com:3478' }])).toBe(true);
+  });
+
+  it('rejects shapes that would break the RTCPeerConnection config', () => {
+    expect(isIceServerArray(undefined)).toBe(false);
+    expect(isIceServerArray({})).toBe(false);
+    expect(isIceServerArray([])).toBe(false);
+    expect(isIceServerArray([{ username: 'u' }])).toBe(false); // no urls
+    expect(isIceServerArray([{ urls: [] }])).toBe(false);
+    expect(isIceServerArray([{ urls: [42] }])).toBe(false);
+    expect(isIceServerArray([{ urls: 'turn:x', username: 42 }])).toBe(false);
   });
 });

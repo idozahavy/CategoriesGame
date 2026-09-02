@@ -124,7 +124,7 @@ export const he: LanguagePack = {
     'round.yourTurn': 'עכשיו התור שלך, {name}!',
     'round.timeUp': 'נגמר הזמן!',
     'round.leaveConfirm': 'לצאת מהסיבוב? ההתקדמות נשמרה.',
-    'round.submitConfirm': 'לשלוח את התשובות ולסיים את הסיבוב שלך?',
+    'round.submitConfirm': 'יש קטגוריות שעדיין ריקות — לסיים את הסיבוב בכל זאת?',
     'round.letterHint': 'מתחיל באות "{letter}"?',
     'round.waitingFor': 'מחכים ל…',
     'round.allIn': 'כולם סיימו!',

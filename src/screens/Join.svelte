@@ -143,13 +143,19 @@
     phase = 'waiting';
   }
 
+  /** Lock the words in — but confirm first when some categories are still blank. */
+  function requestSubmit(): void {
+    const hasEmpty = (round?.categories ?? []).some((c) => (answers[c.id] ?? '').trim() === '');
+    if (hasEmpty) showSubmitConfirm = true;
+    else submitAnswers();
+  }
+
   /** Enter hops to the next category's input; on the last one it asks to finish. */
   function onAnswerKeydown(e: KeyboardEvent, index: number): void {
     if (e.key !== 'Enter') return;
     e.preventDefault();
     if (index >= (round?.categories.length ?? 0) - 1) {
-      // Enter is easy to hit by habit — confirm before ending the player's round.
-      showSubmitConfirm = true;
+      requestSubmit();
       return;
     }
     const inputs = document.querySelectorAll<HTMLInputElement>('.cards .inp');
@@ -289,7 +295,7 @@
         </Card>
       {/each}
     </div>
-    <Button variant="primary" block disabled={submitted} onclick={submitAnswers}
+    <Button variant="primary" block disabled={submitted} onclick={requestSubmit}
       >{$t('round.done')}</Button
     >
   {:else if phase === 'waiting'}

@@ -1,5 +1,5 @@
 import { getPack } from './i18n';
-import type { GameSettings, GameState, PlayerDef, RoundState, Screen } from './types';
+import type { CategoryDef, GameSettings, GameState, PlayerDef, RoundState, Screen } from './types';
 
 export const DEFAULT_CATEGORY_IDS = ['animal', 'food', 'city', 'name', 'object'] as const;
 
@@ -37,12 +37,35 @@ export function createGame(settings: GameSettings, players: PlayerDef[]): GameSt
   };
 }
 
+/**
+ * Weighted random pick: every previous use of an item proportionally shrinks
+ * its chance (weight 1/(1+uses)), so repeats stay possible but get rarer the
+ * more often an item has already come up.
+ */
+export function drawWeighted<T>(pool: readonly T[], uses: (item: T) => number): T | undefined {
+  const weights = pool.map((item) => 1 / (1 + uses(item)));
+  let roll = Math.random() * weights.reduce((sum, w) => sum + w, 0);
+  for (let i = 0; i < pool.length; i++) {
+    roll -= weights[i] ?? 0;
+    if (roll <= 0) return pool[i];
+  }
+  return pool[pool.length - 1];
+}
+
 export function drawLetter(state: GameState): string {
   const letters = getPack(state.settings.language).letters;
-  const unused = letters.filter((l) => !state.usedLetters.includes(l));
-  const pool = unused.length > 0 ? unused : letters;
-  const letter = pool[Math.floor(Math.random() * pool.length)] ?? 'A';
-  return letter;
+  const counts = new Map<string, number>();
+  for (const l of state.usedLetters) counts.set(l, (counts.get(l) ?? 0) + 1);
+  return drawWeighted(letters, (l) => counts.get(l) ?? 0) ?? 'A';
+}
+
+/** Single mode: draw the round's category, past picks proportionally less likely. */
+export function drawCategory(state: GameState): CategoryDef | undefined {
+  const counts = new Map<string, number>();
+  for (const r of state.rounds) {
+    for (const id of r.categoryIds) counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return drawWeighted(state.settings.categories, (c) => counts.get(c.id) ?? 0);
 }
 
 export function startNextRound(state: GameState): RoundState | null {
@@ -54,9 +77,8 @@ export function startNextRound(state: GameState): RoundState | null {
   const letter = drawLetter(state);
   state.usedLetters.push(letter);
   const { mode, categories } = state.settings;
-  const singleCategory = categories[state.rounds.length % categories.length] ?? categories[0];
-  const categoryIds =
-    mode === 'single' && singleCategory ? [singleCategory.id] : categories.map((c) => c.id);
+  const singleCategory = mode === 'single' ? drawCategory(state) : undefined;
+  const categoryIds = singleCategory ? [singleCategory.id] : categories.map((c) => c.id);
   const round: RoundState = {
     index: state.rounds.length,
     letter,
