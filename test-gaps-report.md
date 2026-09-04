@@ -227,8 +227,8 @@ Round.svelte timer (tick sound under 10 s, time-up forces review), Join.svelte w
 
 ## 6. Suspected bugs
 
-- **BUG-001** (Medium) - `src/lib/p2p.ts:150` `isHostMessage` validates only the `type` string. A peer holding the room's id can send `{type:'welcome', playerId: {}}` or `{type:'round', categories: 'x'}` and the guest screen uses the fields as-is. Probably should validate each variant's shape like `isGuestMessage` does. Not tagged security: the guest only renders text and Svelte escapes it.
-- **BUG-002** (Low) - `src/lib/p2p.ts:557` after a successful join `fail()` returns early on `settled`, so a peer-level error (broker lost) never reaches `onClose`; only connection-level close/error does. The guest may sit on a dead room until the host's conn closes.
+- **BUG-001** (Medium) - `src/lib/p2p.ts:150` `isHostMessage` validates only the `type` string. A peer holding the room's id can send `{type:'welcome', playerId: {}}` or `{type:'round', categories: 'x'}` and the guest screen uses the fields as-is. Probably should validate each variant's shape like `isGuestMessage` does. Not tagged security: the guest only renders text and Svelte escapes it. Triage 2026-09-04: accepted, open for a separate fix.
+- **BUG-002** (Low) - `src/lib/p2p.ts:557` after a successful join `fail()` returns early on `settled`, so a peer-level error (broker lost) never reaches `onClose`; only connection-level close/error does. The guest may sit on a dead room until the host's conn closes. Triage 2026-09-04: accepted, open for a separate fix; the held-back GAP-002 case follows it.
 
 ## 7. Top 5 quick wins
 
