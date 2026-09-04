@@ -60,6 +60,8 @@
   let showSettings = $state(false);
   let showTimeUp = $state(false);
   let timeLeft = $state<number | null>(null);
+  /** Answer inputs in category order, so Enter can hop to the next one. */
+  let answerInputs = $state<(HTMLInputElement | undefined)[]>([]);
 
   // Settings stay editable while nothing has been played yet — a wrong timer
   // or round count is cheap to fix on round one, pointless to fix later.
@@ -268,8 +270,7 @@
       requestSubmit();
       return;
     }
-    const inputs = document.querySelectorAll<HTMLInputElement>('.cards .inp');
-    inputs[index + 1]?.focus();
+    answerInputs[index + 1]?.focus();
   }
 
   // The robot plays its own turn: think briefly, then answer from the lists.
@@ -451,6 +452,7 @@
             </div>
             <TextInput
               bind:value={() => answers[catId] ?? '', (v) => (answers[catId] = v)}
+              bind:ref={answerInputs[i]}
               enterkeyhint={i === round.categoryIds.length - 1 ? 'done' : 'next'}
               onkeydown={(e) => onAnswerKeydown(e, i)}
               error={val !== '' && !matchesLetter(val, round.letter)
@@ -581,7 +583,7 @@
     text-align: center;
   }
   .handoff-emoji {
-    font-size: 64px;
+    font-size: calc(var(--font-size-display) * 1.6);
   }
   .handoff-text {
     font-size: var(--font-size-h1);
@@ -652,7 +654,7 @@
     margin-block-end: var(--space-2);
   }
   .cat-emoji {
-    font-size: 24px;
+    font-size: var(--font-size-h2);
   }
   .cat-name {
     font-weight: var(--font-weight-subheading);
@@ -664,7 +666,7 @@
     border: none;
     border-radius: var(--radius-md);
     background: var(--color-surface);
-    font-size: 22px;
+    font-size: var(--font-size-h2);
     display: flex;
     align-items: center;
     justify-content: center;

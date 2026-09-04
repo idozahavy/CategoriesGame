@@ -221,7 +221,7 @@
     flex: 1;
   }
   .crown {
-    font-size: 24px;
+    font-size: var(--font-size-h2);
     flex-shrink: 0;
   }
   .winner {

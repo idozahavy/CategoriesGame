@@ -272,7 +272,7 @@
     margin-block-end: var(--space-3);
   }
   .cat-emoji {
-    font-size: 24px;
+    font-size: var(--font-size-h2);
   }
   .cat-name {
     font-weight: var(--font-weight-subheading);
@@ -334,7 +334,7 @@
     gap: var(--space-3);
   }
   .fact-emoji {
-    font-size: 24px;
+    font-size: var(--font-size-h2);
   }
   .fact-body {
     display: flex;
@@ -348,7 +348,7 @@
     color: var(--color-muted);
   }
   .vote-emoji {
-    font-size: 48px;
+    font-size: calc(var(--font-size-display) * 1.2);
   }
   .vote-question {
     font-size: var(--font-size-h2);

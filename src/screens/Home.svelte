@@ -77,7 +77,7 @@
     text-align: center;
   }
   .logo {
-    font-size: 72px;
+    font-size: calc(var(--font-size-display) * 1.6);
   }
   .title {
     font-size: var(--font-size-display);
@@ -104,6 +104,6 @@
     margin-block-start: var(--space-5);
   }
   .globe {
-    font-size: 20px;
+    font-size: var(--font-size-h2);
   }
 </style>

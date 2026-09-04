@@ -734,7 +734,7 @@
   }
   .emoji-option {
     min-block-size: 48px;
-    font-size: 28px;
+    font-size: var(--font-size-h1);
     background: var(--color-bg);
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-md);

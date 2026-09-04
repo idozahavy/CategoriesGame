@@ -1,6 +1,6 @@
 ---
 name: design-system
-description: CategoriesGame visual design scheme — read before ANY UI work (creating/editing Svelte components, CSS, HTML, screens, styles).
+description: Kategoria visual design scheme — read before ANY UI work (creating/editing Svelte components, CSS, HTML, screens, styles).
 ---
 
 Rules:

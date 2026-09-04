@@ -1,6 +1,7 @@
 <script lang="ts">
   let {
     value = $bindable(''),
+    ref = $bindable<HTMLInputElement | undefined>(),
     placeholder = '',
     error = '',
     disabled = false,
@@ -11,6 +12,8 @@
     onkeydown,
   }: {
     value?: string;
+    /** The underlying <input>, for parents that need to move focus. */
+    ref?: HTMLInputElement;
     placeholder?: string;
     error?: string;
     disabled?: boolean;
@@ -28,6 +31,7 @@
   <input
     class="inp"
     class:err={error !== ''}
+    bind:this={ref}
     bind:value
     {placeholder}
     {disabled}

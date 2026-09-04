@@ -28,7 +28,7 @@ interface GameDB extends DBSchema {
   };
 }
 
-const DB_NAME = 'categories-game';
+const DB_NAME = 'kategoria';
 const STORE = 'saves';
 const LEARNED_STORE = 'learned';
 const PROFILE_STORE = 'profiles';

@@ -6,7 +6,9 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
 const i18nDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'lib', 'i18n');
-const packFiles = readdirSync(i18nDir).filter((f) => f.endsWith('.ts') && f !== 'index.ts');
+const packFiles = readdirSync(i18nDir).filter(
+  (f) => f.endsWith('.ts') && !f.endsWith('.test.ts') && f !== 'index.ts',
+);
 
 /** Extract the quoted keys of one `name: { ... }` object literal in the file. */
 function blockKeys(source, blockName) {

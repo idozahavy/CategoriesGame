@@ -1,4 +1,4 @@
-# CategoriesGame Design Scheme
+# Kategoria Design Scheme
 
 **Version: 1.0.0** · Established 2026-08-30 · Direction: **Candy Pop** (teal-lead)
 

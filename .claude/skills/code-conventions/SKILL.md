@@ -1,6 +1,6 @@
 ---
 name: code-conventions
-description: CategoriesGame coding conventions — read before writing or reviewing ANY code in src/ (TypeScript, Svelte, stores, i18n).
+description: Kategoria coding conventions — read before writing or reviewing ANY code in src/ (TypeScript, Svelte, stores, i18n).
 ---
 
 Rules:

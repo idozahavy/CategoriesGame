@@ -205,12 +205,14 @@
 
   function leave(): void {
     forgetSession();
+    session?.onClose(null);
     session?.close();
     session = null;
     screen.set('home');
   }
 
   function retry(): void {
+    session?.onClose(null);
     session?.close();
     session = null;
     phase = 'form';
@@ -465,7 +467,7 @@
     text-align: center;
   }
   .emoji {
-    font-size: 64px;
+    font-size: calc(var(--font-size-display) * 1.6);
     text-align: center;
   }
   .big {
@@ -546,7 +548,7 @@
   }
   .emoji-option {
     min-block-size: 48px;
-    font-size: 28px;
+    font-size: var(--font-size-h1);
     background: var(--color-bg);
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-md);
@@ -591,7 +593,7 @@
     margin-block-end: var(--space-2);
   }
   .cat-emoji {
-    font-size: 24px;
+    font-size: var(--font-size-h2);
   }
   .cat-name {
     font-weight: var(--font-weight-subheading);

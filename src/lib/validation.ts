@@ -78,7 +78,6 @@ export async function checkWord(word: string, options: WordCheckOptions): Promis
     if (known === 'unknown' && mode === 'dictionary') return 'vote';
   }
 
-  if (mode === 'bundled') return 'vote';
   return 'vote';
 }
 

@@ -1,4 +1,4 @@
-# Design Brief — CategoriesGame
+# Design Brief — Kategoria
 
 _Recorded 2026-08-30 (Phase 2 interview). Revisions must re-read intent from this file._
 

@@ -94,7 +94,7 @@
     text-align: center;
   }
   .empty-emoji {
-    font-size: 64px;
+    font-size: calc(var(--font-size-display) * 1.6);
   }
   .empty-text {
     color: var(--color-muted);

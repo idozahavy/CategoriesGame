@@ -34,6 +34,6 @@
     margin-inline-start: auto;
     font-weight: var(--font-weight-display);
     font-variant-numeric: tabular-nums;
-    font-size: 20px;
+    font-size: var(--font-size-h2);
   }
 </style>

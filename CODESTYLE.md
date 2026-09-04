@@ -1,4 +1,4 @@
-# Code Scheme — CategoriesGame
+# Code Scheme — Kategoria
 
 **Version 1.5.0** · 2026-09-02 · Enforced by Prettier + ESLint (`npm run format` / `npm run lint`) and the `code-conventions` skill.
 

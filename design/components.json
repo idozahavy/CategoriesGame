@@ -1,5 +1,5 @@
 {
-  "$description": "CategoriesGame component registry. Every UI component must be registered here with its token bindings. Reference sheet: references/refine-5-components.html",
+  "$description": "Kategoria component registry. Every UI component must be registered here with its token bindings. Reference sheet: references/refine-5-components.html",
   "version": "0.1.0",
   "components": {
     "button": {

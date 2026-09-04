@@ -1,4 +1,6 @@
-# Categories! 🎪
+# Kategoria 🎪
+
+**Play it:** https://kategoria.pages.dev · **Source:** https://github.com/idozahavy/Kategoria
 
 A kid-friendly Scattergories-style word game. Play alone, together on one shared screen, or with everyone joining from their own phone via a room code (WebRTC — a static web app, plus one tiny optional Pages Function for TURN credentials).
 

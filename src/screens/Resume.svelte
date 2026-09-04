@@ -126,7 +126,7 @@
   {/if}
 </div>
 
-<Modal open={confirmDeleteId !== null}>
+<Modal open={confirmDeleteId !== null} onclose={cancelDelete}>
   <p class="confirm-text">{$t('resume.deleteConfirm')}</p>
   <div class="modal-actions">
     <Button variant="ghost" onclick={cancelDelete}>{$t('common.cancel')}</Button>
@@ -151,7 +151,7 @@
     text-align: center;
   }
   .empty .emoji {
-    font-size: 64px;
+    font-size: calc(var(--font-size-display) * 1.6);
   }
   .empty-title {
     font-weight: var(--font-weight-display);

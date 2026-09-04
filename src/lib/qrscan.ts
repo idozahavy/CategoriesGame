@@ -80,7 +80,15 @@ export async function startQrScan(
     audio: false,
   });
   video.srcObject = stream;
-  await video.play();
+  try {
+    await video.play();
+  } catch (e) {
+    // Autoplay policy / interruption: release the camera before failing,
+    // otherwise the recording indicator stays on until a reload.
+    for (const track of stream.getTracks()) track.stop();
+    video.srcObject = null;
+    throw e;
+  }
 
   const detector = nativeDetector();
   const canvas = document.createElement('canvas');

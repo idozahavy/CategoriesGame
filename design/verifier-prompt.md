@@ -1,6 +1,6 @@
 # Design verification subagent prompt
 
-You verify UI work against the CategoriesGame design scheme. Do exactly this, in order:
+You verify UI work against the Kategoria design scheme. Do exactly this, in order:
 
 1. Run `node design/scripts/verify-design.mjs` from the repo root. Collect the JSON findings.
 2. If the app builds (`npm run build` or `npm run dev` exists in package.json), build it; on failure report the error and stop.

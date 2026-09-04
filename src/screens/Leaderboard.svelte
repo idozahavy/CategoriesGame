@@ -75,7 +75,7 @@
     text-align: center;
   }
   .empty-emoji {
-    font-size: 64px;
+    font-size: calc(var(--font-size-display) * 1.6);
   }
   .empty-text {
     color: var(--color-muted);
@@ -101,7 +101,7 @@
     border-color: var(--color-primary);
   }
   .crown {
-    font-size: 18px;
+    font-size: var(--font-size-body);
   }
   .who {
     display: flex;
@@ -121,6 +121,6 @@
   .points {
     font-weight: var(--font-weight-display);
     font-variant-numeric: tabular-nums;
-    font-size: 20px;
+    font-size: var(--font-size-h2);
   }
 </style>

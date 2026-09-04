@@ -259,3 +259,54 @@ describe('isFinished / screenForGame', () => {
     expect(screenForGame(state)).toBe('round');
   });
 });
+
+describe('scoreRound edge cases', () => {
+  it('an invalid duplicate does not make the valid word count as shared', () => {
+    const state = createGame(makeSettings(), makePlayers(2));
+    const round = makeRound(0, [
+      answer('p1', 'animal', 'Ant'),
+      { ...answer('p2', 'animal', 'ant'), status: 'invalid' },
+    ]);
+    scoreRound(state, round);
+    expect(round.answers[0]?.status).toBe('valid');
+    expect(round.answers[0]?.points).toBe(10);
+    expect(round.answers[1]?.points).toBe(0);
+  });
+
+  it('duplicate detection ignores case and surrounding whitespace', () => {
+    const state = createGame(makeSettings(), makePlayers(2));
+    const round = makeRound(0, [answer('p1', 'animal', 'ANT'), answer('p2', 'animal', '  ant ')]);
+    scoreRound(state, round);
+    expect(round.answers.map((a) => a.status)).toEqual(['shared', 'shared']);
+  });
+
+  it('marks the round done even when nobody answered', () => {
+    const state = createGame(makeSettings(), makePlayers(2));
+    const round = makeRound(0, []);
+    scoreRound(state, round);
+    expect(round.phase).toBe('done');
+  });
+});
+
+describe('matchesLetter in non-Latin scripts', () => {
+  it('matches Hebrew and Cyrillic first letters', () => {
+    expect(matchesLetter('כלב', 'כ')).toBe(true);
+    expect(matchesLetter('כלב', 'ל')).toBe(false);
+    expect(matchesLetter('Собака', 'с')).toBe(true);
+  });
+});
+
+describe('totalScores', () => {
+  it('lists every player, including ones with no answers yet', () => {
+    const state = createGame(makeSettings(), makePlayers(3));
+    const scored = { ...answer('p1', 'animal', 'ant'), points: 10 };
+    const round = makeRound(0, [scored], { phase: 'done' });
+    state.rounds.push(round);
+    const totals = totalScores(state);
+    expect([...totals.entries()]).toEqual([
+      ['p1', 10],
+      ['p2', 0],
+      ['p3', 0],
+    ]);
+  });
+});
