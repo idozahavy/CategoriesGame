@@ -2,4 +2,6 @@ node_modules/
 dist/
 *.local
 .DS_Store
-.wrangler/
+.wrangler/coverage/
+.test-gaps-tmp/
+test-gaps-report.html
