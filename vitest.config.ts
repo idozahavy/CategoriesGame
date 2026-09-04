@@ -9,6 +9,7 @@ export default defineConfig({
       include: ['src/**/*.ts', 'functions/**/*.ts'],
       exclude: [
         '**/*.test.ts',
+        '**/*.test-helpers.ts',
         'src/vite-env.d.ts',
         'src/main.ts',
         // Language packs and bundled word lists are data, not logic.
