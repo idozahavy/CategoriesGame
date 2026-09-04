@@ -1,3 +1,5 @@
+import { webcrypto } from 'node:crypto';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -76,9 +78,22 @@ describe('matchesLetter', () => {
 });
 
 describe('newId', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('produces unique UUID-shaped ids', () => {
     const a = newId();
     expect(a).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+    expect(newId()).not.toBe(a);
+  });
+
+  it('builds a valid v4 UUID by hand when randomUUID is missing (plain-HTTP LAN play)', () => {
+    vi.stubGlobal('crypto', {
+      getRandomValues: (bytes: Uint8Array) => webcrypto.getRandomValues(bytes),
+    });
+    const a = newId();
+    expect(a).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
     expect(newId()).not.toBe(a);
   });
 });
@@ -103,6 +118,19 @@ describe('startNextRound', () => {
     const second = startNextRound(state);
     expect(second?.categoryIds).toHaveLength(1);
     expect(['animal', 'food']).toContain(second?.categoryIds[0]);
+  });
+
+  it('still draws a letter once every letter of the pack has been used', () => {
+    const state = createGame(makeSettings(), makePlayers(2));
+    state.usedLetters = [...getPack('en').letters];
+    const round = startNextRound(state);
+    expect(getPack('en').letters).toContain(round?.letter);
+  });
+
+  it('leaves the active player empty when the game has no players yet', () => {
+    const state = createGame(makeSettings(), []);
+    const round = startNextRound(state);
+    expect(round?.activePlayerId).toBeNull();
   });
 
   it('refuses while the current round is unfinished (double-tap guard)', () => {
