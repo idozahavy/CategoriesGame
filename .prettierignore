@@ -2,3 +2,5 @@ node_modules/
 dist/
 design/
 package-lock.json
+coverage/
+.wrangler/

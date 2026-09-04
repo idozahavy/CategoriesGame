@@ -90,7 +90,7 @@ describe('newId', () => {
 
   it('builds a valid v4 UUID by hand when randomUUID is missing (plain-HTTP LAN play)', () => {
     vi.stubGlobal('crypto', {
-      getRandomValues: (bytes: Uint8Array) => webcrypto.getRandomValues(bytes),
+      getRandomValues: (bytes: Uint8Array<ArrayBuffer>) => webcrypto.getRandomValues(bytes),
     });
     const a = newId();
     expect(a).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
