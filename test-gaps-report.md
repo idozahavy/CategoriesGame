@@ -2,7 +2,7 @@
 
 Mapped 2026-09-04 at commit 3120cba. Scope: whole repo. Runner: vitest 4.1.11 (node v24.18.0), colocated `*.test.ts`.
 
-## Result of this run (2026-09-04, --top 15)
+## Result so far (full run 2026-09-04 --top 15, plus write pass 2026-09-05 for GAP-016/017/020)
 
 | Metric                      | Before             | After                       |
 | --------------------------- | ------------------ | --------------------------- |
@@ -19,11 +19,11 @@ Gaps closed: Phase B 8 (GAP-001..008), Phase C 4 (GAP-009..012), Phase E 3 (GAP-
 
 Reconciliation: p2p.ts at 98 % lines and BUG-001 (`p2p.ts:150`, host messages unvalidated on the guest) and BUG-002 (`p2p.ts:557`) are still open; one GAP-002 case is held back on BUG-002; one GAP-011 case is `needs-seam`; the user-named "game timeouts / waiting" behavior in the Svelte screens has no test because the repo has no DOM test environment (GAP-019, `needs-harness`).
 
-Left open: GAP-016, GAP-017, GAP-020 (beyond --top; all Medium, M effort); GAP-018 db.ts and GAP-019 screens (`needs-harness`); GAP-021, GAP-022 (`needs-harness`, Low).
+Left open: GAP-018 db.ts and GAP-019 screens (`needs-harness`); GAP-021, GAP-022 (`needs-harness`, Low).
 
 Suite health after Phase A: nothing un-skipped, deleted or quarantined - the suite was clean. One test written this run was deleted before commit as a tautology (see state file).
 
-Commits: 3120cba coverage tooling, 5696728 map, 7cda361 Phase B, f0eb630 + 0b03989 Phase C, d3b5049 Phase E.
+Commits: 3120cba coverage tooling, 5696728 map, 7cda361 Phase B, f0eb630 + 0b03989 Phase C, d3b5049 Phase E, 40f3058 second write pass (GAP-016/017/020).
 
 ## Before this run
 
@@ -68,30 +68,30 @@ Two artifacts to keep in mind: raw branch % (37.25) is inflated by the synthetic
 
 Rank = points / effort weight (S=1, M=2, L=4). Evidence: M = Measured by coverage, S = Suspected.
 
-| #   | ID      | Unit (file:line)                                                    | Points | Effort | Ev  | Phase | Status              |
-| --- | ------- | ------------------------------------------------------------------- | ------ | ------ | --- | ----- | ------------------- |
-| 1   | GAP-004 | p2p.ts:515 setActiveRoom / getActiveRoom                            | 9      | S      | M   | B     | done                |
-| 2   | GAP-009 | game.ts:14 newId fallback (no crypto.randomUUID)                    | 7      | S      | M   | C     | done                |
-| 3   | GAP-010 | game.ts:55 drawLetter / startNextRound defensive branches           | 6      | S      | M   | C     | done                |
-| 4   | GAP-001 | p2p.ts:234 createRoom + buildHostRoom lobby                         | 10     | M      | M   | B     | done                |
-| 5   | GAP-002 | p2p.ts:537 joinRoom (+ isHostMessage, getDeviceId)                  | 10     | M      | M   | B     | done                |
-| 6   | GAP-003 | p2p.ts:316 host room after lock: reconnect, seat reclaim, close     | 10     | M      | M   | B     | done                |
-| 7   | GAP-005 | stores.ts:15 updateGame                                             | 9      | M      | M   | B     | done                |
-| 8   | GAP-008 | p2p.ts:275 reopenRoom                                               | 9      | M      | M   | B     | done                |
-| 9   | GAP-006 | p2p.ts:190 fetchPeerOptions / getPeerOptions (TURN)                 | 8      | M      | M   | B     | done                |
-| 10  | GAP-007 | functions/turn-credentials.ts:44 onRequestPost                      | 7      | M      | M   | B     | done                |
-| 11  | GAP-013 | validation.ts:309 inPublicDictionary + lookupWiktionary             | 6      | M      | M   | E/F   | done                |
-| 12  | GAP-014 | validation.ts:43 checkWord dictionary / hybrid paths                | 6      | M      | M   | E     | done                |
-| 13  | GAP-015 | validation.ts:161 wordFact                                          | 6      | M      | M   | E     | done                |
-| 14  | GAP-011 | words/index.ts:12 ensureWords unknown language / failed chunk       | 3      | S      | M   | C     | done                |
-| 15  | GAP-012 | i18n/index.ts:36 detectInitialLanguage / persistLanguage / applyDir | 5      | M      | M   | C     | done                |
-| 16  | GAP-016 | validation.ts:250 inWikidataCategory                                | 5      | M      | M   | E     | open (beyond --top) |
-| 17  | GAP-017 | validation.ts:114 inLearnedList / learnWord / forgetWord            | 5      | M      | M   | E     | open (beyond --top) |
-| 18  | GAP-018 | db.ts:62 all IndexedDB functions                                    | 8      | L      | M   | E     | needs-harness       |
-| 19  | GAP-020 | sound.ts soundOn + chimes                                           | 4      | M      | M   | E     | open (beyond --top) |
-| 20  | GAP-019 | Round/Join/Scoreboard.svelte timers and waiting                     | 7      | L      | S   | G     | needs-harness       |
-| -   | GAP-021 | avatar.ts:32 fileToAvatar                                           | 4      | L      | M   | E     | needs-harness       |
-| -   | GAP-022 | qrscan.ts:23 hasCamera / decodeWithCanvas                           | 3      | L      | M   | E     | needs-harness       |
+| #   | ID      | Unit (file:line)                                                    | Points | Effort | Ev  | Phase | Status        |
+| --- | ------- | ------------------------------------------------------------------- | ------ | ------ | --- | ----- | ------------- |
+| 1   | GAP-004 | p2p.ts:515 setActiveRoom / getActiveRoom                            | 9      | S      | M   | B     | done          |
+| 2   | GAP-009 | game.ts:14 newId fallback (no crypto.randomUUID)                    | 7      | S      | M   | C     | done          |
+| 3   | GAP-010 | game.ts:55 drawLetter / startNextRound defensive branches           | 6      | S      | M   | C     | done          |
+| 4   | GAP-001 | p2p.ts:234 createRoom + buildHostRoom lobby                         | 10     | M      | M   | B     | done          |
+| 5   | GAP-002 | p2p.ts:537 joinRoom (+ isHostMessage, getDeviceId)                  | 10     | M      | M   | B     | done          |
+| 6   | GAP-003 | p2p.ts:316 host room after lock: reconnect, seat reclaim, close     | 10     | M      | M   | B     | done          |
+| 7   | GAP-005 | stores.ts:15 updateGame                                             | 9      | M      | M   | B     | done          |
+| 8   | GAP-008 | p2p.ts:275 reopenRoom                                               | 9      | M      | M   | B     | done          |
+| 9   | GAP-006 | p2p.ts:190 fetchPeerOptions / getPeerOptions (TURN)                 | 8      | M      | M   | B     | done          |
+| 10  | GAP-007 | functions/turn-credentials.ts:44 onRequestPost                      | 7      | M      | M   | B     | done          |
+| 11  | GAP-013 | validation.ts:309 inPublicDictionary + lookupWiktionary             | 6      | M      | M   | E/F   | done          |
+| 12  | GAP-014 | validation.ts:43 checkWord dictionary / hybrid paths                | 6      | M      | M   | E     | done          |
+| 13  | GAP-015 | validation.ts:161 wordFact                                          | 6      | M      | M   | E     | done          |
+| 14  | GAP-011 | words/index.ts:12 ensureWords unknown language / failed chunk       | 3      | S      | M   | C     | done          |
+| 15  | GAP-012 | i18n/index.ts:36 detectInitialLanguage / persistLanguage / applyDir | 5      | M      | M   | C     | done          |
+| 16  | GAP-016 | validation.ts:250 inWikidataCategory                                | 5      | M      | M   | E     | done          |
+| 17  | GAP-017 | validation.ts:114 inLearnedList / learnWord / forgetWord            | 5      | M      | M   | E     | done          |
+| 18  | GAP-018 | db.ts:62 all IndexedDB functions                                    | 8      | L      | M   | E     | needs-harness |
+| 19  | GAP-020 | sound.ts soundOn + chimes                                           | 4      | M      | M   | E     | done          |
+| 20  | GAP-019 | Round/Join/Scoreboard.svelte timers and waiting                     | 7      | L      | S   | G     | needs-harness |
+| -   | GAP-021 | avatar.ts:32 fileToAvatar                                           | 4      | L      | M   | E     | needs-harness |
+| -   | GAP-022 | qrscan.ts:23 hasCamera / decodeWithCanvas                           | 3      | L      | M   | E     | needs-harness |
 
 Uniform signals: churn (+1) applies to every file in the top 15 except stores.ts and turn-credentials.ts; noted per gap.
 
