@@ -123,6 +123,7 @@ export const en: LanguagePack = {
     'score.oneMore': 'One more round!',
     'score.playAgain': 'Play again',
     'score.home': 'Home',
+    'score.stopAuto': 'Stop auto-continue ({n})',
 
     'resume.title': 'Your saved games',
     'resume.empty.title': 'No saved games yet',

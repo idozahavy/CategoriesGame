@@ -123,6 +123,7 @@ export const es: LanguagePack = {
     'score.oneMore': '¡Otra ronda!',
     'score.playAgain': 'Jugar otra vez',
     'score.home': 'Inicio',
+    'score.stopAuto': 'Detener continuación automática ({n})',
 
     'resume.title': 'Tus partidas guardadas',
     'resume.empty.title': 'Aún no hay partidas guardadas',

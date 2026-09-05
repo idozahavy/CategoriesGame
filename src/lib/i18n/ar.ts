@@ -146,6 +146,7 @@ export const ar: LanguagePack = {
     'score.oneMore': 'جولة أخرى!',
     'score.playAgain': 'العب مرة أخرى',
     'score.home': 'الرئيسية',
+    'score.stopAuto': 'إيقاف المتابعة التلقائية ({n})',
 
     'resume.title': 'ألعابك المحفوظة',
     'resume.empty.title': 'لا توجد ألعاب محفوظة بعد',

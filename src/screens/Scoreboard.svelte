@@ -43,6 +43,34 @@
   });
 
   let advancing = $state(false);
+
+  // Remote game: the host device auto-advances after a short pause so the
+  // table keeps moving without anyone tapping; one tap stops it for this round.
+  const AUTO_NEXT_SECONDS = 10;
+  let autoNextLeft = $state(AUTO_NEXT_SECONDS);
+  let autoNextStopped = $state(false);
+  const autoNextActive = $derived(
+    $game !== null && !isOver && $game.settings.isRemote === true && !autoNextStopped,
+  );
+
+  $effect(() => {
+    if (!autoNextActive) return;
+    const id = setInterval(() => {
+      autoNextLeft -= 1;
+      if (autoNextLeft <= 0) {
+        clearInterval(id);
+        nextRound();
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  });
+
+  function stopAutoNext(): void {
+    autoNextStopped = true;
+  }
+
+  const stopAutoText = $derived($t('score.stopAuto').replace('{n}', String(autoNextLeft)));
+
   function nextRound(): void {
     if (advancing) return;
     advancing = true;
@@ -165,6 +193,9 @@
       <Button variant="primary" block disabled={advancing} onclick={nextRound}
         >{$t('review.next')}</Button
       >
+      {#if autoNextActive}
+        <Button variant="ghost" block onclick={stopAutoNext}>{stopAutoText}</Button>
+      {/if}
       <Button variant="danger" block onclick={finalize}>{$t('score.endGame')}</Button>
     </div>
   {/if}

@@ -1,3 +1,5 @@
+.wrangler/
+coverage/
 node_modules/
 dist/
 *.local

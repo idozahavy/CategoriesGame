@@ -124,6 +124,7 @@ export const fr: LanguagePack = {
     'score.oneMore': 'Encore une manche !',
     'score.playAgain': 'Rejouer',
     'score.home': 'Accueil',
+    'score.stopAuto': 'Arrêter la suite automatique ({n})',
 
     'resume.title': 'Tes parties sauvegardées',
     'resume.empty.title': 'Pas encore de partie sauvegardée',

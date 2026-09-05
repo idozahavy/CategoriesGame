@@ -123,6 +123,7 @@ export const ru: LanguagePack = {
     'score.oneMore': 'Ещё раунд!',
     'score.playAgain': 'Сыграть ещё',
     'score.home': 'Домой',
+    'score.stopAuto': 'Остановить автопродолжение ({n})',
 
     'resume.title': 'Сохранённые игры',
     'resume.empty.title': 'Пока нет сохранённых игр',

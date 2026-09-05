@@ -146,6 +146,7 @@ export const he: LanguagePack = {
     'score.oneMore': 'עוד סיבוב!',
     'score.playAgain': 'משחק נוסף',
     'score.home': 'מסך הבית',
+    'score.stopAuto': 'עצור המשך אוטומטי ({n})',
 
     'resume.title': 'המשחקים השמורים שלך',
     'resume.empty.title': 'אין עדיין משחקים שמורים',
