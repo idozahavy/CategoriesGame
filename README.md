@@ -34,7 +34,7 @@ npm run dev
 
 ## Remote rooms (WebRTC + TURN)
 
-Phones-join rooms use PeerJS: the free public broker for signaling, then a direct peer-to-peer connection. Direct connections fail on restrictive networks (cellular ↔ WiFi, office firewalls), so on Cloudflare deploys a Pages Function ([functions/turn-credentials.ts](functions/turn-credentials.ts)) mints short-lived TURN relay credentials from Cloudflare Realtime. One-time setup per Pages project:
+Phones-join rooms use PeerJS: the free public broker for signaling, then a direct peer-to-peer connection. Direct connections fail on restrictive networks (cellular ↔ WiFi, office firewalls), so on Cloudflare deploys a Pages Function ([functions/turn-credentials.ts](functions/turn-credentials.ts)) mints 2-hour TURN relay credentials from Cloudflare Realtime (the client fetches fresh ones for rooms opened later). One-time setup per Pages project:
 
 1. Cloudflare dashboard → **Realtime → TURN** → create a TURN key (note its **Key ID** and **API token**).
 2. ```bash
@@ -44,7 +44,16 @@ Phones-join rooms use PeerJS: the free public broker for signaling, then a direc
    npx wrangler pages secret put TURN_API_TOKEN --project-name=kategoria
    ```
 4. Redeploy (`npm run deploy`) so the function ships.
-5. Recommended: add a **rate-limiting rule** for the path `/turn-credentials` (dashboard → your zone/site → Security → WAF → Rate limiting rules; e.g. 10 requests per minute per IP). The function already rejects cross-origin callers (403), but a scripted caller can forge headers — the rate limit caps how much relay quota anyone could mint.
+
+Each credential is a pass to relay arbitrary traffic through the account's TURN quota (billed per GB past the free tier), so the endpoint is guarded in layers. The function itself rejects cross-origin callers (403), but a script can forge those headers. The next two layers both need a **custom domain**: Turnstile refuses hostnames directly under a shared suffix such as `pages.dev`, and WAF rules only exist on a zone you own. Register or transfer a domain (dashboard → Domain Registration, sold at cost), then **Pages → your project → Custom domains** to attach it; the `pages.dev` address keeps working alongside.
+
+5. **Turnstile** (bot check, free): dashboard → **Turnstile → Add widget**, hostname = the custom domain (add `localhost` too for local testing), widget mode **Invisible**. Put the **site key** in `.env` as `VITE_TURNSTILE_SITE_KEY=…` (see `.env.example`; it is public and safe to commit) and the **secret key** as a Pages secret:
+   ```bash
+   npx wrangler pages secret put TURNSTILE_SECRET_KEY --project-name=kategoria
+   ```
+   Then redeploy. With the secret set, every mint must carry a fresh single-use Turnstile token, which a `curl` script cannot produce; the client solves the challenge invisibly before asking for credentials. Without the secret the token is ignored, so an unfinished setup never breaks rooms. Do not use Cloudflare's testing keys in production — the test secret accepts every token.
+6. **Rate-limiting rule** on the custom domain's zone (Security → WAF → Rate limiting rules; e.g. 10 requests per minute per IP on the path `/turn-credentials`) — caps how many credentials anyone could mint even if a layer above fails.
+7. **Watch usage**: Realtime → TURN → Analytics shows relay traffic within seconds; the account's Notifications only offer usage alerts for some products on paid plans, so check analytics after busy evenings. Deleting the TURN key in the dashboard revokes every outstanding credential at once.
 
 Without the secrets — and in local dev, where the endpoint doesn't exist — the app silently falls back to STUN-only, and same-network play works exactly as before. Security headers for the deployed site live in [public/_headers](public/_headers).
 

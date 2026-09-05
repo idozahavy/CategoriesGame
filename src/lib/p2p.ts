@@ -2,6 +2,7 @@ import Peer, { type DataConnection, type PeerJSOption } from 'peerjs';
 
 import { newId } from './game';
 import { readStorage, writeStorage } from './storage';
+import { getTurnstileToken } from './turnstile';
 
 /**
  * P2P room layer (WebRTC via PeerJS + its free public broker for signaling).
@@ -181,16 +182,27 @@ export function isIceServerArray(v: unknown): v is RTCIceServer[] {
 /**
  * ICE config from the deploy's Pages Function (Cloudflare Realtime TURN) —
  * the relay that lets guests connect across networks (cellular, office WiFi).
- * Fetched once per page load (the credentials' TTL outlives any session).
- * When the endpoint is absent (local dev) or fails, rooms work STUN-only via
- * PeerJS defaults, exactly as before.
+ * Remembered per page load until it nears the credentials' TTL, then fetched
+ * again for the next room. When the endpoint is absent (local dev) or fails,
+ * rooms work STUN-only via PeerJS defaults, exactly as before.
  */
 let peerOptionsPromise: Promise<PeerJSOption> | null = null;
+let peerOptionsFetchedAt = 0;
+
+/** Below the 2 h TTL minted by functions/turn-credentials.ts, with margin for a long room. */
+const TURN_CREDENTIALS_MAX_AGE_MS = 90 * 60 * 1000;
 
 async function fetchPeerOptions(): Promise<PeerJSOption> {
   try {
+    const turnstileToken = await getTurnstileToken();
     const res = await fetch('/turn-credentials', {
       method: 'POST',
+      ...(turnstileToken === null
+        ? {}
+        : {
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ turnstileToken }),
+          }),
       signal: AbortSignal.timeout(TURN_FETCH_TIMEOUT_MS),
     });
     if (!res.ok) return {};
@@ -206,11 +218,15 @@ async function fetchPeerOptions(): Promise<PeerJSOption> {
 }
 
 function getPeerOptions(): Promise<PeerJSOption> {
-  peerOptionsPromise ??= fetchPeerOptions().then((options) => {
-    // A failure isn't remembered — the next room or join tries the endpoint again.
-    if (options.config === undefined) peerOptionsPromise = null;
-    return options;
-  });
+  if (Date.now() - peerOptionsFetchedAt > TURN_CREDENTIALS_MAX_AGE_MS) peerOptionsPromise = null;
+  if (peerOptionsPromise === null) {
+    peerOptionsFetchedAt = Date.now();
+    peerOptionsPromise = fetchPeerOptions().then((options) => {
+      // A failure isn't remembered — the next room or join tries the endpoint again.
+      if (options.config === undefined) peerOptionsPromise = null;
+      return options;
+    });
+  }
   return peerOptionsPromise;
 }
 
